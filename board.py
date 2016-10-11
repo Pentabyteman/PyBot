@@ -31,10 +31,11 @@ class Map:
 
 class Board:
 
-    def __init__(self, size, shape=(9, 9), robot_count=2):
+    def __init__(self, size, shape=(9, 9), robot_count=2, on_finish=None):
         self.shape = shape  # default 9 by 9
         print("shape", self.shape)
         self.size = size  # actual size in pixels
+        self.on_finish = on_finish
 
         self.field_size = self.size[0] / 9, self.size[1] / 9
 
@@ -55,14 +56,14 @@ class Board:
 
     def draw(self):
         surf = pygame.Surface(self.size)
-        surf.fill((0, 0, 0))
+        surf.fill((255, 255, 255))
 
         # draw grid as background
         for row, _ in enumerate(self.map.fields):
             for col, _ in enumerate(_):
                 w, h = self.field_size
                 rect = pygame.Rect(col * w, row * h, w, h)
-                pygame.draw.rect(surf, (255, 255, 255), rect, 1)
+                pygame.draw.rect(surf, (100, 100, 100), rect, 1)
 
         # draw fields on top of it
         for row, _ in enumerate(self.map.fields):
@@ -76,6 +77,8 @@ class Board:
 
     def game_over(self):
         print("The game is over!")
+        if self.on_finish:
+            self.on_finish()
 
     def on_turn(self):
         bot = self.next_bot()

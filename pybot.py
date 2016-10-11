@@ -1,4 +1,5 @@
 import pygame
+import time
 import board
 from app import App
 
@@ -12,13 +13,17 @@ class Game(App):
         super(Game, self).__init__()
         self.display = display
 
-        self.board = board.Board(self.display.get_size())
+        self.board = board.Board(self.display.get_size(),
+                                 on_finish=self.stop)
+        self.last_time = time.time()
 
     def on_event(self, event):
         self.board.on_event(event)
 
     def on_tick(self):
-        self.board.on_turn()
+        if (time.time() - self.last_time) > 1:
+            self.board.on_turn()
+            self.last_time = time.time()
 
     def on_render(self):
         self.display.fill((255, 255, 255))

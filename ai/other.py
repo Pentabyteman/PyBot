@@ -1,2 +1,2 @@
 def get_move():
-    return "bloo"
+    return "move 0"

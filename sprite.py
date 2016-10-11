@@ -6,7 +6,7 @@ class Sprite:
     STATE_VALID, STATE_INVALID = 0, 1
 
     def __init__(self, size):
-        self.size = size
+        self.size = tuple([round(x) for x in size])
         self.surface = pygame.Surface(self.size, pygame.SRCALPHA)
         self.state = Sprite.STATE_INVALID
 

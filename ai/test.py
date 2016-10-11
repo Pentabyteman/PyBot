@@ -1,2 +1,2 @@
 def get_move():
-    return "blaa"
+    return "move 1"
