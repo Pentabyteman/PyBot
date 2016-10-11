@@ -16,11 +16,8 @@ class Robot(sprite.Sprite):
         self.team = team
         self.map = map
 
-        self.game_over = game_over
-
-        self.max_health = 100
-        self.health = self.max_health
-
+        self.maxhealth = 100
+        self.__health = self.maxhealth
         try:
             self.pos = pos
         except IllegalMoveException:
@@ -83,7 +80,7 @@ class Robot(sprite.Sprite):
 
     @property
     def health(self):
-        pass
+        return self.__health
 
     @health.setter
     def health(self, new):
