@@ -50,14 +50,14 @@ class Board:
 
     def draw(self):
         surf = pygame.Surface(self.size)
-        surf.fill((255, 255, 255))
+        surf.fill((0, 0, 0))
 
         # draw grid as background
         for row, _ in enumerate(self.map.fields):
             for col, _ in enumerate(_):
                 w, h = self.field_size
                 rect = pygame.Rect(col * w, row * h, w, h)
-                pygame.draw.rect(surf, (100, 100, 100), rect, 1)
+                pygame.draw.rect(surf, (255, 255, 255), rect, 1)
 
         # draw fields on top of it
         for row, _ in enumerate(self.map.fields):
