@@ -53,7 +53,7 @@ class Robot(sprite.Sprite):
         
     @property
     def health(self):
-        pass
+        return self.__health
     
     @health.setter
     def health(self, new):
