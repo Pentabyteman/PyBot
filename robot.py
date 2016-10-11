@@ -9,6 +9,8 @@ class Robot(sprite.Sprite):
         super(Robot, self).__init__(size)
         self.team = team
         self.map = map
+        self.maxhealth = 100
+        self.__health = self.maxhealth
         try:
             print("pos", pos)
             self.pos = pos
@@ -48,3 +50,14 @@ class Robot(sprite.Sprite):
     def col(self, col):
         self.map.move(self, col, self.row)
         self.__col = col
+        
+    @property
+    def health(self):
+        pass
+    
+    @health.setter
+    def health(self, new):
+        self.__health = new
+        if self.__health <= 0:
+            # send gameover
+            pass
