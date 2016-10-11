@@ -17,6 +17,9 @@ class Game(App):
     def on_event(self, event):
         self.board.on_event(event)
 
+    def on_tick(self):
+        self.board.on_turn()
+
     def on_render(self):
         self.display.fill((255, 255, 255))
         self.display.blit(self.board.draw(), (0, 0))  # blit board

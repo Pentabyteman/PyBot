@@ -10,19 +10,23 @@ class App():
     def on_event(self, event):
         pass
 
+    def on_tick(self):
+        pass
+
     def on_render(self):
         pass
 
     def exec_(self):
         clock = pygame.time.Clock()
         self._running = True
-
+        self.on_render()
         while(self._running):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.stop()
                     break
                 self.on_event(event)
+            self.on_tick()
             self.on_render()
             clock.tick()
 

@@ -4,18 +4,24 @@ import sprite
 import importlib.util as imputil
 
 AI_PATH = "ai/test.py"
+DIRECTIONS = [(1, 0), (0, 1), (-1, 0), (0, -1)]  # 0 = N, 1 = S, etc.
+COLORS = [(255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255)]
 
 
 class Robot(sprite.Sprite):
 
-    def __init__(self, size, team, map, pos=(0, 0), ai_path=AI_PATH):
+    def __init__(self, size, team, map, game_over, pos=(0, 0),
+                 ai_path=AI_PATH):
         super(Robot, self).__init__(size)
         self.team = team
         self.map = map
+
+        self.game_over = game_over
+
         self.max_health = 100
-        self.__health = self.max_health
+        self.health = self.max_health
+
         try:
-            print("pos", pos)
             self.pos = pos
         except IllegalMoveException:
             print("Not a valid position")
@@ -25,12 +31,28 @@ class Robot(sprite.Sprite):
         spec = imputil.spec_from_file_location(ai_name, ai_path)
         self.ai = imputil.module_from_spec(spec)
         spec.loader.exec_module(self.ai)
+        self.move(0)
+
+    def __repr__(self):
+        try:
+            pos = self.pos
+        except AttributeError:
+            pos = (-1, -1)
+        return "Robot[{pos}] {team}".format(pos=pos, team=self.team)
+
+    def move(self, direction):
+        self.pos = [p + d for p, d in zip(self.pos, DIRECTIONS[direction])]
 
     def draw(self):
-        pygame.draw.ellipse(self.surface, (255, 0, 0), self.surface.get_rect())
+        pygame.draw.ellipse(self.surface, self.team_color(),
+                            self.surface.get_rect())
+
+    def team_color(self, alpha=255):
+        return COLORS[self.team] + (alpha,)
 
     def on_turn(self):
-        print(self.ai.get_move())
+        move = self.ai.get_move()
+        pass
 
     @property
     def pos(self):
@@ -38,7 +60,6 @@ class Robot(sprite.Sprite):
 
     @pos.setter
     def pos(self, pos):
-        row, col = pos
         self.map.move(self, *pos)
         self.__row, self.__col = pos
 
@@ -68,5 +89,8 @@ class Robot(sprite.Sprite):
     def health(self, new):
         self.__health = new
         if self.__health <= 0:
-            # send gameover
-            pass
+            self.game_over()
+
+
+def team_color(team, alpha=255):
+    return COLORS[team] + (alpha,)

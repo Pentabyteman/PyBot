@@ -12,7 +12,6 @@ class Map:
         self.fields = fields
 
     def move(self, bot, row, col):
-        print("moving", bot, "to", row, col)
         try:
             if self.get(bot.row, bot.col) == bot:
                 self.set(None, bot.row, bot.col)  # clear old field
@@ -21,7 +20,7 @@ class Map:
         self.set(bot, row, col)  # move to new
 
     def get(self, row, col):
-        return self.fields[row][col]
+        return self.fields[row][col].entity
 
     def set(self, bot, row, col):
         field = self.fields[row][col]
@@ -38,15 +37,21 @@ class Board:
         self.size = size  # actual size in pixels
 
         self.field_size = self.size[0] / 9, self.size[1] / 9
+
         # generate map
         self.map = Map([[Field(self.field_size)
                         for col in range(self.shape[1])]
                         for row in range(self.shape[0])])
 
         # n robots
-        self.bots = [robot.Robot(self.field_size, team, self.map, (team,
-                                                                   team))
+        ais = ["ai/test.py", "ai/other.py"]
+        self.bots = [robot.Robot(self.field_size, team, self.map,
+                                 self.game_over,
+                                 (team, team),
+                                 ais[team])
                      for team in range(robot_count)]
+
+        self.__itbots = self._iter_bots()  # initialize bot generator
 
     def draw(self):
         surf = pygame.Surface(self.size)
@@ -69,15 +74,26 @@ class Board:
     def on_event(self, event=None):
         pass
 
+    def game_over(self):
+        print("The game is over!")
+
     def on_turn(self):
         bot = self.next_bot()
-        bot.on_turn(self.map)
+        bot.on_turn()
 
     def next_bot(self):
+        if not self.__itbots:
+            self.__itbots = self._iter_bots()
+        return self.__itbots.__next__()
+
+    def _iter_bots(self):
         idx = 0
         while True:
             yield self.bots[idx]
-            idx += 1
+            if idx + 1 >= len(self.bots):
+                idx = 0
+            else:
+                idx += 1
 
 
 class Field(sprite.Sprite):
@@ -86,6 +102,7 @@ class Field(sprite.Sprite):
         super(Field, self).__init__(size)
         self.kind = kind
         self.entity = None
+        self.team = None
 
     def draw(self):
         self.surface.fill(self._bgcolor())
@@ -93,11 +110,23 @@ class Field(sprite.Sprite):
             self.surface.blit(self.entity.image, (0, 0))
 
     @property
+    def entity(self):
+        return self.__entity
+
+    @entity.setter
+    def entity(self, new):
+        self.__entity = new
+        if new is not None:
+            self.team = new.team
+        self.state = sprite.Sprite.STATE_INVALID
+
+    @property
     def passable(self):
         return self.kind != TYPE_WALL and self.entity is None
 
     def _bgcolor(self):
         if self.kind == TYPE_FIELD:
-            return (0, 0, 0, 0)  # reset everything
+            return (0, 0, 0, 0) if self.team is None else\
+                robot.team_color(self.team, alpha=100)
         elif self.kind == TYPE_WALL:
             return (150, 50, 50, 250)
