@@ -14,5 +14,6 @@ class Sprite:
     def image(self):
         if self.state == Sprite.STATE_INVALID:
             self.draw()
+            self.state = Sprite.STATE_VALID
 
         return self.surface
