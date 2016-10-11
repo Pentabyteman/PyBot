@@ -50,11 +50,11 @@ class Robot(sprite.Sprite):
     def col(self, col):
         self.map.move(self, col, self.row)
         self.__col = col
-        
+
     @property
     def health(self):
         return self.__health
-    
+
     @health.setter
     def health(self, new):
         self.__health = new
