@@ -58,7 +58,7 @@ class Board:
                                  start_positions[team][-1],
                                  ais[team],)
                      for team in range(robot_count)]
-        # random.shuffle(self.bots)
+        random.shuffle(self.bots)
         self.__itbots = self._iter_bots()  # initialize bot generator
 
     def draw(self):

@@ -102,17 +102,17 @@ class Robot(sprite.Sprite):
 
     def on_turn(self):
         move = self.ai.get_move()
-        # try:
-        cmd, arg = move.split(" ")
-        if cmd == "move":
-            self.move(int(arg))
-        elif cmd == "rotate":
-            self.rotate(int(arg))
-        elif cmd == "attack":
-            self.attack(int(arg))
-        # except Exception as e:
-            # print("The AI failed to answer!", e)
-            # self.game_over()
+        try:
+            cmd, arg = move.split(" ")
+            if cmd == "move":
+                self.move(int(arg))
+            elif cmd == "rotate":
+                self.rotate(int(arg))
+            elif cmd == "attack":
+                self.attack(int(arg))
+        except Exception as e:
+            print("The AI failed to answer!", e)
+            self.game_over()
 
     def rotate(self, direction):
         """
