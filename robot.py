@@ -54,12 +54,15 @@ class Robot(sprite.Sprite):
         direction -- Direction of momement in the perspective of the robot's
                      current rotation.
         """
+        servo = pygame.mixer.Sound(file='Servo_Motor.wav')
+        servo.set_volume(0.2)
         # validity of direction
         if not proportional:
             assert direction != 0 and -1 <= direction <= 1, "No valid movement"
         # p: eigene position, d * (vorne/hinten): positionsänderung
         self.pos = [p + (d * direction)
                     for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
+        servo.play()
 
     def attack(self, direction):
         """Attacks in the specified direction -> move"""
@@ -76,6 +79,8 @@ class Robot(sprite.Sprite):
 
     def hit(self, other=None):
         """Attacks the robot in front of self"""
+        laser = pygame.mixer.Sound('Laser.wav')
+        laser.set_volume(0.5)
         if not other:
             front_pos = \
                 [p + d for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
@@ -91,6 +96,7 @@ class Robot(sprite.Sprite):
             other.health -= DAMAGE[FROM_SIDE]
         else:  # frontal
             other.health -= DAMAGE[FROM_FRONT]
+        laser.play()
 
     def draw(self):
         img = pygame.transform.scale(bot_image(self.team), self.size)
@@ -121,11 +127,14 @@ class Robot(sprite.Sprite):
         Arguments:
         direction -- 1 := 90 degrees, -1 := -90 degrees
         """
+        electro = pygame.mixer.Sound('Electro_Motor.wav')
+        electro.set_volume(0.2)
         self.rotation += min(max(direction, -1), 1)
         if self.rotation >= 4:
             self.rotation = 0
         elif self.rotation <= -1:
             self.rotation = 4
+        electro.play()
 
     @property
     def pos(self):

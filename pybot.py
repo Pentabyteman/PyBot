@@ -24,7 +24,7 @@ class Game(App):
         """Called every tick"""
         # delays the turns a little bit to give the players the opportunity
         # to view the turns of their robots
-        if (time.time() - self.last_time) > 1:
+        if (time.time() - self.last_time) > 2:
             self.board.on_turn()
             self.last_time = time.time()
 
@@ -37,6 +37,15 @@ class Game(App):
 if __name__ == '__main__':
 
     pygame.init()
+    pygame.mixer.pre_init(44100, -16, 2, 2048)
+    pygame.mixer.init()
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.load('bensound-pianomoment.mp3')
+    pygame.mixer.music.play(-1)  # plays infinite loop
     display = pygame.display.set_mode(WINDOW_SIZE)  # setup display
     game = Game(display)
     game.exec_()
+    pygame.mixer.music.fadeout(5000)
+    pygame.time.wait(5000)
+    pygame.mixer.quit()
+    pygame.quit()
