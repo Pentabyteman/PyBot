@@ -5,6 +5,7 @@ import sprite
 import random
 
 TYPE_FIELD, TYPE_WALL = 0, 1
+MAX_TURNS = 60
 
 
 class Map:
@@ -29,6 +30,23 @@ class Map:
             raise bot_exceptions.IllegalMoveException("Field not passable")
         field.entity = bot
 
+    def get_fields(self):
+        for row in self.fields:
+            for field in row:
+                yield field
+
+    def get_most_team(self):
+        teams = {}
+        for field in self.get_fields():
+            if field.team is None:
+                continue
+            if field.team not in teams:
+                teams[field.team] = 1
+            else:
+                teams[field.team] += 1
+        print("teams", teams)
+        return max(teams, key=teams.get)  # sort by values
+
 
 class Board:
 
@@ -42,7 +60,6 @@ class Board:
         obstacles = get_obstacles()
 
         # generate map
-
         self.map = Map([[Field(self.field_size,
                                kind=(TYPE_WALL if (row, col) in obstacles
                                      else TYPE_FIELD))
@@ -60,6 +77,7 @@ class Board:
                      for team in range(robot_count)]
         random.shuffle(self.bots)
         self.__itbots = self._iter_bots()  # initialize bot generator
+        self.turns = 0
 
     def draw(self):
         surf = pygame.Surface(self.size)
@@ -82,15 +100,28 @@ class Board:
     def on_event(self, event=None):
         pass
 
-    def game_over(self):
-        print("The game is over!")
+    def game_over(self, winner=None):
+        if winner:
+            print("The game is over: Team {0} has won!".format(winner.team))
+        else:
+            print("The game is over!")
         if self.on_finish:
             self.on_finish()
 
     def on_turn(self):
         bot = self.next_bot()
-        bot.on_turn()
-        pass
+        bot.on_turn(MAX_TURNS - self.turns)
+        self.turns += 1
+        if self.turns >= MAX_TURNS:
+            # get winner: team with most fields
+            team = self.map.get_most_team()
+            print("team with most fields", team)
+            try:
+                bot = [b for b in self.bots if b.team == team][0]
+            except KeyError:
+                self.game_over()
+            else:
+                self.game_over(winner=bot)
 
     def next_bot(self):
         if not self.__itbots:

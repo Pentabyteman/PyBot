@@ -24,6 +24,7 @@ class Robot(sprite.Sprite):
         self.team = team
         self.map = map
         self.game_over = game_over
+        self.first_turn = True
 
         self.maxhealth = 100
         self.health = self.maxhealth
@@ -106,8 +107,16 @@ class Robot(sprite.Sprite):
     def team_color(self, alpha=255):
         return COLORS[self.team] + (alpha,)
 
-    def on_turn(self):
-        move = self.ai.get_move()
+    def on_turn(self, turns_to_go):
+        if self.first_turn:
+            pos, rot = self.pos, self.rotation
+            self.first_turn = False
+        else:
+            pos, rot = None, None
+        move = self.ai.get_move(self.ask_for_field,
+                                turns_to_go,
+                                position=pos,
+                                rotation=rot)
         try:
             cmd, arg = move.split(" ")
             if cmd == "move":
@@ -119,6 +128,12 @@ class Robot(sprite.Sprite):
         except Exception as e:
             print("The AI failed to answer!", e)
             self.game_over()
+
+    def ask_for_field(self, row, col):
+        """Returns a limited amount of information about a specific field"""
+        field = self.map.fields[row][col]
+        # return the field kind, team, and if there is an entity or not
+        return field.passable, field.team, field.entity is not None
 
     def rotate(self, direction):
         """
