@@ -1,2 +1,2 @@
 def get_move():
-    return "move 0"
+    return "move 1"

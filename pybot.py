@@ -21,6 +21,9 @@ class Game(App):
         self.board.on_event(event)
 
     def on_tick(self):
+        """Called every tick"""
+        # delays the turns a little bit to give the players the opportunity
+        # to view the turns of their robots
         if (time.time() - self.last_time) > 1:
             self.board.on_turn()
             self.last_time = time.time()

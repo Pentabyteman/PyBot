@@ -4,18 +4,18 @@ import sprite
 import importlib.util as imputil
 
 AI_PATH = "ai/test.py"
-DIRECTIONS = [(1, 0), (0, 1), (-1, 0), (0, -1)]  # 0 = N, 1 = S, etc.
+DIRECTIONS = [(-1, 0), (0, 1), (1, 0), (-1, 0)]  # north, east, south, west
 COLORS = [(255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255)]
 IMAGE_PATHS = ["robot_red.png", "robot_blue.png"]
 BOT_IMAGES = [pygame.image.load(f) for f in IMAGE_PATHS]
 ROTATE_RIGHT, ROTATE_LEFT = 1, -1
-MOVE_FORWARD, MOVE_BACK, MOVE_LEFT, MOVE_RIGHT = 0, 2, 3, 1
+MOVE_FORWARD, MOVE_BACK = 0, -1
 
 
 class Robot(sprite.Sprite):
 
     def __init__(self, size, team, map, game_over, pos=(0, 0),
-                 ai_path=AI_PATH):
+                 rotation=0, ai_path=AI_PATH):
         super(Robot, self).__init__(size)
         self.team = team
         self.map = map
@@ -23,7 +23,7 @@ class Robot(sprite.Sprite):
 
         self.maxhealth = 100
         self.health = self.maxhealth
-        self.rotation = 0
+        self.rotation = rotation
         try:
             self.pos = pos
         except IllegalMoveException:
@@ -35,10 +35,6 @@ class Robot(sprite.Sprite):
         self.ai = imputil.module_from_spec(spec)
         spec.loader.exec_module(self.ai)
 
-        # test
-        self.move(MOVE_FORWARD)
-        self.rotate(ROTATE_LEFT)
-
     def __repr__(self):
         try:
             pos = self.pos
@@ -47,11 +43,13 @@ class Robot(sprite.Sprite):
         return "Robot[{pos}] {team}".format(pos=pos, team=self.team)
 
     def move(self, direction):
-        self.pos = [p + d for p, d in zip(self.pos, DIRECTIONS[direction])]
+        self.pos = [p + (d * direction)
+                    for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
 
     def draw(self):
+        print("redrawn")
         img = pygame.transform.scale(bot_image(self.team), self.size)
-        img = pygame.transform.rotate(img, self.rotation)
+        img = pygame.transform.rotate(img, self.rotation * -90)
         self.surface.blit(img, (0, 0))
 
     def team_color(self, alpha=255):
@@ -64,7 +62,7 @@ class Robot(sprite.Sprite):
             if cmd == "move":
                 self.move(int(arg))
             elif cmd == "rotate":
-                self.move(int(arg))
+                self.rotate(int(arg))
         except Exception:
             print("The AI failed to answer!")
             self.game_over()
@@ -76,7 +74,7 @@ class Robot(sprite.Sprite):
         Arguments:
         direction -- 1 := 90 degrees, -1 := -90 degrees
         """
-        self.rotation += min(max(direction, -1), 1) * -90
+        self.rotation += min(max(direction, -1), 1)
 
     @property
     def pos(self):
