@@ -42,6 +42,7 @@ class Board:
         obstacles = get_obstacles()
 
         # generate map
+
         self.map = Map([[Field(self.field_size,
                                kind=(TYPE_WALL if (row, col) in obstacles
                                      else TYPE_FIELD))
@@ -57,7 +58,7 @@ class Board:
                                  start_positions[team][-1],
                                  ais[team],)
                      for team in range(robot_count)]
-
+        # random.shuffle(self.bots)
         self.__itbots = self._iter_bots()  # initialize bot generator
 
     def draw(self):
@@ -108,14 +109,24 @@ class Board:
 
 class Field(sprite.Sprite):
 
+    wall_image = None
+
     def __init__(self, size, kind=TYPE_FIELD, team=None):
         super(Field, self).__init__(size)
         self.kind = kind
         self.entity = None
         self.team = None
+        if not Field.wall_image:
+            Field.wall_image = \
+                pygame.transform.scale(pygame.image.load("wall.png"),
+                                       self.size)
+
+    def __repr__(self):
+        return "Field [{kind}]".format(kind="Field" if self.kind == TYPE_FIELD
+                                       else "Wall")
 
     def draw(self):
-        self.surface.fill(self._bgcolor())
+        self.draw_background()
         if self.entity:
             self.surface.blit(self.entity.image, (0, 0))
 
@@ -143,12 +154,12 @@ class Field(sprite.Sprite):
             self.state = Field.STATE_VALID
         return self.surface
 
-    def _bgcolor(self):
+    def draw_background(self):
         if self.kind == TYPE_FIELD:
-            return (0, 0, 0, 0) if self.team is None else\
-                robot.team_color(self.team, alpha=100)
+            self.surface.fill((0, 0, 0, 0)) if self.team is None else\
+                self.surface.fill(robot.team_color(self.team, alpha=100))
         elif self.kind == TYPE_WALL:
-            return (150, 50, 50, 250)
+            self.surface.blit(self.wall_image, (0, 0))
 
 
 def get_obstacles():
