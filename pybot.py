@@ -1,12 +1,15 @@
 #MAIN FILE
 
 WINDOW_SIZE = (1017, 1017)  # quadratisch praktisch gut
+Modules = ["pygame v1.9", "sysconfig", "time"]
 importstring = """Python was unable to import some important modules. 
 Be sure to have all necessary packages installed. Type help('modules') in your shell if you are not sure which packages you have installed. 
-Required modules: %s""" % Modules
-Modules = ["pygame v1.9", "sysconfig", "time"]
-workingVersion = 3.5
-namestring = "This app is only launchable with Python %s, please download this version of Python", % workingVersion
+Required modules: {}""".format(Modules)
+workingVersion = '3.5' #change to current version
+namestring = "This app is only launchable with Python {}, please download this version of Python".format(workingVersion)
+
+import board
+from app import App
 
 class Game(App):
 
@@ -41,13 +44,11 @@ if __name__ == '__main__':
     try:
         import pygame
         import time
-        import board
-        from app import App
         import sysconfig
     except ImportError:
         raise ImportError(importstring)
     except:
-        print("Unknown Error: %s", % sys.exec_info()[0])
+        print("Unknown Error: {}".format(sys.exec_info()[0]))
     
     #correct version of python?
     if sysconfig.get_python_version() != workingVersion:
