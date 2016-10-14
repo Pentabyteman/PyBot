@@ -1,11 +1,10 @@
-import pygame
-import time
-import board
-from app import App
+#MAIN FILE
 
 WINDOW_SIZE = (1017, 1017)  # quadratisch praktisch gut
 importstring = """Python was unable to import some important modules. 
-Be sure to have all necessary packages installed. Type help('modules') in your shell if you are not sure which packages you have installed."""
+Be sure to have all necessary packages installed. Type help('modules') in your shell if you are not sure which packages you have installed. 
+Required modules: %s""" % Modules
+Modules = ["pygame v1.9", "sysconfig", "time"]
 workingVersion = 3.5
 namestring = "This app is only launchable with Python %s, please download this version of Python", % workingVersion
 
