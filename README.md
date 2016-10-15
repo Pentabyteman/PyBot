@@ -6,7 +6,6 @@ Legal Notice: The background music is under a Creative Commons License music tak
 
 The sound effects are also under a Creative Commons License and taken from soundbible.com. Special thanks to SoundBible too!
 
-Credits: Most of the programming done by ErichHasl
-         Inspiration and unhelpful comments by Pentabyteman
+Credits: Most of the programming done by ErichHasl, Inspiration and unhelpful comments by Pentabyteman
 
 copyright @ Pentabyteman, ErichHasl 14.10.16
