@@ -1,15 +1,36 @@
-#MAIN FILE
+# MAIN FILE
+modules = ["pygame v1.9", "sysconfig", "time"]
+
+importstring = """Python was unable to import some important modules.
+Be sure to have all necessary packages installed. Type help('modules')
+in your shell if you are not sure which packages you have installed.
+Required modules: {}""".format(modules)
+
+working_version = '3.5'  # change to current version
+namestring = """This app is only launchable with Python {},
+please download this version of Python""".format(working_version)
+
+# Loads of Error Handling if some idiots mess up with everything,,,
+try:
+    # import sys
+    import pygame
+    import time
+    import sysconfig
+    import board
+    from app import App
+except ImportError:
+    raise ImportError(importstring)
+except Exception as e:
+    # sys.exec_info does not exist ..
+    # print("Unknown Error: {}".format(sys.exec_info()[0]))
+    print("Unkonw Error: {}".format(e))
+
+# correct version of python?
+if sysconfig.get_python_version() != working_version:
+    raise NameError(namestring)
 
 WINDOW_SIZE = (1017, 1017)  # quadratisch praktisch gut
-Modules = ["pygame v1.9", "sysconfig", "time"]
-importstring = """Python was unable to import some important modules. 
-Be sure to have all necessary packages installed. Type help('modules') in your shell if you are not sure which packages you have installed. 
-Required modules: {}""".format(Modules)
-workingVersion = '3.5' #change to current version
-namestring = "This app is only launchable with Python {}, please download this version of Python".format(workingVersion)
 
-import board
-from app import App
 
 class Game(App):
 
@@ -39,33 +60,17 @@ class Game(App):
 
 
 if __name__ == '__main__':
-    
-    #Loads of Error Handling if some idiots mess up with everything,,,
-    try:
-        import pygame
-        import time
-        import sysconfig
-    except ImportError:
-        raise ImportError(importstring)
-    except:
-        print("Unknown Error: {}".format(sys.exec_info()[0]))
-    
-    #correct version of python?
-    if sysconfig.get_python_version() != workingVersion:
-        raise NameError(namestring)
-    
-    #if everything is fine
-    else:
-        pygame.init()
-        pygame.mixer.pre_init(44100, -16, 2, 2048)
-        pygame.mixer.init()
-        pygame.mixer.music.set_volume(0.5)
-        pygame.mixer.music.load('bensound-pianomoment.mp3')
-        pygame.mixer.music.play(-1)  # plays infinite loop
-        display = pygame.display.set_mode(WINDOW_SIZE)  # setup display
-        game = Game(display)
-        game.exec_()
-        pygame.mixer.music.fadeout(5000)
-        pygame.time.wait(5000)
-        pygame.mixer.quit()
-        pygame.quit()
+
+    pygame.init()
+    pygame.mixer.pre_init(44100, -16, 2, 2048)
+    pygame.mixer.init()
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.load('bensound-pianomoment.mp3')
+    pygame.mixer.music.play(-1)  # plays infinite loop
+    display = pygame.display.set_mode(WINDOW_SIZE)  # setup display
+    game = Game(display)
+    game.exec_()
+    pygame.mixer.music.fadeout(5000)
+    pygame.time.wait(5000)
+    pygame.mixer.quit()
+    pygame.quit()
