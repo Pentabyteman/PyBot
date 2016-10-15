@@ -109,6 +109,14 @@ class Board:
         if self.on_finish:
             self.on_finish()
 
+    def start_game(self, ais):
+        if self.is_playing:
+            return
+        for bot, ai in zip(sorted(self.bots, key=lambda x: x.team),
+                           ais):
+            bot.ai = ai
+        self.is_playing = True
+
     def on_turn(self):
         if not self.is_playing:
             return

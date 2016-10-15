@@ -36,10 +36,7 @@ class Robot(sprite.Sprite):
             print("Not a valid position")
 
         # load ai module
-        ai_name = ai_path.split("/")[-1].split(".")[0]
-        spec = imputil.spec_from_file_location(ai_name, ai_path)
-        self.ai = imputil.module_from_spec(spec)
-        spec.loader.exec_module(self.ai)
+        self.ai = ai_path
 
     def __repr__(self):
         try:
@@ -207,6 +204,17 @@ class Robot(sprite.Sprite):
     def _call_health_callbacks(self, health):
         for func in self.health_callbacks:
             func(health)
+
+    @property
+    def ai(self):
+        return self.__ai
+
+    @ai.setter
+    def ai(self, ai_path):
+        ai_name = ai_path.split("/")[-1].split(".")[0]
+        spec = imputil.spec_from_file_location(ai_name, ai_path)
+        self.__ai = imputil.module_from_spec(spec)
+        spec.loader.exec_module(self.__ai)
 
 
 def team_color(team, alpha=255):
