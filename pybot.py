@@ -17,6 +17,7 @@ try:
     import time
     import sysconfig
     import board
+    import gui
     from app import App
 except ImportError:
     raise ImportError(importstring)
@@ -29,7 +30,8 @@ except Exception as e:
 if sysconfig.get_python_version() != working_version:
     raise NameError(namestring)
 
-WINDOW_SIZE = (1017, 1017)  # quadratisch praktisch gut
+BOARD_SIZE = (1017, 1017)  # quadratisch praktisch gut
+WINDOW_SIZE = (1100, 1017)
 
 
 class Game(App):
@@ -38,12 +40,14 @@ class Game(App):
         super(Game, self).__init__()
         self.display = display
 
-        self.board = board.Board(self.display.get_size(),
+        self.board = board.Board(BOARD_SIZE,
                                  on_finish=self.stop)
+        self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE, self.board)
         self.last_time = time.time()
 
     def on_event(self, event):
         self.board.on_event(event)
+        self.window.update(event)
 
     def on_tick(self):
         """Called every tick"""
@@ -55,7 +59,7 @@ class Game(App):
 
     def on_render(self):
         self.display.fill((255, 255, 255))
-        self.display.blit(self.board.draw(), (0, 0))  # blit board
+        self.display.blit(self.window.draw(), (0, 0))  # blit board
         pygame.display.flip()  # update screen
 
 

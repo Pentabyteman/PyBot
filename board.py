@@ -78,6 +78,7 @@ class Board:
         random.shuffle(self.bots)
         self.__itbots = self._iter_bots()  # initialize bot generator
         self.turns = 0
+        self.is_playing = False
 
     def draw(self):
         surf = pygame.Surface(self.size)
@@ -109,6 +110,8 @@ class Board:
             self.on_finish()
 
     def on_turn(self):
+        if not self.is_playing:
+            return
         bot = self.next_bot()
         bot.on_turn(MAX_TURNS - self.turns)
         self.turns += 1
