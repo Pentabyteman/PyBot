@@ -1,4 +1,5 @@
 import pygame
+import os
 import tkinter
 from tkinter import filedialog
 
@@ -72,6 +73,15 @@ class GameWindow:
             self.file_selectors.append(widget_open)  # add to list for access
             self.ui_components.add(widget_open)
 
+        # add an error field after the open file widgets
+        y_start = self.file_selectors[-1].rect.bottom
+        label_rect = pygame.Rect(left_space[2] * 0.1,
+                                 y_start,
+                                 left_space[2] * 0.9,
+                                 left_space[3] * 0.05)
+        self.error_label = Label("", label_rect, (255, 0, 0, 255))
+        self.ui_components.add(self.error_label)
+
         self.ui_components.add(self.btn_play)
 
     def draw(self):
@@ -86,19 +96,27 @@ class GameWindow:
     def play(self, event):
         if not self.has_started:
             # first start of game -> give ai paths
+            ais = [w.path_name for w in self.file_selectors]
+            if any(not os.path.isfile(path) for path in ais):
+                self.error_label.text = "Error: Invalid ai path!"
+                return
             self.board.start_game([w.path_name for w in self.file_selectors])
             self.has_started = True
+            for widget in self.ui_components:
+                widget.selectable = False
+            self.error_label.text = ""
         else:
             self.board.is_playing = not self.board.is_playing
         self.btn_play.icon = self.ic_pause if self.board.is_playing\
             else self.ic_play
 
 
-class UIComponent(pygame.sprite.Sprite):
+class UIComponent(pygame.sprite.DirtySprite):
 
     STATE_INVALID, STATE_VALID = 0, 1
 
     def __init__(self, size, x=0, y=0):
+        self.dirty = 2
         self.focussed = False
         self.parent = None
         self.state = UIComponent.STATE_INVALID
@@ -273,11 +291,9 @@ class Progressbar(UIComponent):
 class FileSelectionWidget(UIComponent):
 
     def __init__(self, rect):
+        super(FileSelectionWidget, self).__init__(rect.size, rect.x, rect.y)
         # label positioning and font
-        self.label_rect = pygame.Rect(0,
-                                      rect.height * 0.15,
-                                      rect.width * 0.65,
-                                      rect.height * 0.7)
+        self.selectable = True
         self._font = pygame.font.Font("fantasque.ttf", 20)
 
         self.btn_pos = (rect.width * 0.75, rect.height * 0.05)
@@ -291,11 +307,20 @@ class FileSelectionWidget(UIComponent):
         self.btn_open.parent = self
         self.btn_open.clicked = self.on_select
         self.path_name = ""
-        super(FileSelectionWidget, self).__init__(rect.size, rect.x, rect.y)
 
     def draw(self):
         self._image.fill((0, 0, 0, 0))
-        self._image.blit(self.btn_open.image, self.btn_pos)
+        if self.selectable:
+            self.label_rect = pygame.Rect(0,
+                                          self.rect.height * 0.15,
+                                          self.rect.width * 0.65,
+                                          self.rect.height * 0.7)
+            self._image.blit(self.btn_open.image, self.btn_pos)
+        else:
+            self.label_rect = pygame.Rect(0,
+                                          self.rect.height * 0.15,
+                                          self.rect.width * 0.9,
+                                          self.rect.height * 0.7)
         draw_roundrect(self._image, self.label_rect, (200, 200, 200, 255), 0.2)
         name = self.path_name.split("/")[-1]
         text = self._font.render(name, True, (0, 0, 0, 255))
@@ -308,13 +333,15 @@ class FileSelectionWidget(UIComponent):
         if hasattr(event, "pos"):
             x, y = event.pos
             event.pos = (x - self.rect.x, y - self.rect.y)
-        self.btn_open.update(event)
+        if self.selectable:
+            self.btn_open.update(event)
 
     def clicked(self, event):
         if hasattr(event, "pos"):
             x, y = event.pos
             event.pos = (x - self.rect.x, y - self.rect.y)
-        self.btn_open.update(event)
+        if self.selectable:
+            self.btn_open.update(event)
 
     def on_select(self, event):
         # open up file dialog
@@ -322,6 +349,39 @@ class FileSelectionWidget(UIComponent):
         if type(path) == str:
             self.path_name = path
             self.state = FileSelectionWidget.STATE_INVALID
+
+    @property
+    def selectable(self):
+        return self.__selectable
+
+    @selectable.setter
+    def selectable(self, new):
+        self.__selectable = new
+        self.state = FileSelectionWidget.STATE_INVALID
+
+
+class Label(UIComponent):
+
+    def __init__(self, text, rect, color=(0, 0, 0, 255)):
+        super(Label, self).__init__(rect.size, rect.x, rect.y)
+        self.text, self.color = text, color
+        self._font = pygame.font.Font("fantasque.ttf", 15)
+
+    def draw(self):
+        self._image.fill((0, 0, 0, 0))
+        text = self._font.render(self.text, True, self.color)
+        textpos = self._image.get_rect()
+        self._image.blit(text, textpos)
+
+    @property
+    def text(self):
+        return self.__text
+
+    @text.setter
+    def text(self, new):
+        self.__text = new
+        self.state = Label.STATE_INVALID
+        print("updated text", new)
 
 
 def draw_roundrect(surface, rect, color, radius=0.4):
