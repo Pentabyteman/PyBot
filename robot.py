@@ -194,10 +194,10 @@ class Robot(sprite.Sprite):
     @health.setter
     def health(self, new):
         self.__health = new
-        print(self, "has now", new, "hp")
-        if self.__health <= 0:
+        if self._health <= 0:
+            self._health == 0;
             self.game_over()
-
+        print(self, "has now", new, "hp")
 
 def team_color(team, alpha=255):
     return COLORS[team] + (alpha,)
