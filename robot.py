@@ -27,6 +27,7 @@ class Robot(sprite.Sprite):
         self.first_turn = True
 
         self.health_callbacks = []
+        self.gamelog_callbacks = []
         self.maxhealth = 100
         self.health = self.maxhealth
         self.rotation = rotation
@@ -45,6 +46,25 @@ class Robot(sprite.Sprite):
             pos = (-1, -1)
         return "Robot[{pos}] {team}".format(pos=pos, team=self.team)
 
+    def rotate(self, direction):
+        """
+        Rotates the robot in the given direction
+
+        Arguments:
+        direction -- 1 := 90 degrees, -1 := -90 degrees
+        """
+        electro = pygame.mixer.Sound('Electro_Motor.wav')
+        electro.set_volume(0.2)
+        self.rotation += min(max(direction, -1), 1)
+        if self.rotation >= 4:
+            self.rotation = 0
+        elif self.rotation <= -1:
+            self.rotation = 4
+        electro.play()
+        new_turn = "r={}".format(self.rotation)
+        self._call_gamelog_callbacks(new_turn)
+
+
     def move(self, direction, proportional=False):
         """
         Moves the robot in the specified direction
@@ -62,6 +82,8 @@ class Robot(sprite.Sprite):
         self.pos = [p + (d * direction)
                     for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
         servo.play()
+        new_turn = str(self.pos)
+        self._call_gamelog_callbacks(new_turn)
 
     def attack(self, direction):
         """Attacks in the specified direction -> move"""
@@ -73,7 +95,8 @@ class Robot(sprite.Sprite):
              for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
         other = self.map.get(*front_pos)
         assert other is not None, "No robot to attack!"
-        self.move(direction, proportional=True)
+        if direction != 0:
+            self.move(direction, proportional=True)
         self.hit(other)
 
     def hit(self, other=None):
@@ -90,12 +113,17 @@ class Robot(sprite.Sprite):
         print(self, "hits", other)
         if look_other == look_self:  # von hinten getroffen
             other.health -= DAMAGE[FROM_BEHIND]
+            damage = DAMAGE[FROM_BEHIND]
         elif all(abs(x) != abs(y)
                  for x, y in zip(look_other, look_self)):  # seitlich
             other.health -= DAMAGE[FROM_SIDE]
+            damage = DAMAGE[FROM_SIDE]
         else:  # frontal
             other.health -= DAMAGE[FROM_FRONT]
+            damage = DAMAGE[FROM_FRONT]
         laser.play()
+        new_turn = "{0}!{1};{2}".format(self.pos, other.pos, damage)
+        self._call_gamelog_callbacks(new_turn)
 
     def draw(self):
         img = pygame.transform.scale(bot_image(self.team), self.size)
@@ -132,22 +160,6 @@ class Robot(sprite.Sprite):
         field = self.map.fields[row][col]
         # return the field kind, team, and if there is an entity or not
         return field.passable, field.team, field.entity is not None
-
-    def rotate(self, direction):
-        """
-        Rotates the robot in the given direction
-
-        Arguments:
-        direction -- 1 := 90 degrees, -1 := -90 degrees
-        """
-        electro = pygame.mixer.Sound('Electro_Motor.wav')
-        electro.set_volume(0.2)
-        self.rotation += min(max(direction, -1), 1)
-        if self.rotation >= 4:
-            self.rotation = 0
-        elif self.rotation <= -1:
-            self.rotation = 4
-        electro.play()
 
     @property
     def pos(self):
@@ -204,6 +216,13 @@ class Robot(sprite.Sprite):
     def _call_health_callbacks(self, health):
         for func in self.health_callbacks:
             func(health)
+
+    def register_gamelog_callback(self, func):
+        self.gamelog_callbacks.append(func)
+
+    def _call_gamelog_callbacks(self, new_turn):
+        for func in self.gamelog_callbacks:
+            func(new_turn)
 
     @property
     def ai(self):
