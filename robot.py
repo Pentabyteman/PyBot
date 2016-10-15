@@ -81,7 +81,7 @@ class Robot(sprite.Sprite):
         self.pos = [p + (d * direction)
                     for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
         servo.play()
-        new_turn = str(self.pos)
+        new_turn = "{0}".format(self.pos)
         self._call_gamelog_callbacks(new_turn)
 
     def attack(self, direction):
