@@ -1,4 +1,8 @@
-# PyBot v1.1
+# PyBot v1.1.0-beta
+
+*******
+UPDATE: Now with a game-enhancing GUI for a better playing experience.
+*******
 
 Important Notice: It is vital to have the latest Python (3.5.4) installed, as well as pygame v1.9 and the time module.
 
