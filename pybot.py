@@ -1,5 +1,5 @@
 # MAIN FILE
-modules = ["pygame v1.9", "sysconfig", "time"]
+modules = ["pygame v1.9", "sysconfig", "time", "tkinter"]
 
 importstring = """Python was unable to import some important modules.
 Be sure to have all necessary packages installed. Type help('modules')
@@ -16,6 +16,7 @@ try:
     import pygame
     import time
     import sysconfig
+    import tkinter
     #local files
     import board
     import gui
