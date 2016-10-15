@@ -12,18 +12,17 @@ please download this version of Python""".format(working_version)
 
 # Loads of Error Handling if some idiots mess up with everything,,,
 try:
-    # import sys
+    # outside modules
     import pygame
     import time
     import sysconfig
+    #local files
     import board
     import gui
     from app import App
 except ImportError:
     raise ImportError(importstring)
 except Exception as e:
-    # sys.exec_info does not exist ..
-    # print("Unknown Error: {}".format(sys.exec_info()[0]))
     print("Unkonw Error: {}".format(e))
 
 # correct version of python?
