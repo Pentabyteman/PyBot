@@ -47,7 +47,7 @@ class GameWindow:
             bot.register_health_callback(lambda x:
                                          pb_health.set_progress(x / 100))
             self.ui_components.add(pb_health)
-            
+
         self.ui_components.add(self.btn_play)
 
     def draw(self):
@@ -276,29 +276,35 @@ def draw_progressbar(surface, rect, color, bgcolor, progress, text="",
     t_rect = text.get_rect(center=rect.center)
     surface.blit(text, t_rect)
 
+
 class Game_Log(UIComponent):
-    
-    def __init__(self):
-        TURNLIST = ["[2,4]", "[2,4]"]
-        
-    def update_turns(new_turn):
-        TURNLIST[len(TURNLIST):] = [new_turn]
-    
-    def draw(self, gamelog_size):
-        gamelog_rowsize = int(gamelog_size[0] / int(len(TURNLIST)/2)) #xpos of first row
-        gamelog_width = int(gamelogsize[1]/2) #ypos of first column
-        current_row = 0 #watch out, needs to start with 0 
-        index = 0 #watch out, needs to start with zero
-        for i in range(0, len(TURNLIST)):
-            new_text = TURNLIST[i]
+
+    def __init__(self, gamelog_size):
+        self.TURNLIST = ["[2,4]", "[2,4]"]
+        self.gamelog_size = gamelog_size
+
+    def update_turns(self, new_turn):
+        self.TURNLIST.append(new_turn)
+
+    def draw(self):
+        # xpos of first row
+        gamelog_rowsize = int(self.gamelog_size[0] /
+                              int(len(self.TURNLIST) / 2))
+        gamelog_width = int(self.gamelog_size[1] / 2)  # ypos of first column
+        current_row = 0  # watch out, needs to start with 0
+        index = 0  # watch out, needs to start with zero
+        for i in range(0, len(self.TURNLIST)):
+            new_text = self.TURNLIST[i]
             font = pygame.font.Font("texgyreadventor-regular.otf", 15)
-            if i%2==0: #muss ne neue Reihe aufmachen
+            if i % 2 == 0:  # muss ne neue Reihe aufmachen
                 current_row += 1
-            else: #rechts weiter malen
-                index+=1
+            else:  # rechts weiter malen
+                index += 1
             if index < 1:
                 index == 0
-            font.render(new_text, True ((gamelog_size[0]+current_row*gamelog_rowsize), (gamelog_size[1]+index*gamelog_width))
-            #how to write the text p
-            
-            
+            font.render(
+                new_text,
+                True(
+                    (self.gamelog_size[0] + current_row * gamelog_rowsize),
+                    (self.gamelog_size[1] + index * gamelog_width)))
+            # how to write the text p
