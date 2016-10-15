@@ -275,3 +275,19 @@ def draw_progressbar(surface, rect, color, bgcolor, progress, text="",
     text = font.render(text, True, (20, 20, 20))
     t_rect = text.get_rect(center=rect.center)
     surface.blit(text, t_rect)
+
+class Game_Log(UIComponent):
+    
+    def __init__(self):
+        TURNLIST = []
+        
+    def update_turns(new_turn):
+        TURNLIST[len(TURNLIST):] = [new_turn]
+    
+    def draw(self, gamelog_size):
+        gamelog_rows = int(gamelog_size / int(len(TURNLIST)/2))
+        for i in range(0, len(TURNLIST)):
+            new_text = TURNLIST[i]
+            #how to write the text properly?
+            
+            
