@@ -31,7 +31,7 @@ if sysconfig.get_python_version() != working_version:
     raise NameError(namestring)
 
 BOARD_SIZE = (1017, 1017)  # quadratisch praktisch gut
-WINDOW_SIZE = (1100, 1017)
+WINDOW_SIZE = (1500, 1017) #so that there is enough space for our GUI on both sides
 
 
 class Game(App):
