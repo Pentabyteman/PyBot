@@ -40,6 +40,14 @@ class GameWindow:
         self.root = tkinter.Tk()
         self.root.withdraw()
 
+        # GameLog
+        gameLog_top_x = int(right_space[0]+right_space[2]*0.125)
+        gameLog_top_y = int(right_space[3]*0.5)
+        gameLog_width = right_space[2]*0.75
+        gameLog_height = right_space[3]*0.4
+        gamelog_size = (gameLog_width, gameLog_height)
+        gameLog = GameLog(gamelog_size, gameLog_top_x, gameLog_top_y)
+
         # list of file selection widgets
         self.file_selectors = []
 
@@ -60,6 +68,7 @@ class GameWindow:
                                      for i, x in enumerate(bot.team_color())])
             bot.register_health_callback(lambda x:
                                          pb_health.set_progress(x / 100))
+            bot.register_gamelog_callback(gameLog.update_turns)
             self.ui_components.add(pb_health)
 
             # add button to select an ai file for the given robot
@@ -72,6 +81,7 @@ class GameWindow:
             widget_open = FileSelectionWidget(widget_rect)
             self.file_selectors.append(widget_open)  # add to list for access
             self.ui_components.add(widget_open)
+        self.ui_components.add(gameLog)
 
         # add an error field after the open file widgets
         y_start = self.file_selectors[-1].rect.bottom
@@ -83,7 +93,7 @@ class GameWindow:
         self.ui_components.add(self.error_label)
 
         self.ui_components.add(self.btn_play)
-
+        
     def draw(self):
         self.surface.fill((0, 0, 0, 0))  # clean up
         self.surface.blit(self.board.draw(), self.board_pos)
@@ -435,34 +445,38 @@ def draw_progressbar(surface, rect, color, bgcolor, progress, text="",
     surface.blit(text, t_rect)
 
 
-class Game_Log(UIComponent):
+class GameLog(UIComponent):
 
-    def __init__(self, gamelog_size):
-        self.TURNLIST = ["[2,4]", "[2,4]"]
+    def __init__(self, gamelog_size, x, y):
+        super(GameLog, self).__init__(gamelog_size, x, y)
+        self.turnlist = ["[2,4]", "[2,4]"]
         self.gamelog_size = gamelog_size
 
     def update_turns(self, new_turn):
-        self.TURNLIST.append(new_turn)
+        self.turnlist.append(new_turn)
+        self.state = UIComponent.STATE_INVALID
 
     def draw(self):
         # xpos of first row
-        gamelog_rowsize = int(self.gamelog_size[0] /
-                              int(len(self.TURNLIST) / 2))
-        gamelog_width = int(self.gamelog_size[1] / 2)  # ypos of first column
+        gamelog_rowsize = int(self.gamelog_size[0] / 2)
+        gamelog_rownumber = int(self.gamelog_size[1]/(int(len(self.turnlist)/2)))  # ypos of first column
         current_row = 0  # watch out, needs to start with 0
-        index = 0  # watch out, needs to start with zero
-        for i in range(0, len(self.TURNLIST)):
-            new_text = self.TURNLIST[i]
-            font = pygame.font.Font("texgyreadventor-regular.otf", 15)
+        self._image.fill((255, 0, 0, 255))
+        index = 0  # watch out, needs to start with 0
+        for i in range(0, len(self.turnlist)):
+            new_text = self.turnlist[i]
+            font = pygame.font.Font("fantasque.ttf", 20)
             if i % 2 == 0:  # muss ne neue Reihe aufmachen
                 current_row += 1
             else:  # rechts weiter malen
                 index += 1
             if index < 1:
                 index == 0
-            font.render(
+            surf = font.render(
                 new_text,
-                True(
-                    (self.gamelog_size[0] + current_row * gamelog_rowsize),
-                    (self.gamelog_size[1] + index * gamelog_width)))
-            # how to write the text p
+                True,
+                (255, 255, 255, 255))
+            position = [index * gamelog_rowsize, current_row*gamelog_rownumber]
+            self._image.blit(surf, position)
+            print(position)
+            
