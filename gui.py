@@ -4,23 +4,49 @@ import pygame
 class GameWindow:
 
     def __init__(self, size, board_size, board):
+        # expects size only to be wider than board_size
         self.size = size
         self.board_size = min(board_size, size)  # may not be larger than size
-        self.board_pos = [s - b for s, b in zip(self.size, self.board_size)]
+        self.board_pos = [round(0.5 * (s - b))
+                          for s, b in zip(self.size, self.board_size)]
 
         self.board = board
         self.surface = pygame.Surface(self.size)
 
         self.ui_components = pygame.sprite.Group()
-        space = (0, 0, self.board_pos[0], self.size[1])
-        btn_rect = pygame.Rect(space[2] * 0.1,
-                               space[3] * 0.2,
-                               space[2] * 0.8,
-                               space[2] * 0.8)
+
+        left_space = (0, 0, self.board_pos[0], self.size[1])
+        right_space = (self.board_pos[0] + self.board_size[0],
+                       self.board_pos[1],
+                       self.board_pos[0],
+                       self.size[1])
+
+        btn_rect = pygame.Rect(left_space[2] * 0.1,
+                               left_space[3] * 0.2,
+                               left_space[2] * 0.8,
+                               left_space[2] * 0.8)
         self.ic_play = pygame.image.load("play.png")
         self.ic_pause = pygame.image.load("pause.png")
         self.btn_play = ImageButton(self.ic_play, btn_rect)
         self.btn_play.clicked = self.play
+
+        # draw one progressbar per robot
+        for idx, bot in enumerate(sorted(board.bots, key=lambda x: x.team)):
+            offset = idx * right_space[3] * 0.1
+            width, height = right_space[2], right_space[3]
+            pb_rect = pygame.Rect(right_space[0] + width * 0.1,
+                                  right_space[1] + height * 0.2 + offset,
+                                  width * 0.8,
+                                  height * 0.05)
+            print("bot team", bot.team, "color", bot.team_color())
+            pb_health = Progressbar(pb_rect, bot.team_color(),
+                                    [round(x * 0.1)
+                                     if i < 3
+                                     else x
+                                     for i, x in enumerate(bot.team_color())])
+            bot.register_health_callback(lambda x:
+                                         pb_health.set_progress(x / 100))
+            self.ui_components.add(pb_health)
 
         self.ui_components.add(self.btn_play)
 
@@ -174,6 +200,32 @@ class ImageButton(UIComponent):
         self.state = Button.STATE_INVALID
 
 
+class Progressbar(UIComponent):
+
+    def __init__(self, rect, color, bgcolor):
+        print("colors:", color, bgcolor)
+        self.color, self.bgcolor = color, bgcolor
+        self.__progress = 0.5
+        super(Progressbar, self).__init__(rect.size, rect.x, rect.y)
+
+    def draw(self):
+        draw_progressbar(self._image, self._image.get_rect(),
+                         self.color, self.bgcolor,
+                         self.progress)
+
+    @property
+    def progress(self):
+        return self.__progress
+
+    @progress.setter
+    def progress(self, new):
+        self.__progress = min(max(new, 0), 1)  # between 0 and 1
+        self.state = Progressbar.STATE_INVALID
+
+    def set_progress(self, new):
+        self.progress = new
+
+
 def draw_roundrect(surface, rect, color, radius=0.4):
 
     rect = pygame.Rect(rect)
@@ -204,3 +256,22 @@ def draw_roundrect(surface, rect, color, radius=0.4):
     rectangle.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MIN)
 
     return surface.blit(rectangle, pos)
+
+
+def draw_progressbar(surface, rect, color, bgcolor, progress, text="",
+                     radius=0.7):
+    draw_roundrect(surface, rect, bgcolor, radius)
+
+    foreground = pygame.surface.Surface(rect.size, pygame.SRCALPHA)
+    draw_roundrect(foreground, foreground.get_rect(), color, radius)
+
+    revealed = (0, 0, rect.width * progress, rect.height)
+    foreground.set_colorkey((0, 0, 0))
+    surface.blit(foreground, rect.topleft, area=revealed)
+
+    if text == "":
+        return
+    font = pygame.font.Font("texgyreadventor-regular.otf", 15)
+    text = font.render(text, True, (20, 20, 20))
+    t_rect = text.get_rect(center=rect.center)
+    surface.blit(text, t_rect)

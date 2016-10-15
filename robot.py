@@ -26,6 +26,7 @@ class Robot(sprite.Sprite):
         self.game_over = game_over
         self.first_turn = True
 
+        self.health_callbacks = []
         self.maxhealth = 100
         self.health = self.maxhealth
         self.rotation = rotation
@@ -193,10 +194,19 @@ class Robot(sprite.Sprite):
 
     @health.setter
     def health(self, new):
-        self.__health = new
-        print(self, "has now", new, "hp")
+        self.__health = max(new, 0)
+        self._call_health_callbacks(self.__health)
+        print(self, "has now", self.__health, "hp")
         if self.__health <= 0:
             self.game_over()
+
+    def register_health_callback(self, func):
+        self.health_callbacks.append(func)
+        func(self.health)
+
+    def _call_health_callbacks(self, health):
+        for func in self.health_callbacks:
+            func(health)
 
 
 def team_color(team, alpha=255):
