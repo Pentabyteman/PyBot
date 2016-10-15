@@ -64,7 +64,6 @@ class Robot(sprite.Sprite):
         new_turn = "r={}".format(self.rotation)
         self._call_gamelog_callbacks(new_turn)
 
-
     def move(self, direction, proportional=False):
         """
         Moves the robot in the specified direction

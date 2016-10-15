@@ -41,10 +41,10 @@ class GameWindow:
         self.root.withdraw()
 
         # GameLog
-        gameLog_top_x = int(right_space[0]+right_space[2]*0.125)
-        gameLog_top_y = int(right_space[3]*0.5)
-        gameLog_width = right_space[2]*0.75
-        gameLog_height = right_space[3]*0.4
+        gameLog_top_x = int(right_space[0] + right_space[2] * 0.125)
+        gameLog_top_y = int(right_space[3] * 0.5)
+        gameLog_width = right_space[2] * 0.75
+        gameLog_height = right_space[3] * 0.4
         gamelog_size = (gameLog_width, gameLog_height)
         gameLog = GameLog(gamelog_size, gameLog_top_x, gameLog_top_y)
 
@@ -93,7 +93,7 @@ class GameWindow:
         self.ui_components.add(self.error_label)
 
         self.ui_components.add(self.btn_play)
-        
+
     def draw(self):
         self.surface.fill((0, 0, 0, 0))  # clean up
         self.surface.blit(self.board.draw(), self.board_pos)
@@ -356,7 +356,7 @@ class FileSelectionWidget(UIComponent):
     def on_select(self, event):
         # open up file dialog
         path = filedialog.askopenfilename()
-        if type(path) == str:
+        if isinstance(path, str):
             self.path_name = path
             self.state = FileSelectionWidget.STATE_INVALID
 
@@ -459,7 +459,9 @@ class GameLog(UIComponent):
     def draw(self):
         # xpos of first row
         gamelog_rowsize = int(self.gamelog_size[0] / 2)
-        gamelog_rownumber = int(self.gamelog_size[1]/(int(len(self.turnlist)/2)))  # ypos of first column
+        # ypos of first column
+        gamelog_rownumber = int(
+            self.gamelog_size[1] / (int(len(self.turnlist) / 2)))
         current_row = 0  # watch out, needs to start with 0
         self._image.fill((255, 0, 0, 255))
         index = 0  # watch out, needs to start with 0
@@ -476,7 +478,8 @@ class GameLog(UIComponent):
                 new_text,
                 True,
                 (255, 255, 255, 255))
-            position = [index * gamelog_rowsize, current_row*gamelog_rownumber]
+            position = [
+                index * gamelog_rowsize,
+                current_row * gamelog_rownumber]
             self._image.blit(surf, position)
             print(position)
-            
