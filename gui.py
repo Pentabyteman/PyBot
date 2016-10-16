@@ -2,6 +2,7 @@ import pygame
 import os
 import tkinter
 from tkinter import filedialog
+from bot_exceptions import InvalidAiException
 
 
 class Speaker:
@@ -16,7 +17,7 @@ class Speaker:
 
 class GameWindow:
 
-    def __init__(self, size, board_size, board):
+    def __init__(self, size, board_size, board, on_finish=None):
         # expects size only to be wider than board_size
         self.size = size
         self.board_size = min(board_size, size)  # may not be larger than size
@@ -31,17 +32,39 @@ class GameWindow:
         self.ui_components = pygame.sprite.Group()
 
         # calculate some rects for the space available for the gui
-        left_space = (0, 0, self.board_pos[0], self.size[1])
-        right_space = (self.board_pos[0] + self.board_size[0],
-                       self.board_pos[1],
-                       self.board_pos[0],
-                       self.size[1])
+        left_space = pygame.Rect(0, 0, self.board_pos[0], self.size[1])
+        right_space = pygame.Rect(self.board_pos[0] + self.board_size[0],
+                                  self.board_pos[1],
+                                  self.board_pos[0],
+                                  self.size[1])
+
+        # add a quit button
+        quit_btn_rect = pygame.Rect(left_space.width * 0.125,
+                                    left_space.height * 0.05,
+                                    left_space.width * 0.25,
+                                    left_space.width * 0.25)
+        ic_quit = pygame.image.load("quit.png")
+        quit_btn = ImageButton(ic_quit, quit_btn_rect)
+        if on_finish is not None:
+            quit_btn.clicked = on_finish
+        self.ui_components.add(quit_btn)
+
+        # add a mute button (finally!!)
+        mute_btn_rect = pygame.Rect(left_space.width * 0.625,
+                                    left_space.height * 0.05,
+                                    left_space.width * 0.25,
+                                    left_space.width * 0.25)
+        self.ic_not_muted = pygame.image.load("not_muted.png")
+        self.ic_muted = pygame.image.load("muted.png")
+        self.mute_btn = ImageButton(self.ic_not_muted, mute_btn_rect)
+        self.mute_btn.clicked = self.mute_sounds
+        self.ui_components.add(self.mute_btn)
 
         # add the button to play/pause the game
-        btn_rect = pygame.Rect(left_space[2] * 0.1,
-                               left_space[3] * 0.2,
-                               left_space[2] * 0.8,
-                               left_space[2] * 0.8)
+        btn_rect = pygame.Rect(left_space.width * 0.1,
+                               left_space.height * 0.2,
+                               left_space.width * 0.8,
+                               left_space.width * 0.8)
         self.ic_play = pygame.image.load("play.png")
         self.ic_pause = pygame.image.load("pause.png")
         self.btn_play = ImageButton(self.ic_play, btn_rect)
@@ -53,10 +76,10 @@ class GameWindow:
         self.root.withdraw()
 
         # GameLog
-        gameLog_top_x = int(right_space[0] + right_space[2] * 0.0625)
-        gameLog_top_y = int(right_space[3] * 0.4)
-        gameLog_width = right_space[2] * 0.875
-        gameLog_height = right_space[3] * 0.55
+        gameLog_top_x = int(right_space.x + right_space.width * 0.0625)
+        gameLog_top_y = int(right_space.height * 0.4)
+        gameLog_width = right_space.width * 0.875
+        gameLog_height = right_space.height * 0.55
         gamelog_size = (gameLog_width, gameLog_height)
         gameLog = GameLog(gamelog_size, gameLog_top_x, gameLog_top_y)
 
@@ -66,10 +89,10 @@ class GameWindow:
         # stuff specific for each robot
         for idx, bot in enumerate(sorted(board.bots, key=lambda x: x.team)):
             # draw health bars for each robot on the right side of the board
-            pb_offset = idx * right_space[3] * 0.1
-            width, height = right_space[2], right_space[3]
-            pb_rect = pygame.Rect(right_space[0] + width * 0.1,
-                                  right_space[1] + height * 0.2 + pb_offset,
+            pb_offset = idx * right_space.height * 0.1
+            width, height = right_space.width, right_space.height
+            pb_rect = pygame.Rect(right_space.x + width * 0.1,
+                                  right_space.y + height * 0.2 + pb_offset,
                                   width * 0.8,
                                   height * 0.05)
             print("bot team", bot.team, "color", bot.team_color())
@@ -84,11 +107,11 @@ class GameWindow:
             self.ui_components.add(pb_health)
 
             # add button to select an ai file for the given robot
-            widget_offset = idx * left_space[3] * 0.06
-            widget_rect = pygame.Rect(left_space[2] * 0.1,
-                                      left_space[3] * 0.4 + widget_offset,
-                                      left_space[2] * 0.9,
-                                      left_space[3] * 0.05)
+            widget_offset = idx * left_space.height * 0.06
+            widget_rect = pygame.Rect(left_space.width * 0.1,
+                                      left_space.height * 0.4 + widget_offset,
+                                      left_space.width * 0.9,
+                                      left_space.height * 0.05)
 
             widget_open = FileSelectionWidget(widget_rect)
             self.file_selectors.append(widget_open)  # add to list for access
@@ -97,23 +120,12 @@ class GameWindow:
 
         # add an error field after the open file widgets
         y_start = self.file_selectors[-1].rect.bottom
-        label_rect = pygame.Rect(left_space[2] * 0.1,
+        label_rect = pygame.Rect(left_space.width * 0.1,
                                  y_start,
-                                 left_space[2] * 0.9,
-                                 left_space[3] * 0.05)
+                                 left_space.width * 0.9,
+                                 left_space.height * 0.05)
         self.error_label = Label("", label_rect, (255, 0, 0, 255))
         self.ui_components.add(self.error_label)
-
-        # add a mute button (finally!!)
-        mute_btn_rect = pygame.Rect(left_space[2] * 0.25,
-                                    y_start + left_space[3] * 0.1,
-                                    left_space[2] * 0.5,
-                                    left_space[2] * 0.5)
-        self.ic_not_muted = pygame.image.load("not_muted.png")
-        self.ic_muted = pygame.image.load("muted.png")
-        self.mute_btn = ImageButton(self.ic_not_muted, mute_btn_rect)
-        self.mute_btn.clicked = self.mute_sounds
-        self.ui_components.add(self.mute_btn)
 
         self.ui_components.add(self.btn_play)
 
@@ -133,7 +145,12 @@ class GameWindow:
             if any(not os.path.isfile(path) for path in ais):
                 self.error_label.text = "Error: Invalid ai path!"
                 return
-            self.board.start_game([w.path_name for w in self.file_selectors])
+            try:
+                self.board.start_game([w.path_name
+                                       for w in self.file_selectors])
+            except InvalidAiException:
+                self.error_label.text = "Error: Invalid ai file!"
+                return
             self.has_started = True
             for widget in self.ui_components:
                 widget.selectable = False

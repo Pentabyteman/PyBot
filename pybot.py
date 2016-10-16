@@ -42,7 +42,8 @@ class Game(App):
 
         self.board = board.Board(BOARD_SIZE,
                                  on_finish=self.stop)
-        self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE, self.board)
+        self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE, self.board,
+                                     on_finish=self.stop)
         self.last_time = time.time()
 
     def on_event(self, event):

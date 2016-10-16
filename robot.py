@@ -1,5 +1,5 @@
 import pygame
-from bot_exceptions import IllegalMoveException
+from bot_exceptions import IllegalMoveException, InvalidAiException
 import sprite
 import importlib.util as imputil
 
@@ -144,11 +144,11 @@ class Robot(sprite.Sprite):
             self.first_turn = False
         else:
             pos, rot = None, None
-        move = self.ai.get_move(self.ask_for_field,
-                                turns_to_go,
-                                position=pos,
-                                rotation=rot)
         try:
+            move = self.ai.get_move(self.ask_for_field,
+                                    turns_to_go,
+                                    position=pos,
+                                    rotation=rot)
             cmd, arg = move.split(" ")
             if cmd == "move":
                 self.move(int(arg))
@@ -235,10 +235,13 @@ class Robot(sprite.Sprite):
 
     @ai.setter
     def ai(self, ai_path):
-        ai_name = ai_path.split("/")[-1].split(".")[0]
-        spec = imputil.spec_from_file_location(ai_name, ai_path)
-        self.__ai = imputil.module_from_spec(spec)
-        spec.loader.exec_module(self.__ai)
+        try:
+            ai_name = ai_path.split("/")[-1].split(".")[0]
+            spec = imputil.spec_from_file_location(ai_name, ai_path)
+            self.__ai = imputil.module_from_spec(spec)
+            spec.loader.exec_module(self.__ai)
+        except AttributeError:
+            raise InvalidAiException
 
 
 def team_color(team, alpha=255):

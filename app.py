@@ -32,6 +32,6 @@ class App():
 
         return self.return_code
 
-    def stop(self):
+    def stop(self, *args):
         self.return_code = -1
         self._running = False
