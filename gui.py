@@ -1,5 +1,7 @@
 import pygame
+import time
 import os
+import board
 import tkinter
 from tkinter import filedialog
 from bot_exceptions import InvalidAiException
@@ -17,14 +19,16 @@ class Speaker:
 
 class GameWindow:
 
-    def __init__(self, size, board_size, board, on_finish=None):
+    def __init__(self, size, board_size, on_finish=None):
         # expects size only to be wider than board_size
         self.size = size
         self.board_size = min(board_size, size)  # may not be larger than size
         self.board_pos = [round(0.5 * (s - b))
                           for s, b in zip(self.size, self.board_size)]
+        self.on_finish = on_finish
 
-        self.board = board
+        self.board = board.Board(board_size, on_finish=on_finish)
+        self.last_time = time.time()
         self.speaker = Speaker()
         self.board.speakers = self.speaker
         self.surface = pygame.Surface(self.size)
@@ -63,13 +67,23 @@ class GameWindow:
         # add the button to play/pause the game
         btn_rect = pygame.Rect(left_space.width * 0.1,
                                left_space.height * 0.2,
-                               left_space.width * 0.8,
-                               left_space.width * 0.8)
+                               left_space.width * 0.4,
+                               left_space.width * 0.4)
         self.ic_play = pygame.image.load("play.png")
         self.ic_pause = pygame.image.load("pause.png")
         self.btn_play = ImageButton(self.ic_play, btn_rect)
         self.btn_play.clicked = self.play
         self.has_started = False
+
+        # button to reset the game
+        btn_reset_rect = pygame.Rect(left_space.width * 0.5,
+                                     left_space.height * 0.2,
+                                     left_space.width * 0.4,
+                                     left_space.width * 0.4)
+        ic_reset = pygame.image.load("reset.png")
+        btn_reset = ImageButton(ic_reset, btn_reset_rect)
+        btn_reset.clicked = self.reset
+        self.ui_components.add(btn_reset)
 
         # prepare file selection dialog
         self.root = tkinter.Tk()
@@ -81,13 +95,14 @@ class GameWindow:
         gameLog_width = right_space.width * 0.875
         gameLog_height = right_space.height * 0.55
         gamelog_size = (gameLog_width, gameLog_height)
-        gameLog = GameLog(gamelog_size, gameLog_top_x, gameLog_top_y)
+        self.gameLog = GameLog(gamelog_size, gameLog_top_x, gameLog_top_y)
 
         # list of file selection widgets
         self.file_selectors = []
 
         # stuff specific for each robot
-        for idx, bot in enumerate(sorted(board.bots, key=lambda x: x.team)):
+        for idx, bot in enumerate(sorted(self.board.bots,
+                                         key=lambda x: x.team)):
             # draw health bars for each robot on the right side of the board
             pb_offset = idx * right_space.height * 0.1
             width, height = right_space.width, right_space.height
@@ -103,7 +118,7 @@ class GameWindow:
                                      for i, x in enumerate(bot.team_color())])
             bot.register_health_callback(lambda x:
                                          pb_health.set_progress(x / 100))
-            bot.register_gamelog_callback(gameLog.update_turns)
+            bot.register_gamelog_callback(self.gameLog.update_turns)
             self.ui_components.add(pb_health)
 
             # add button to select an ai file for the given robot
@@ -116,7 +131,7 @@ class GameWindow:
             widget_open = FileSelectionWidget(widget_rect)
             self.file_selectors.append(widget_open)  # add to list for access
             self.ui_components.add(widget_open)
-        self.ui_components.add(gameLog)
+        self.ui_components.add(self.gameLog)
 
         # add an error field after the open file widgets
         y_start = self.file_selectors[-1].rect.bottom
@@ -134,6 +149,14 @@ class GameWindow:
         self.surface.blit(self.board.draw(), self.board_pos)
         self.ui_components.draw(self.surface)
         return self.surface
+
+    def on_tick(self):
+        """Called every tick"""
+        # delays the turns a little bit to give the players the opportunity
+        # to view the turns of their robots
+        if (time.time() - self.last_time) > 2:
+            self.board.on_turn()
+            self.last_time = time.time()
 
     def update(self, event):
         self.ui_components.update(event)
@@ -159,6 +182,17 @@ class GameWindow:
             self.board.is_playing = not self.board.is_playing
         self.btn_play.icon = self.ic_pause if self.board.is_playing\
             else self.ic_play
+
+    def init_board(self):
+        self.board = board.Board(self.board_size, on_finish=self.on_finish)
+
+    def reset(self, event):
+        self.init_board()
+        self.has_started = False
+        self.btn_play.icon = self.ic_play
+        self.gameLog.reset()
+        for sel in self.file_selectors:
+            sel.reset()
 
     def mute_sounds(self, event):
         if pygame.mixer.music.get_volume() > 0:
@@ -390,6 +424,10 @@ class FileSelectionWidget(UIComponent):
         textpos.x += self._image.get_rect().width * 0.05
         self._image.blit(text, textpos)
 
+    def reset(self):
+        self.path_name = ""
+        self.selectable = True
+
     def mouse_moved(self, event):
         if hasattr(event, "pos"):
             x, y = event.pos
@@ -498,9 +536,11 @@ def draw_progressbar(surface, rect, color, bgcolor, progress, text="",
 
 class GameLog(UIComponent):
 
+    DEFAULT_TURNLIST = ["ROBOT RED:", "ROBOT BLUE:"]
+
     def __init__(self, gamelog_size, x, y):
         super(GameLog, self).__init__(gamelog_size, x, y)
-        self.turnlist = ["ROBOT RED:", "ROBOT BLUE:"]
+        self.turnlist = GameLog.DEFAULT_TURNLIST.copy()
         self.gamelog_size = gamelog_size
 
     def update_turns(self, new_turn):
@@ -530,3 +570,7 @@ class GameLog(UIComponent):
             position = [index * gamelog_rowsize,
                         current_row * gamelog_rownumber]
             self._image.blit(surf, position)
+
+    def reset(self):
+        self.turnlist = GameLog.DEFAULT_TURNLIST.copy()
+        self.state = UIComponent.STATE_INVALID

@@ -12,15 +12,13 @@ please download this version of Python""".format(working_version)
 
 # Loads of Error Handling if some idiots mess up with everything,,,
 try:
+    import sysconfig
+    import gui
+    from app import App
     # outside modules
     import pygame
     import time
-    import sysconfig
-    import tkinter
     # local files
-    import board
-    import gui
-    from app import App
 except ImportError:
     raise ImportError(importstring)
 except Exception as e:
@@ -40,23 +38,16 @@ class Game(App):
         super(Game, self).__init__()
         self.display = display
 
-        self.board = board.Board(BOARD_SIZE,
-                                 on_finish=self.stop)
-        self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE, self.board,
+        self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE,
                                      on_finish=self.stop)
         self.last_time = time.time()
 
     def on_event(self, event):
-        self.board.on_event(event)
         self.window.update(event)
 
     def on_tick(self):
         """Called every tick"""
-        # delays the turns a little bit to give the players the opportunity
-        # to view the turns of their robots
-        if (time.time() - self.last_time) > 2:
-            self.board.on_turn()
-            self.last_time = time.time()
+        self.window.on_tick()
 
     def on_render(self):
         self.display.fill((255, 255, 255))
