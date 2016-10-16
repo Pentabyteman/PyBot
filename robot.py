@@ -26,6 +26,8 @@ class Robot(sprite.Sprite):
         self.game_over = game_over
         self.first_turn = True
 
+        self.speakers = None  # speakers to play sounds
+
         self.health_callbacks = []
         self.gamelog_callbacks = []
         self.maxhealth = 100
@@ -60,7 +62,9 @@ class Robot(sprite.Sprite):
             self.rotation = 0
         elif self.rotation <= -1:
             self.rotation = 4
-        electro.play()
+        if self.speakers:
+            print("playing electro")
+            self.speakers.play(electro)
         new_turn = "r={}".format(self.rotation)
         self._call_gamelog_callbacks(new_turn)
 
@@ -80,7 +84,8 @@ class Robot(sprite.Sprite):
         # p: eigene position, d * (vorne/hinten): positionsänderung
         self.pos = [p + (d * direction)
                     for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
-        servo.play()
+        if self.speakers:
+            self.speakers.play(servo)
         new_turn = "{0}".format(self.pos)
         self._call_gamelog_callbacks(new_turn)
 
@@ -120,7 +125,8 @@ class Robot(sprite.Sprite):
         else:  # frontal
             other.health -= DAMAGE[FROM_FRONT]
             damage = DAMAGE[FROM_FRONT]
-        laser.play()
+        if self.speakers:
+            self.speakers.play(laser)
         new_turn = "{0}!{1};{2}".format(self.pos, other.pos, damage)
         self._call_gamelog_callbacks(new_turn)
 

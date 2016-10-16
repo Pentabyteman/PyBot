@@ -4,6 +4,16 @@ import tkinter
 from tkinter import filedialog
 
 
+class Speaker:
+
+    def __init__(self):
+        self.muted = False
+
+    def play(self, sound):
+        if not self.muted:
+            sound.play()
+
+
 class GameWindow:
 
     def __init__(self, size, board_size, board):
@@ -14,6 +24,8 @@ class GameWindow:
                           for s, b in zip(self.size, self.board_size)]
 
         self.board = board
+        self.speaker = Speaker()
+        self.board.speakers = self.speaker
         self.surface = pygame.Surface(self.size)
 
         self.ui_components = pygame.sprite.Group()
@@ -92,6 +104,17 @@ class GameWindow:
         self.error_label = Label("", label_rect, (255, 0, 0, 255))
         self.ui_components.add(self.error_label)
 
+        # add a mute button (finally!!)
+        mute_btn_rect = pygame.Rect(left_space[2] * 0.25,
+                                    y_start + left_space[3] * 0.1,
+                                    left_space[2] * 0.5,
+                                    left_space[2] * 0.5)
+        self.ic_not_muted = pygame.image.load("not_muted.png")
+        self.ic_muted = pygame.image.load("muted.png")
+        self.mute_btn = ImageButton(self.ic_not_muted, mute_btn_rect)
+        self.mute_btn.clicked = self.mute_sounds
+        self.ui_components.add(self.mute_btn)
+
         self.ui_components.add(self.btn_play)
 
     def draw(self):
@@ -119,6 +142,17 @@ class GameWindow:
             self.board.is_playing = not self.board.is_playing
         self.btn_play.icon = self.ic_pause if self.board.is_playing\
             else self.ic_play
+
+    def mute_sounds(self, event):
+        if pygame.mixer.music.get_volume() > 0:
+            self.music_volume = pygame.mixer.music.get_volume()
+            pygame.mixer.music.set_volume(0)
+            self.speaker.muted = True
+            self.mute_btn.icon = self.ic_muted
+        else:
+            pygame.mixer.music.set_volume(self.music_volume)
+            self.speaker.muted = False
+            self.mute_btn.icon = self.ic_not_muted
 
 
 class UIComponent(pygame.sprite.DirtySprite):
@@ -460,7 +494,7 @@ class GameLog(UIComponent):
         self._image.fill((0, 0, 0, 255))
         # xpos of first row
         gamelog_rowsize = int(self.gamelog_size[0] / 2)
-        gamelog_rownumber = int(self.gamelog_size[1]/30)  # ypos of first column
+        gamelog_rownumber = int(self.gamelog_size[1]/30)  # ypos of first col
         current_row = -1  # watch out, needs to start with -1
         index = 0  # watch out, needs to start with 0
         for i in range(0, len(self.turnlist)):
@@ -476,5 +510,6 @@ class GameLog(UIComponent):
                 True,
                 (255, 255, 255, 255))
             # Position not working, please check the y-value
-            position = [index * gamelog_rowsize, current_row * gamelog_rownumber]
+            position = [index * gamelog_rowsize,
+                        current_row * gamelog_rownumber]
             self._image.blit(surf, position)

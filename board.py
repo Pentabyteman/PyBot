@@ -56,6 +56,8 @@ class Board:
         self.size = size  # actual size in pixels
         self.on_finish = on_finish
 
+        self.__speakers = None  # to play sounds
+
         self.field_size = self.size[0] / 9, self.size[1] / 9
         obstacles = get_obstacles()
 
@@ -75,6 +77,8 @@ class Board:
                                  start_positions[team][-1],
                                  ais[team],)
                      for team in range(robot_count)]
+        for bot in self.bots:
+            bot.speakers = self.speakers  # add speakers to the robots
         random.shuffle(self.bots)
         self.__itbots = self._iter_bots()  # initialize bot generator
         self.turns = 0
@@ -147,6 +151,16 @@ class Board:
                 idx = 0
             else:
                 idx += 1
+
+    @property
+    def speakers(self):
+        return self.__speakers
+
+    @speakers.setter
+    def speakers(self, new):
+        self.__speakers = new
+        for bot in self.bots:
+            bot.speakers = new
 
 
 class Field(sprite.Sprite):
