@@ -41,10 +41,10 @@ class GameWindow:
         self.root.withdraw()
 
         # GameLog
-        gameLog_top_x = int(right_space[0] + right_space[2] * 0.125)
-        gameLog_top_y = int(right_space[3] * 0.5)
-        gameLog_width = right_space[2] * 0.75
-        gameLog_height = right_space[3] * 0.4
+        gameLog_top_x = int(right_space[0] + right_space[2] * 0.0625)
+        gameLog_top_y = int(right_space[3] * 0.4)
+        gameLog_width = right_space[2] * 0.875
+        gameLog_height = right_space[3] * 0.55
         gamelog_size = (gameLog_width, gameLog_height)
         gameLog = GameLog(gamelog_size, gameLog_top_x, gameLog_top_y)
 
@@ -449,7 +449,7 @@ class GameLog(UIComponent):
 
     def __init__(self, gamelog_size, x, y):
         super(GameLog, self).__init__(gamelog_size, x, y)
-        self.turnlist = []
+        self.turnlist = ["ROBOT RED:", "ROBOT BLUE:"]
         self.gamelog_size = gamelog_size
 
     def update_turns(self, new_turn):
@@ -457,27 +457,24 @@ class GameLog(UIComponent):
         self.state = UIComponent.STATE_INVALID
 
     def draw(self):
+        self._image.fill((0, 0, 0, 255))
         # xpos of first row
-        if len(self.turnlist) > 1:
-            gamelog_rowsize = int(self.gamelog_size[0] / 2)
-            gamelog_rownumber = int(self.gamelog_size[1]/(int(len(self.turnlist)/2)))  # ypos of first column
-            current_row = 0  # watch out, needs to start with 0
-            self._image.fill((255, 0, 0, 255))
-            index = 0  # watch out, needs to start with 0
-            for i in range(0, len(self.turnlist)):
-                new_text = self.turnlist[i]
-                font = pygame.font.Font("fantasque.ttf", 20)
-                if i % 2 == 0:  # muss ne neue Reihe aufmachen
-                    current_row += 1
-                else:  # rechts weiter malen
-                    index += 1
-                if index < 1:
-                    index == 0
-                surf = font.render(
-                    new_text,
-                    True,
-                    (255, 255, 255, 255))
-                # Position not working, please check the y-value
-                position = [index * gamelog_rowsize, current_row*gamelog_rownumber]
-                self._image.blit(surf, position)
-            print(self.turnlist)
+        gamelog_rowsize = int(self.gamelog_size[0] / 2)
+        gamelog_rownumber = int(self.gamelog_size[1]/30)  # ypos of first column
+        current_row = -1  # watch out, needs to start with -1
+        index = 0  # watch out, needs to start with 0
+        for i in range(0, len(self.turnlist)):
+            new_text = self.turnlist[i]
+            font = pygame.font.Font("fantasque.ttf", 12)
+            if i % 2 == 0:  # muss ne neue Reihe aufmachen
+                current_row += 1
+                index = 0
+            else:  # rechts weiter malen
+                index += 1
+            surf = font.render(
+                new_text,
+                True,
+                (255, 255, 255, 255))
+            # Position not working, please check the y-value
+            position = [index * gamelog_rowsize, current_row * gamelog_rownumber]
+            self._image.blit(surf, position)
