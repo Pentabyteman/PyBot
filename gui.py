@@ -27,10 +27,9 @@ class GameWindow:
                           for s, b in zip(self.size, self.board_size)]
         self.on_finish = on_finish
 
-        self.board = board.Board(board_size, on_finish=on_finish)
         self.last_time = time.time()
         self.speaker = Speaker()
-        self.board.speakers = self.speaker
+        self.init_board()
         self.surface = pygame.Surface(self.size)
 
         self.ui_components = pygame.sprite.Group()
@@ -99,6 +98,8 @@ class GameWindow:
 
         # list of file selection widgets
         self.file_selectors = []
+        # list of health bars
+        self.health_bars = []
 
         # stuff specific for each robot
         for idx, bot in enumerate(sorted(self.board.bots,
@@ -110,15 +111,12 @@ class GameWindow:
                                   right_space.y + height * 0.2 + pb_offset,
                                   width * 0.8,
                                   height * 0.05)
-            print("bot team", bot.team, "color", bot.team_color())
             pb_health = Progressbar(pb_rect, bot.team_color(),
                                     [round(x * 0.1)
                                      if i < 3
                                      else x
                                      for i, x in enumerate(bot.team_color())])
-            bot.register_health_callback(lambda x:
-                                         pb_health.set_progress(x / 100))
-            bot.register_gamelog_callback(self.gameLog.update_turns)
+            self.health_bars.append(pb_health)
             self.ui_components.add(pb_health)
 
             # add button to select an ai file for the given robot
@@ -143,6 +141,9 @@ class GameWindow:
         self.ui_components.add(self.error_label)
 
         self.ui_components.add(self.btn_play)
+
+        # add callbacks to bots
+        self.register_callbacks()
 
     def draw(self):
         self.surface.fill((0, 0, 0, 0))  # clean up
@@ -185,9 +186,19 @@ class GameWindow:
 
     def init_board(self):
         self.board = board.Board(self.board_size, on_finish=self.on_finish)
+        self.board.speakers = self.speaker
+
+    def register_callbacks(self):
+        for bot, pb_health in zip(sorted(self.board.bots,
+                                         key=lambda b: b.team),
+                                  self.health_bars):
+            bot.register_health_callback(lambda x:
+                                         pb_health.set_progress(x / 100))
+            bot.register_gamelog_callback(self.gameLog.update_turns)
 
     def reset(self, event):
         self.init_board()
+        self.register_callbacks()
         self.has_started = False
         self.btn_play.icon = self.ic_play
         self.gameLog.reset()
