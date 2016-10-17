@@ -1,11 +1,17 @@
 import pygame
+from os.path import join
+import time
+import glob
 from bot_exceptions import IllegalMoveException, InvalidAiException
 import sprite
 import importlib.util as imputil
 
 DIRECTIONS = [(-1, 0), (0, 1), (1, 0), (0, -1)]  # north, east, south, west
 COLORS = [(255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255)]
-IMAGE_PATHS = ["resources/robot_red.png", "resources/robot_blue.png"]
+IMAGE_PATHS = ["resources/animation_red/robot_red_normal.png",
+               "resources/robot_blue.png"]
+ANIMATION_DIR = ["resources/animation_red",
+                 None]
 BOT_IMAGES = [pygame.image.load(f) for f in IMAGE_PATHS]
 ROTATE_RIGHT, ROTATE_LEFT = 1, -1
 MOVE_FORWARD, MOVE_BACK = 0, -1
@@ -14,6 +20,65 @@ MOVE_FORWARD, MOVE_BACK = 0, -1
 FROM_BEHIND, FROM_SIDE, FROM_FRONT = 0, 1, 2
 DAMAGE = {FROM_BEHIND: 50, FROM_SIDE: 30, FROM_FRONT: 10}
 AI_PATH = "ai/test.py"  # default ai
+
+
+class Animation:
+
+    def __init__(self, images, length):
+        self.images = images
+        self.length = length
+        self.image_duration = round(self.length / len(self.images))
+        self.frame = 0
+        self.last_time = 0
+
+    @property
+    def image(self):
+        self.images[self.frame]
+
+    def on_tick(self):
+        # increases frame until last frame reached
+        if time.time() > self.last_time + self.image_duration:
+            if self.frame < len(self.images) - 1:
+                self.frame += 1
+            else:
+                self.on_finish()
+            self.last_time = time.time()
+
+    def on_finish(self):
+        pass
+
+    @staticmethod
+    def from_path(self, pattern):
+        img_files = glob.glob(pattern)
+        images = [pygame.image.load(path) for path in img_files]
+        return Animation(images)
+
+
+class Animator:
+
+    def __init__(self, default_image):
+        self.current_animation = None
+        self.default_image = default_image
+
+    def play_animation(self, animation):
+        animation.on_finish = self.stop_animation
+        self.current_animation = animation
+
+    def stop_animation(self):
+        self.current_animation = None
+
+    @property
+    def image(self):
+        if self.current_animation is not None:
+            return self.current_animation.image
+        else:
+            return self.default_image
+
+    def on_tick(self):
+        if self.current_animation is not None:
+            self.current_animation.on_tick()
+            return Robot.STATE_INVALID
+        return Robot.STATE_VALID
 
 
 class Robot(sprite.Sprite):
@@ -25,6 +90,15 @@ class Robot(sprite.Sprite):
         self.map = map
         self.game_over = game_over
         self.first_turn = True
+
+        default_img = IMAGE_PATHS[self.team]
+        self.animator = Animator(pygame.image.load(default_img))
+        anim_dir = ANIMATION_DIR[self.team]
+        if anim_dir is not None:
+            self.take_damage_anim = \
+                Animation.from_path(join(anim_dir, '*_robot_take_damage*'))
+            self.attack_anim = Animation(join(anim_dir,
+                                              '*_robot_attack_*'))
 
         self.speakers = None  # speakers to play sounds
 
@@ -102,6 +176,8 @@ class Robot(sprite.Sprite):
         if direction != 0:
             self.move(direction, proportional=True)
         self.hit(other)
+        if self.attack_anim:
+            self.animator.play_animation(self.attack_anim)
 
     def hit(self, other=None):
         """Attacks the robot in front of self"""
@@ -125,13 +201,16 @@ class Robot(sprite.Sprite):
         else:  # frontal
             other.health -= DAMAGE[FROM_FRONT]
             damage = DAMAGE[FROM_FRONT]
+        if other.take_damage_anim:
+            other.animator.play_animation(other.take_damage_anim)
         if self.speakers:
             self.speakers.play(laser)
         new_turn = "{0}!{1};{2}".format(self.pos, other.pos, damage)
         self._call_gamelog_callbacks(new_turn)
 
     def draw(self):
-        img = pygame.transform.scale(bot_image(self.team), self.size)
+        image = self.animator.image
+        img = pygame.transform.scale(image, self.size)
         img = pygame.transform.rotate(img, self.rotation * -90)
         self.surface.blit(img, (0, 0))
 
@@ -159,6 +238,9 @@ class Robot(sprite.Sprite):
         except Exception as e:
             print("The AI failed to answer!", e)
             self.game_over()
+
+    def on_tick(self):
+        self.state = self.animator.on_tick()
 
     def ask_for_field(self, row, col):
         """Returns a limited amount of information about a specific field"""

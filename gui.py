@@ -158,6 +158,7 @@ class GameWindow:
         if (time.time() - self.last_time) > 2:
             self.board.on_turn()
             self.last_time = time.time()
+        self.board.on_tick()
 
     def update(self, event):
         self.ui_components.update(event)
