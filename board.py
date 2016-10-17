@@ -199,7 +199,7 @@ class Field(sprite.Sprite):
         self.__entity = new
         if new is not None:
             self.team = new.team
-        self.state = Field.STATE_INVALID
+        self.state = sprite.Sprite.STATE_INVALID
 
     @property
     def passable(self):
