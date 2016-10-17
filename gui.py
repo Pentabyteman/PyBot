@@ -46,7 +46,7 @@ class GameWindow:
                                     left_space.height * 0.05,
                                     left_space.width * 0.25,
                                     left_space.width * 0.25)
-        ic_quit = pygame.image.load("quit.png")
+        ic_quit = pygame.image.load("/ressources/quit.png")
         quit_btn = ImageButton(ic_quit, quit_btn_rect)
         if on_finish is not None:
             quit_btn.clicked = on_finish
@@ -57,8 +57,8 @@ class GameWindow:
                                     left_space.height * 0.05,
                                     left_space.width * 0.25,
                                     left_space.width * 0.25)
-        self.ic_not_muted = pygame.image.load("not_muted.png")
-        self.ic_muted = pygame.image.load("muted.png")
+        self.ic_not_muted = pygame.image.load("/ressources/not_muted.png")
+        self.ic_muted = pygame.image.load("/ressources/muted.png")
         self.mute_btn = ImageButton(self.ic_not_muted, mute_btn_rect)
         self.mute_btn.clicked = self.mute_sounds
         self.ui_components.add(self.mute_btn)
@@ -68,8 +68,8 @@ class GameWindow:
                                left_space.height * 0.2,
                                left_space.width * 0.4,
                                left_space.width * 0.4)
-        self.ic_play = pygame.image.load("play.png")
-        self.ic_pause = pygame.image.load("pause.png")
+        self.ic_play = pygame.image.load("/ressources/play.png")
+        self.ic_pause = pygame.image.load("/ressources/pause.png")
         self.btn_play = ImageButton(self.ic_play, btn_rect)
         self.btn_play.clicked = self.play
         self.has_started = False
@@ -79,7 +79,7 @@ class GameWindow:
                                      left_space.height * 0.2,
                                      left_space.width * 0.4,
                                      left_space.width * 0.4)
-        ic_reset = pygame.image.load("reset.png")
+        ic_reset = pygame.image.load("/ressources/reset.png")
         btn_reset = ImageButton(ic_reset, btn_reset_rect)
         btn_reset.clicked = self.reset
         self.ui_components.add(btn_reset)
