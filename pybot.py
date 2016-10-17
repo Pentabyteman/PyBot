@@ -61,7 +61,7 @@ if __name__ == '__main__':
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.mixer.init()
     pygame.mixer.music.set_volume(0.5)
-    pygame.mixer.music.load('bensound-pianomoment.mp3')
+    pygame.mixer.music.load('/ressources/bensound-pianomoment.mp3')
     pygame.mixer.music.play(-1)  # plays infinite loop
     display = pygame.display.set_mode(WINDOW_SIZE)  # setup display
     game = Game(display)
