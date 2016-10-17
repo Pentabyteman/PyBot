@@ -56,6 +56,8 @@ class Board:
         self.size = size  # actual size in pixels
         self.on_finish = on_finish
 
+        self.__speakers = None  # to play sounds
+
         self.field_size = self.size[0] / 9, self.size[1] / 9
         obstacles = get_obstacles()
 
@@ -75,9 +77,12 @@ class Board:
                                  start_positions[team][-1],
                                  ais[team],)
                      for team in range(robot_count)]
+        for bot in self.bots:
+            bot.speakers = self.speakers  # add speakers to the robots
         random.shuffle(self.bots)
         self.__itbots = self._iter_bots()  # initialize bot generator
         self.turns = 0
+        self.is_playing = False
 
     def draw(self):
         surf = pygame.Surface(self.size)
@@ -108,7 +113,17 @@ class Board:
         if self.on_finish:
             self.on_finish()
 
+    def start_game(self, ais):
+        if self.is_playing:
+            return
+        for bot, ai in zip(sorted(self.bots, key=lambda x: x.team),
+                           ais):
+            bot.ai = ai
+        self.is_playing = True
+
     def on_turn(self):
+        if not self.is_playing:
+            return
         bot = self.next_bot()
         bot.on_turn(MAX_TURNS - self.turns)
         self.turns += 1
@@ -136,6 +151,16 @@ class Board:
                 idx = 0
             else:
                 idx += 1
+
+    @property
+    def speakers(self):
+        return self.__speakers
+
+    @speakers.setter
+    def speakers(self, new):
+        self.__speakers = new
+        for bot in self.bots:
+            bot.speakers = new
 
 
 class Field(sprite.Sprite):

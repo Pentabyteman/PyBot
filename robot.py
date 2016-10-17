@@ -1,5 +1,5 @@
 import pygame
-from bot_exceptions import IllegalMoveException
+from bot_exceptions import IllegalMoveException, InvalidAiException
 import sprite
 import importlib.util as imputil
 
@@ -26,6 +26,10 @@ class Robot(sprite.Sprite):
         self.game_over = game_over
         self.first_turn = True
 
+        self.speakers = None  # speakers to play sounds
+
+        self.health_callbacks = []
+        self.gamelog_callbacks = []
         self.maxhealth = 100
         self.health = self.maxhealth
         self.rotation = rotation
@@ -35,10 +39,7 @@ class Robot(sprite.Sprite):
             print("Not a valid position")
 
         # load ai module
-        ai_name = ai_path.split("/")[-1].split(".")[0]
-        spec = imputil.spec_from_file_location(ai_name, ai_path)
-        self.ai = imputil.module_from_spec(spec)
-        spec.loader.exec_module(self.ai)
+        self.ai = ai_path
 
     def __repr__(self):
         try:
@@ -46,6 +47,26 @@ class Robot(sprite.Sprite):
         except AttributeError:
             pos = (-1, -1)
         return "Robot[{pos}] {team}".format(pos=pos, team=self.team)
+
+    def rotate(self, direction):
+        """
+        Rotates the robot in the given direction
+
+        Arguments:
+        direction -- 1 := 90 degrees, -1 := -90 degrees
+        """
+        electro = pygame.mixer.Sound('Electro_Motor.wav')
+        electro.set_volume(0.2)
+        self.rotation += min(max(direction, -1), 1)
+        if self.rotation >= 4:
+            self.rotation = 0
+        elif self.rotation <= -1:
+            self.rotation = 4
+        if self.speakers:
+            print("playing electro")
+            self.speakers.play(electro)
+        new_turn = "r={}".format(self.rotation)
+        self._call_gamelog_callbacks(new_turn)
 
     def move(self, direction, proportional=False):
         """
@@ -63,7 +84,10 @@ class Robot(sprite.Sprite):
         # p: eigene position, d * (vorne/hinten): positionsänderung
         self.pos = [p + (d * direction)
                     for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
-        servo.play()
+        if self.speakers:
+            self.speakers.play(servo)
+        new_turn = "{0}".format(self.pos)
+        self._call_gamelog_callbacks(new_turn)
 
     def attack(self, direction):
         """Attacks in the specified direction -> move"""
@@ -75,7 +99,8 @@ class Robot(sprite.Sprite):
              for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
         other = self.map.get(*front_pos)
         assert other is not None, "No robot to attack!"
-        self.move(direction, proportional=True)
+        if direction != 0:
+            self.move(direction, proportional=True)
         self.hit(other)
 
     def hit(self, other=None):
@@ -92,12 +117,18 @@ class Robot(sprite.Sprite):
         print(self, "hits", other)
         if look_other == look_self:  # von hinten getroffen
             other.health -= DAMAGE[FROM_BEHIND]
+            damage = DAMAGE[FROM_BEHIND]
         elif all(abs(x) != abs(y)
                  for x, y in zip(look_other, look_self)):  # seitlich
             other.health -= DAMAGE[FROM_SIDE]
+            damage = DAMAGE[FROM_SIDE]
         else:  # frontal
             other.health -= DAMAGE[FROM_FRONT]
-        laser.play()
+            damage = DAMAGE[FROM_FRONT]
+        if self.speakers:
+            self.speakers.play(laser)
+        new_turn = "{0}!{1};{2}".format(self.pos, other.pos, damage)
+        self._call_gamelog_callbacks(new_turn)
 
     def draw(self):
         img = pygame.transform.scale(bot_image(self.team), self.size)
@@ -113,11 +144,11 @@ class Robot(sprite.Sprite):
             self.first_turn = False
         else:
             pos, rot = None, None
-        move = self.ai.get_move(self.ask_for_field,
-                                turns_to_go,
-                                position=pos,
-                                rotation=rot)
         try:
+            move = self.ai.get_move(self.ask_for_field,
+                                    turns_to_go,
+                                    position=pos,
+                                    rotation=rot)
             cmd, arg = move.split(" ")
             if cmd == "move":
                 self.move(int(arg))
@@ -134,22 +165,6 @@ class Robot(sprite.Sprite):
         field = self.map.fields[row][col]
         # return the field kind, team, and if there is an entity or not
         return field.passable, field.team, field.entity is not None
-
-    def rotate(self, direction):
-        """
-        Rotates the robot in the given direction
-
-        Arguments:
-        direction -- 1 := 90 degrees, -1 := -90 degrees
-        """
-        electro = pygame.mixer.Sound('Electro_Motor.wav')
-        electro.set_volume(0.2)
-        self.rotation += min(max(direction, -1), 1)
-        if self.rotation >= 4:
-            self.rotation = 0
-        elif self.rotation <= -1:
-            self.rotation = 4
-        electro.play()
 
     @property
     def pos(self):
@@ -193,11 +208,41 @@ class Robot(sprite.Sprite):
 
     @health.setter
     def health(self, new):
-        self.__health = new
-        if self._health <= 0:
-            self._health == 0;
+        self.__health = max(new, 0)
+        self._call_health_callbacks(self.__health)
+        print(self, "has now", self.__health, "hp")
+        if self.__health <= 0:
             self.game_over()
-        print(self, "has now", new, "hp")
+
+    def register_health_callback(self, func):
+        self.health_callbacks.append(func)
+        func(self.health)
+
+    def _call_health_callbacks(self, health):
+        for func in self.health_callbacks:
+            func(health)
+
+    def register_gamelog_callback(self, func):
+        self.gamelog_callbacks.append(func)
+
+    def _call_gamelog_callbacks(self, new_turn):
+        for func in self.gamelog_callbacks:
+            func(new_turn)
+
+    @property
+    def ai(self):
+        return self.__ai
+
+    @ai.setter
+    def ai(self, ai_path):
+        try:
+            ai_name = ai_path.split("/")[-1].split(".")[0]
+            spec = imputil.spec_from_file_location(ai_name, ai_path)
+            self.__ai = imputil.module_from_spec(spec)
+            spec.loader.exec_module(self.__ai)
+        except AttributeError:
+            raise InvalidAiException
+
 
 def team_color(team, alpha=255):
     return COLORS[team] + (alpha,)

@@ -1,10 +1,35 @@
-import pygame
-import time
-import board
-from app import App
+# MAIN FILE
+modules = ["pygame v1.9", "sysconfig", "time", "tkinter"]
 
+importstring = """Python was unable to import some important modules.
+Be sure to have all necessary packages installed. Type help('modules')
+in your shell if you are not sure which packages you have installed.
+Required modules: {}""".format(modules)
 
-WINDOW_SIZE = (1017, 1017)  # quadratisch praktisch gut
+working_version = '3.5'  # change to current version
+namestring = """This app is only launchable with Python {},
+please download this version of Python""".format(working_version)
+
+# Loads of Error Handling if some idiots mess up with everything,,,
+try:
+    import sysconfig
+    import gui
+    from app import App
+    # outside modules
+    import pygame
+    import time
+    # local files
+except ImportError:
+    raise ImportError(importstring)
+except Exception as e:
+    print("Unkonw Error: {}".format(e))
+
+# correct version of python?
+if sysconfig.get_python_version() != working_version:
+    raise NameError(namestring)
+
+BOARD_SIZE = (1017, 1017)  # quadratisch praktisch gut
+WINDOW_SIZE = (1500, 1017)  # enough space for gui
 
 
 class Game(App):
@@ -13,24 +38,20 @@ class Game(App):
         super(Game, self).__init__()
         self.display = display
 
-        self.board = board.Board(self.display.get_size(),
-                                 on_finish=self.stop)
+        self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE,
+                                     on_finish=self.stop)
         self.last_time = time.time()
 
     def on_event(self, event):
-        self.board.on_event(event)
+        self.window.update(event)
 
     def on_tick(self):
         """Called every tick"""
-        # delays the turns a little bit to give the players the opportunity
-        # to view the turns of their robots
-        if (time.time() - self.last_time) > 2:
-            self.board.on_turn()
-            self.last_time = time.time()
+        self.window.on_tick()
 
     def on_render(self):
         self.display.fill((255, 255, 255))
-        self.display.blit(self.board.draw(), (0, 0))  # blit board
+        self.display.blit(self.window.draw(), (0, 0))  # blit board
         pygame.display.flip()  # update screen
 
 
