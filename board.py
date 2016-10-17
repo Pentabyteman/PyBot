@@ -174,7 +174,7 @@ class Field(sprite.Sprite):
         self.team = None
         if not Field.wall_image:
             Field.wall_image = \
-                pygame.transform.scale(pygame.image.load("wall.png"),
+                pygame.transform.scale(pygame.image.load("resources/wall.png"),
                                        self.size)
 
     def __repr__(self):

@@ -5,7 +5,7 @@ import importlib.util as imputil
 
 DIRECTIONS = [(-1, 0), (0, 1), (1, 0), (0, -1)]  # north, east, south, west
 COLORS = [(255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255)]
-IMAGE_PATHS = ["ressources/robot_red.png", "ressources/robot_blue.png"]
+IMAGE_PATHS = ["resources/robot_red.png", "resources/robot_blue.png"]
 BOT_IMAGES = [pygame.image.load(f) for f in IMAGE_PATHS]
 ROTATE_RIGHT, ROTATE_LEFT = 1, -1
 MOVE_FORWARD, MOVE_BACK = 0, -1
@@ -13,6 +13,7 @@ MOVE_FORWARD, MOVE_BACK = 0, -1
 # how much hp an attack from the given side deals
 FROM_BEHIND, FROM_SIDE, FROM_FRONT = 0, 1, 2
 DAMAGE = {FROM_BEHIND: 50, FROM_SIDE: 30, FROM_FRONT: 10}
+AI_PATH = "ai/test.py"  # default ai
 
 
 class Robot(sprite.Sprite):
@@ -54,7 +55,7 @@ class Robot(sprite.Sprite):
         Arguments:
         direction -- 1 := 90 degrees, -1 := -90 degrees
         """
-        electro = pygame.mixer.Sound('ressources/Electro_Motor.wav')
+        electro = pygame.mixer.Sound('resources/Electro_Motor.wav')
         electro.set_volume(0.2)
         self.rotation += min(max(direction, -1), 1)
         if self.rotation >= 4:
@@ -75,7 +76,7 @@ class Robot(sprite.Sprite):
         direction -- Direction of momement in the perspective of the robot's
                      current rotation.
         """
-        servo = pygame.mixer.Sound(file='ressources/Servo_Motor.wav')
+        servo = pygame.mixer.Sound(file='resources/Servo_Motor.wav')
         servo.set_volume(0.2)
         # validity of direction
         if not proportional:
@@ -104,7 +105,7 @@ class Robot(sprite.Sprite):
 
     def hit(self, other=None):
         """Attacks the robot in front of self"""
-        laser = pygame.mixer.Sound('ressources/Laser.wav')
+        laser = pygame.mixer.Sound('resources/Laser.wav')
         laser.set_volume(0.5)
         if not other:
             front_pos = \
