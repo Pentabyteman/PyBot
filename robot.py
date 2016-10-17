@@ -26,6 +26,7 @@ class Animation:
 
     def __init__(self, images, length):
         self.images = images
+        print("images", images)
         self.length = length
         self.image_duration = round(self.length / len(self.images))
         self.frame = 0
@@ -33,10 +34,11 @@ class Animation:
 
     @property
     def image(self):
-        self.images[self.frame]
+        return self.images[self.frame]
 
     def on_tick(self):
         # increases frame until last frame reached
+        print("ticking")
         if time.time() > self.last_time + self.image_duration:
             if self.frame < len(self.images) - 1:
                 self.frame += 1
@@ -48,10 +50,10 @@ class Animation:
         pass
 
     @staticmethod
-    def from_path(self, pattern):
+    def from_path(pattern, length):
         img_files = glob.glob(pattern)
-        images = [pygame.image.load(path) for path in img_files]
-        return Animation(images)
+        images = [pygame.image.load(path) for path in sorted(img_files)]
+        return Animation(images, length)
 
 
 class Animator:
@@ -61,6 +63,7 @@ class Animator:
         self.default_image = default_image
 
     def play_animation(self, animation):
+        animation.frame = 0
         animation.on_finish = self.stop_animation
         self.current_animation = animation
 
@@ -83,6 +86,8 @@ class Animator:
 
 class Robot(sprite.Sprite):
 
+    # STATE_INVALID, STATE_VALID = 0, 1
+
     def __init__(self, size, team, map, game_over, pos=(0, 0),
                  rotation=0, ai_path=AI_PATH):
         super(Robot, self).__init__(size)
@@ -96,9 +101,9 @@ class Robot(sprite.Sprite):
         anim_dir = ANIMATION_DIR[self.team]
         if anim_dir is not None:
             self.take_damage_anim = \
-                Animation.from_path(join(anim_dir, '*_robot_take_damage*'))
-            self.attack_anim = Animation(join(anim_dir,
-                                              '*_robot_attack_*'))
+                Animation.from_path(join(anim_dir, '*_robot_take_damage*'), 2)
+            self.attack_anim = Animation.from_path(join(anim_dir,
+                                                   '*_robot_attack_*'), 2)
 
         self.speakers = None  # speakers to play sounds
 
@@ -201,7 +206,7 @@ class Robot(sprite.Sprite):
         else:  # frontal
             other.health -= DAMAGE[FROM_FRONT]
             damage = DAMAGE[FROM_FRONT]
-        if other.take_damage_anim:
+        if hasattr(other, 'take_damage_anim'):
             other.animator.play_animation(other.take_damage_anim)
         if self.speakers:
             self.speakers.play(laser)
@@ -209,8 +214,9 @@ class Robot(sprite.Sprite):
         self._call_gamelog_callbacks(new_turn)
 
     def draw(self):
-        image = self.animator.image
-        img = pygame.transform.scale(image, self.size)
+        print("redrawing robot")
+        # img = pygame.transform.scale(self.animator.image, self.size)
+        img = pygame.transform.scale(bot_image(self.team), self.size)
         img = pygame.transform.rotate(img, self.rotation * -90)
         self.surface.blit(img, (0, 0))
 
@@ -283,6 +289,7 @@ class Robot(sprite.Sprite):
     def rotation(self, new):
         self.__rotation = new
         self.state = Robot.STATE_INVALID
+        print("rotated -> redraw")
 
     @property
     def health(self):

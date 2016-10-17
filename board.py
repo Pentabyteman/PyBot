@@ -138,6 +138,10 @@ class Board:
             else:
                 self.game_over(winner=bot)
 
+    def on_tick(self):
+        for bot in self.bots:
+            bot.on_tick()
+
     def next_bot(self):
         if not self.__itbots:
             self.__itbots = self._iter_bots()
@@ -195,7 +199,7 @@ class Field(sprite.Sprite):
         self.__entity = new
         if new is not None:
             self.team = new.team
-        self.state = sprite.Sprite.STATE_INVALID
+        self.state = Field.STATE_INVALID
 
     @property
     def passable(self):
