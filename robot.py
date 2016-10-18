@@ -26,7 +26,6 @@ class Animation:
 
     def __init__(self, images, length):
         self.images = images
-        print("images", images)
         self.length = length
         self.image_duration = round(self.length / len(self.images))
         self.frame = 0
@@ -38,7 +37,6 @@ class Animation:
 
     def on_tick(self):
         # increases frame until last frame reached
-        print("ticking")
         if time.time() > self.last_time + self.image_duration:
             if self.frame < len(self.images) - 1:
                 self.frame += 1
@@ -85,8 +83,6 @@ class Animator:
 
 
 class Robot(sprite.Sprite):
-
-    # STATE_INVALID, STATE_VALID = 0, 1
 
     def __init__(self, size, team, map, game_over, pos=(0, 0),
                  rotation=0, ai_path=AI_PATH):
@@ -181,7 +177,7 @@ class Robot(sprite.Sprite):
         if direction != 0:
             self.move(direction, proportional=True)
         self.hit(other)
-        if self.attack_anim:
+        if hasattr(self, 'attack_anim'):
             self.animator.play_animation(self.attack_anim)
 
     def hit(self, other=None):
@@ -214,9 +210,7 @@ class Robot(sprite.Sprite):
         self._call_gamelog_callbacks(new_turn)
 
     def draw(self):
-        print("redrawing robot")
-        # img = pygame.transform.scale(self.animator.image, self.size)
-        img = pygame.transform.scale(bot_image(self.team), self.size)
+        img = pygame.transform.scale(self.animator.image, self.size)
         img = pygame.transform.rotate(img, self.rotation * -90)
         self.surface.blit(img, (0, 0))
 
@@ -246,7 +240,9 @@ class Robot(sprite.Sprite):
             self.game_over()
 
     def on_tick(self):
-        self.state = self.animator.on_tick()
+        result = self.animator.on_tick()
+        if result == Robot.STATE_INVALID:
+            self.state = Robot.STATE_INVALID
 
     def ask_for_field(self, row, col):
         """Returns a limited amount of information about a specific field"""
