@@ -22,7 +22,7 @@ try:
 except ImportError:
     raise ImportError(importstring)
 except Exception as e:
-    print("Unkonw Error: {}".format(e))
+    print("Unknown Error: {}".format(e))
 
 # correct version of python?
 if sysconfig.get_python_version() != working_version:
