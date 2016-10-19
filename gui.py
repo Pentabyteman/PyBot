@@ -413,7 +413,7 @@ class FileSelectionWidget(UIComponent):
         self.btn_open = ImageButton(ic_open, btn_rect)
         self.btn_open.parent = self
         self.btn_open.clicked = self.on_select
-        self.path_name = ""
+        self.path_name = "ai"
 
     def draw(self):
         self._image.fill((0, 0, 0, 0))
@@ -437,7 +437,7 @@ class FileSelectionWidget(UIComponent):
         self._image.blit(text, textpos)
 
     def reset(self):
-        self.path_name = ""
+        self.path_name = "ai"
         self.selectable = True
 
     def mouse_moved(self, event):
