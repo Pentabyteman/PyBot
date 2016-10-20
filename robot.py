@@ -133,10 +133,10 @@ class Robot(sprite.Sprite):
         electro = pygame.mixer.Sound('resources/Electro_Motor.wav')
         electro.set_volume(0.2)
         self.rotation += min(max(direction, -1), 1)
-        if self.rotation >= 4:
+        if self.rotation >= 3:
             self.rotation = 0
         elif self.rotation <= -1:
-            self.rotation = 4
+            self.rotation = 3
         if self.speakers:
             print("playing electro")
             self.speakers.play(electro)
