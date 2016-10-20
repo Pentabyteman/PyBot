@@ -138,6 +138,10 @@ class Board:
             else:
                 self.game_over(winner=bot)
 
+    def on_tick(self):
+        for bot in self.bots:
+            bot.on_tick()
+
     def next_bot(self):
         if not self.__itbots:
             self.__itbots = self._iter_bots()
@@ -174,7 +178,7 @@ class Field(sprite.Sprite):
         self.team = None
         if not Field.wall_image:
             Field.wall_image = \
-                pygame.transform.scale(pygame.image.load("wall.png"),
+                pygame.transform.scale(pygame.image.load("resources/wall.png"),
                                        self.size)
 
     def __repr__(self):

@@ -46,7 +46,7 @@ class GameWindow:
                                     left_space.height * 0.05,
                                     left_space.width * 0.25,
                                     left_space.width * 0.25)
-        ic_quit = pygame.image.load("quit.png")
+        ic_quit = pygame.image.load("resources/quit.png")
         quit_btn = ImageButton(ic_quit, quit_btn_rect)
         if on_finish is not None:
             quit_btn.clicked = on_finish
@@ -57,8 +57,8 @@ class GameWindow:
                                     left_space.height * 0.05,
                                     left_space.width * 0.25,
                                     left_space.width * 0.25)
-        self.ic_not_muted = pygame.image.load("not_muted.png")
-        self.ic_muted = pygame.image.load("muted.png")
+        self.ic_not_muted = pygame.image.load("resources/not_muted.png")
+        self.ic_muted = pygame.image.load("resources/muted.png")
         self.mute_btn = ImageButton(self.ic_not_muted, mute_btn_rect)
         self.mute_btn.clicked = self.mute_sounds
         self.ui_components.add(self.mute_btn)
@@ -68,8 +68,8 @@ class GameWindow:
                                left_space.height * 0.2,
                                left_space.width * 0.4,
                                left_space.width * 0.4)
-        self.ic_play = pygame.image.load("play.png")
-        self.ic_pause = pygame.image.load("pause.png")
+        self.ic_play = pygame.image.load("resources/play.png")
+        self.ic_pause = pygame.image.load("resources/pause.png")
         self.btn_play = ImageButton(self.ic_play, btn_rect)
         self.btn_play.clicked = self.play
         self.has_started = False
@@ -79,7 +79,7 @@ class GameWindow:
                                      left_space.height * 0.2,
                                      left_space.width * 0.4,
                                      left_space.width * 0.4)
-        ic_reset = pygame.image.load("reset.png")
+        ic_reset = pygame.image.load("resources/reset.png")
         btn_reset = ImageButton(ic_reset, btn_reset_rect)
         btn_reset.clicked = self.reset
         self.ui_components.add(btn_reset)
@@ -158,6 +158,7 @@ class GameWindow:
         if (time.time() - self.last_time) > 2:
             self.board.on_turn()
             self.last_time = time.time()
+        self.board.on_tick()
 
     def update(self, event):
         self.ui_components.update(event)
@@ -400,7 +401,7 @@ class FileSelectionWidget(UIComponent):
         super(FileSelectionWidget, self).__init__(rect.size, rect.x, rect.y)
         # label positioning and font
         self.selectable = True
-        self._font = pygame.font.Font("fantasque.ttf", 20)
+        self._font = pygame.font.Font("resources/fantasque.ttf", 20)
 
         self.btn_pos = (rect.width * 0.75, rect.height * 0.05)
         btn_rect = pygame.Rect(self.btn_pos[0],
@@ -408,7 +409,7 @@ class FileSelectionWidget(UIComponent):
                                rect.width * 0.25,
                                rect.height * 0.9)
 
-        ic_open = pygame.image.load("open_file.png")
+        ic_open = pygame.image.load("resources/open_file.png")
         self.btn_open = ImageButton(ic_open, btn_rect)
         self.btn_open.parent = self
         self.btn_open.clicked = self.on_select
@@ -455,7 +456,7 @@ class FileSelectionWidget(UIComponent):
 
     def on_select(self, event):
         # open up file dialog
-        path = filedialog.askopenfilename()
+        path = filedialog.askopenfilename(initialdir="ai")
         if isinstance(path, str):
             self.path_name = path
             self.state = FileSelectionWidget.STATE_INVALID
@@ -475,7 +476,7 @@ class Label(UIComponent):
     def __init__(self, text, rect, color=(0, 0, 0, 255)):
         super(Label, self).__init__(rect.size, rect.x, rect.y)
         self.text, self.color = text, color
-        self._font = pygame.font.Font("fantasque.ttf", 15)
+        self._font = pygame.font.Font("resources/fantasque.ttf", 15)
 
     def draw(self):
         self._image.fill((0, 0, 0, 0))
@@ -567,7 +568,7 @@ class GameLog(UIComponent):
         index = 0  # watch out, needs to start with 0
         for i in range(0, len(self.turnlist)):
             new_text = self.turnlist[i]
-            font = pygame.font.Font("fantasque.ttf", 12)
+            font = pygame.font.Font("resources/fantasque.ttf", 12)
             if i % 2 == 0:  # muss ne neue Reihe aufmachen
                 current_row += 1
                 index = 0

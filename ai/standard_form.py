@@ -1,7 +1,12 @@
 #This is the standard form your ai programm should follow
 #The spaces are left intentionally
 
-def get_move():
+def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
+  #Watch out: You are only given the rotation and position at the first move. Every move after thay,
+  #you will have to calculate it yourself
+  
+  #passable, team, is_entity = ask_for_field(row, col)
+  
   #calculate best movements here
   
   #Attention:
@@ -20,4 +25,4 @@ def get_move():
   #"attack -1"
   #"attack -2"
   
-  return #return movetype
+  return None #return movetype
