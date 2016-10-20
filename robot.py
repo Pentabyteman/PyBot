@@ -9,9 +9,9 @@ import importlib.util as imputil
 DIRECTIONS = [(-1, 0), (0, 1), (1, 0), (0, -1)]  # north, east, south, west
 COLORS = [(255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 0, 255)]
 IMAGE_PATHS = ["resources/animation_red/robot_red_normal.png",
-               "resources/robot_blue.png"]
+               "resources/animation_blue/blue_robot_normal.png"]
 ANIMATION_DIR = ["resources/animation_red",
-                 None]
+                 "resources/animation_blue"]
 BOT_IMAGES = [pygame.image.load(f) for f in IMAGE_PATHS]
 ROTATE_RIGHT, ROTATE_LEFT = 1, -1
 MOVE_FORWARD, MOVE_BACK = 0, -1
@@ -27,7 +27,7 @@ class Animation:
     def __init__(self, images, length):
         self.images = images
         self.length = length
-        self.image_duration = round(self.length / len(self.images))
+        self.image_duration = self.length / len(self.images)
         self.frame = 0
         self.last_time = 0
 
@@ -97,9 +97,9 @@ class Robot(sprite.Sprite):
         anim_dir = ANIMATION_DIR[self.team]
         if anim_dir is not None:
             self.take_damage_anim = \
-                Animation.from_path(join(anim_dir, '*_robot_take_damage*'), 2)
+                Animation.from_path(join(anim_dir, '*_robot_take_damage*'), 1)
             self.attack_anim = Animation.from_path(join(anim_dir,
-                                                   '*_robot_attack_*'), 2)
+                                                   '*_robot_attack_*'), 0.5)
 
         self.speakers = None  # speakers to play sounds
 
