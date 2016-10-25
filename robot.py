@@ -136,9 +136,8 @@ class Robot(sprite.Sprite):
         if self.rotation >= 4:
             self.rotation = 0
         elif self.rotation <= -1:
-            self.rotation = 4
+            self.rotation = 3
         if self.speakers:
-            print("playing electro")
             self.speakers.play(electro)
         new_turn = "r={}".format(self.rotation)
         self._call_gamelog_callbacks(new_turn)
@@ -191,7 +190,6 @@ class Robot(sprite.Sprite):
         assert other is not None, "No robot in front!"
         look_other = DIRECTIONS[other.rotation]
         look_self = DIRECTIONS[self.rotation]
-        print(self, "hits", other)
         if look_other == look_self:  # von hinten getroffen
             other.health -= DAMAGE[FROM_BEHIND]
             damage = DAMAGE[FROM_BEHIND]
@@ -285,7 +283,6 @@ class Robot(sprite.Sprite):
     def rotation(self, new):
         self.__rotation = new
         self.state = Robot.STATE_INVALID
-        print("rotated -> redraw")
 
     @property
     def health(self):
@@ -295,7 +292,6 @@ class Robot(sprite.Sprite):
     def health(self, new):
         self.__health = max(new, 0)
         self._call_health_callbacks(self.__health)
-        print(self, "has now", self.__health, "hp")
         if self.__health <= 0:
             self.game_over()
 

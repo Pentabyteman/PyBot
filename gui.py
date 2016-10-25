@@ -19,9 +19,11 @@ class Speaker:
 
 class GameWindow:
 
-    def __init__(self, size, board_size, on_finish=None):
+    def __init__(self, size, board_size, on_finish=None, ai1=None, ai2=None,
+                 start=None, speed=False):
         # expects size only to be wider than board_size
         self.size = size
+        self.speed = speed
         self.board_size = min(board_size, size)  # may not be larger than size
         self.board_pos = [round(0.5 * (s - b))
                           for s, b in zip(self.size, self.board_size)]
@@ -29,7 +31,7 @@ class GameWindow:
 
         self.last_time = time.time()
         self.speaker = Speaker()
-        self.init_board()
+        self.init_board(start=start)
         self.surface = pygame.Surface(self.size)
 
         self.ui_components = pygame.sprite.Group()
@@ -145,6 +147,11 @@ class GameWindow:
         # add callbacks to bots
         self.register_callbacks()
 
+        # set ais when debug mode
+        for fsw, ai in zip(self.file_selectors, (ai1, ai2)):
+            fsw.path_name = "ai/" + ai
+        self.play(None)
+
     def draw(self):
         self.surface.fill((0, 0, 0, 0))  # clean up
         self.surface.blit(self.board.draw(), self.board_pos)
@@ -155,7 +162,8 @@ class GameWindow:
         """Called every tick"""
         # delays the turns a little bit to give the players the opportunity
         # to view the turns of their robots
-        if (time.time() - self.last_time) > 2:
+        min_delay = 2 if not self.speed else 0.1
+        if (time.time() - self.last_time) > min_delay:
             self.board.on_turn()
             self.last_time = time.time()
         self.board.on_tick()
@@ -185,8 +193,9 @@ class GameWindow:
         self.btn_play.icon = self.ic_pause if self.board.is_playing\
             else self.ic_play
 
-    def init_board(self):
-        self.board = board.Board(self.board_size, on_finish=self.on_finish)
+    def init_board(self, start=None):
+        self.board = board.Board(self.board_size, on_finish=self.on_finish,
+                                 start=start)
         self.board.speakers = self.speaker
 
     def register_callbacks(self):

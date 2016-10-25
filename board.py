@@ -26,7 +26,7 @@ class Map:
 
     def set(self, bot, row, col):
         field = self.fields[row][col]
-        if not field.passable and bot is not None:
+        if (not field.passable and bot is not None) or row < 0 or col < 0:
             raise bot_exceptions.IllegalMoveException("Field not passable")
         field.entity = bot
 
@@ -44,15 +44,14 @@ class Map:
                 teams[field.team] = 1
             else:
                 teams[field.team] += 1
-        print("teams", teams)
         return max(teams, key=teams.get)  # sort by values
 
 
 class Board:
 
-    def __init__(self, size, shape=(9, 9), robot_count=2, on_finish=None):
+    def __init__(self, size, shape=(9, 9), robot_count=2, on_finish=None,
+                 start=None):
         self.shape = shape  # default 9 by 9
-        print("shape", self.shape)
         self.size = size  # actual size in pixels
         self.on_finish = on_finish
 
@@ -79,7 +78,10 @@ class Board:
                      for team in range(robot_count)]
         for bot in self.bots:
             bot.speakers = self.speakers  # add speakers to the robots
-        random.shuffle(self.bots)
+        if start == 1:
+            self.bots.reverse()
+        elif start is None:
+            random.shuffle(self.bots)
         self.__itbots = self._iter_bots()  # initialize bot generator
         self.turns = 0
         self.is_playing = False
