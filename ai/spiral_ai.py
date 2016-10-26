@@ -23,14 +23,13 @@ def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
                 field_ahead = [pos[0]+1, pos[1]]
         else:
                 field_ahead = [pos[0], pos[1]-1]
-
-        ###START FEHLER
+                
         if field_ahead[0] < 0 or field_ahead[0] > 8 or field_ahead[1] < 0 or field_ahead[1] > 8:
                 passable = False
                 is_entity = False
         else:
                 passable, team, is_entity = ask_for_field(field_ahead[0], field_ahead[1])
-        ###END FEHLER
+
         if is_entity:
                 return "attack 1"
         elif passable == False or team == my_team:
