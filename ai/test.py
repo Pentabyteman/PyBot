@@ -36,4 +36,4 @@ def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
             rows_to_go = rows_to_go - 1 if rows_to_go > 0 else rows_to_go + 1
             return "move {0}".format(row_diff)
 
-    return "attack 1"
+    return "attack 0"

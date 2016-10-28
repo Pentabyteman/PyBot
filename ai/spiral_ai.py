@@ -36,7 +36,7 @@ def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
 
     if is_entity:
         return "attack 1"
-    elif passable == False or team == my_team:
+    elif passable is False or team == my_team:
         rot += 1
         if rot > 3:
             rot = 0
