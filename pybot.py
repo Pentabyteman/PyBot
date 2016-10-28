@@ -18,6 +18,7 @@ try:
     # outside modules
     import pygame
     import time
+    import sys
     # local files
 except ImportError:
     raise ImportError(importstring)
@@ -34,12 +35,14 @@ WINDOW_SIZE = (1500, 1017)  # enough space for gui
 
 class Game(App):
 
-    def __init__(self, display):
+    def __init__(self, display, ai1=None, ai2=None, start=None, speed=False):
         super(Game, self).__init__()
         self.display = display
 
         self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE,
-                                     on_finish=self.stop)
+                                     on_finish=self.stop,
+                                     ai1=ai1, ai2=ai2,
+                                     start=start, speed=speed)
         self.last_time = time.time()
 
     def on_event(self, event):
@@ -57,16 +60,32 @@ class Game(App):
 
 if __name__ == '__main__':
 
+    display = pygame.display.set_mode(WINDOW_SIZE)  # setup display
+    # debug: --debug <ai1> <ai2> <starting_team> <speed (0 / 1)>
+    speed, debug = False, False
+    if "--debug" in sys.argv:
+        try:
+            ai1, ai2 = sys.argv[2:4]
+            start = int(sys.argv[4])
+            speed = int(sys.argv[5]) == 1
+            game = Game(display, ai1=ai1, ai2=ai2, start=start, speed=speed)
+            debug = True
+        except:
+            print("There is an error in your syntax! Starting normally!")
+            game = Game(display)
+    else:
+        game = Game(display)
+
     pygame.init()
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.mixer.init()
     pygame.mixer.music.set_volume(0.5)
     pygame.mixer.music.load('resources/bensound-pianomoment.mp3')
     pygame.mixer.music.play(-1)  # plays infinite loop
-    display = pygame.display.set_mode(WINDOW_SIZE)  # setup display
-    game = Game(display)
     game.exec_()
-    pygame.mixer.music.fadeout(5000)
-    pygame.time.wait(5000)
+
+    delay = 5000 if not debug else 10
+    pygame.mixer.music.fadeout(delay)
+    pygame.time.wait(delay)
     pygame.mixer.quit()
     pygame.quit()

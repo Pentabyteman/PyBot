@@ -138,7 +138,6 @@ class Robot(sprite.Sprite):
         elif self.rotation <= -1:
             self.rotation = 3
         if self.speakers:
-            print("playing electro")
             self.speakers.play(electro)
         new_turn = "r={}".format(self.rotation)
         self._call_gamelog_callbacks(new_turn)
@@ -167,20 +166,17 @@ class Robot(sprite.Sprite):
     def attack(self, direction):
         """Attacks in the specified direction -> move"""
         # validity of direction
-        assert -2 <= direction <= 2, "No valid attack"
-        add = 1 if direction >= 0 else -1
+        assert 0 <= direction <= 1, "No valid attack"
         front_pos = \
-            [p + d * (direction + add)
+            [p + d
              for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
         other = self.map.get(*front_pos)
         assert other is not None, "No robot to attack!"
-        if direction != 0:
-            self.move(direction, proportional=True)
-        self.hit(other)
+        self.hit(other, push=direction == 1)
         if hasattr(self, 'attack_anim'):
             self.animator.play_animation(self.attack_anim)
 
-    def hit(self, other=None):
+    def hit(self, other=None, push=False):
         """Attacks the robot in front of self"""
         laser = pygame.mixer.Sound('resources/Laser.wav')
         laser.set_volume(0.5)
@@ -189,19 +185,22 @@ class Robot(sprite.Sprite):
                 [p + d for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
             other = self.map.get(front_pos)
         assert other is not None, "No robot in front!"
+        if push:
+            other.pos = [p + d for p, d in
+                         zip(other.pos, DIRECTIONS[self.rotation])]
+        # get the hit direction
         look_other = DIRECTIONS[other.rotation]
         look_self = DIRECTIONS[self.rotation]
-        print(self, "hits", other)
         if look_other == look_self:  # von hinten getroffen
-            other.health -= DAMAGE[FROM_BEHIND]
             damage = DAMAGE[FROM_BEHIND]
         elif all(abs(x) != abs(y)
                  for x, y in zip(look_other, look_self)):  # seitlich
-            other.health -= DAMAGE[FROM_SIDE]
             damage = DAMAGE[FROM_SIDE]
         else:  # frontal
-            other.health -= DAMAGE[FROM_FRONT]
             damage = DAMAGE[FROM_FRONT]
+
+        other.health -= damage if not push else damage * 0.25
+
         if hasattr(other, 'take_damage_anim'):
             other.animator.play_animation(other.take_damage_anim)
         if self.speakers:
@@ -236,8 +235,8 @@ class Robot(sprite.Sprite):
             elif cmd == "attack":
                 self.attack(int(arg))
         except Exception as e:
-            print("The AI failed to answer!", e)
-            self.game_over()
+            print("The AI of team {0} failed to answer!".format(self.team), e)
+            self.game_over(loser=self)
 
     def on_tick(self):
         result = self.animator.on_tick()
@@ -285,7 +284,6 @@ class Robot(sprite.Sprite):
     def rotation(self, new):
         self.__rotation = new
         self.state = Robot.STATE_INVALID
-        print("rotated -> redraw")
 
     @property
     def health(self):
@@ -295,9 +293,8 @@ class Robot(sprite.Sprite):
     def health(self, new):
         self.__health = max(new, 0)
         self._call_health_callbacks(self.__health)
-        print(self, "has now", self.__health, "hp")
         if self.__health <= 0:
-            self.game_over()
+            self.game_over(loser=self)
 
     def register_health_callback(self, func):
         self.health_callbacks.append(func)

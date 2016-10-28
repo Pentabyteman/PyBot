@@ -19,9 +19,11 @@ class Speaker:
 
 class GameWindow:
 
-    def __init__(self, size, board_size, on_finish=None):
+    def __init__(self, size, board_size, on_finish=None, ai1=None, ai2=None,
+                 start=None, speed=False):
         # expects size only to be wider than board_size
         self.size = size
+        self.speed = speed
         self.board_size = min(board_size, size)  # may not be larger than size
         self.board_pos = [round(0.5 * (s - b))
                           for s, b in zip(self.size, self.board_size)]
@@ -29,7 +31,7 @@ class GameWindow:
 
         self.last_time = time.time()
         self.speaker = Speaker()
-        self.init_board()
+        self.init_board(start=start)
         self.surface = pygame.Surface(self.size)
 
         self.ui_components = pygame.sprite.Group()
@@ -145,6 +147,12 @@ class GameWindow:
         # add callbacks to bots
         self.register_callbacks()
 
+        # set ais when debug mode
+        if ai1 is not None and ai2 is not None:
+            for fsw, ai in zip(self.file_selectors, (ai1, ai2)):
+                fsw.path_name = "ai/" + ai
+            self.play(None)
+
     def draw(self):
         self.surface.fill((0, 0, 0, 0))  # clean up
         self.surface.blit(self.board.draw(), self.board_pos)
@@ -155,7 +163,8 @@ class GameWindow:
         """Called every tick"""
         # delays the turns a little bit to give the players the opportunity
         # to view the turns of their robots
-        if (time.time() - self.last_time) > 2:
+        min_delay = 2 if not self.speed else 0.1
+        if (time.time() - self.last_time) > min_delay:
             self.board.on_turn()
             self.last_time = time.time()
         self.board.on_tick()
@@ -185,16 +194,17 @@ class GameWindow:
         self.btn_play.icon = self.ic_pause if self.board.is_playing\
             else self.ic_play
 
-    def init_board(self):
-        self.board = board.Board(self.board_size, on_finish=self.on_finish)
+    def init_board(self, start=None):
+        self.board = board.Board(self.board_size, on_finish=self.on_finish,
+                                 start=start)
         self.board.speakers = self.speaker
 
     def register_callbacks(self):
         for bot, pb_health in zip(sorted(self.board.bots,
                                          key=lambda b: b.team),
                                   self.health_bars):
-            bot.register_health_callback(lambda x:
-                                         pb_health.set_progress(x / 100))
+            bot.register_health_callback(lambda x, d=pb_health:
+                                         d.set_progress(x / 100))
             bot.register_gamelog_callback(self.gameLog.update_turns)
 
     def reset(self, event):
@@ -300,7 +310,6 @@ class Button(UIComponent):
         text_dim = [x * 1.2 for x in self._font.size(self.text)]
         if not rect:
             rect = pygame.Rect(0, 0, *text_dim)
-        print("rect.size", rect.size)
         super(Button, self).__init__(rect.size, rect.x, rect.y)
 
     def draw(self):
@@ -372,7 +381,6 @@ class ImageButton(UIComponent):
 class Progressbar(UIComponent):
 
     def __init__(self, rect, color, bgcolor):
-        print("colors:", color, bgcolor)
         self.color, self.bgcolor = color, bgcolor
         self.__progress = 0.5
         super(Progressbar, self).__init__(rect.size, rect.x, rect.y)
@@ -492,7 +500,6 @@ class Label(UIComponent):
     def text(self, new):
         self.__text = new
         self.state = Label.STATE_INVALID
-        print("updated text", new)
 
 
 def draw_roundrect(surface, rect, color, radius=0.4):
@@ -585,4 +592,3 @@ class GameLog(UIComponent):
 
     def reset(self):
         self.turnlist = GameLog.DEFAULT_TURNLIST.copy()
-        self.state = UIComponent.STATE_INVALID
