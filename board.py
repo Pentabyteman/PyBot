@@ -5,7 +5,7 @@ import sprite
 import random
 
 TYPE_FIELD, TYPE_WALL = 0, 1
-MAX_TURNS = 60
+MAX_TURNS = 180
 
 
 class Map:
