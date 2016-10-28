@@ -1,7 +1,7 @@
 # PyBot v1.1.2
 
 *******
-UPDATE: This version features major bug fixes. Be sure to allways download thr latest version
+UPDATE: This version features major bug fixes. Be sure to allways download the latest version
 *******
 
 Important Notice: It is vital to have the latest Python (3.5.4) installed, as well as pygame v1.9 and the time module.
