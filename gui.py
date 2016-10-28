@@ -148,9 +148,10 @@ class GameWindow:
         self.register_callbacks()
 
         # set ais when debug mode
-        for fsw, ai in zip(self.file_selectors, (ai1, ai2)):
-            fsw.path_name = "ai/" + ai
-        self.play(None)
+        if ai1 is not None and ai2 is not None:
+            for fsw, ai in zip(self.file_selectors, (ai1, ai2)):
+                fsw.path_name = "ai/" + ai
+            self.play(None)
 
     def draw(self):
         self.surface.fill((0, 0, 0, 0))  # clean up
