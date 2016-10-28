@@ -203,8 +203,8 @@ class GameWindow:
         for bot, pb_health in zip(sorted(self.board.bots,
                                          key=lambda b: b.team),
                                   self.health_bars):
-            bot.register_health_callback(lambda x:
-                                         pb_health.set_progress(x / 100))
+            bot.register_health_callback(lambda x, d=pb_health:
+                                         d.set_progress(x / 100))
             bot.register_gamelog_callback(self.gameLog.update_turns)
 
     def reset(self, event):
@@ -310,7 +310,6 @@ class Button(UIComponent):
         text_dim = [x * 1.2 for x in self._font.size(self.text)]
         if not rect:
             rect = pygame.Rect(0, 0, *text_dim)
-        print("rect.size", rect.size)
         super(Button, self).__init__(rect.size, rect.x, rect.y)
 
     def draw(self):
@@ -382,7 +381,6 @@ class ImageButton(UIComponent):
 class Progressbar(UIComponent):
 
     def __init__(self, rect, color, bgcolor):
-        print("colors:", color, bgcolor)
         self.color, self.bgcolor = color, bgcolor
         self.__progress = 0.5
         super(Progressbar, self).__init__(rect.size, rect.x, rect.y)
@@ -502,7 +500,6 @@ class Label(UIComponent):
     def text(self, new):
         self.__text = new
         self.state = Label.STATE_INVALID
-        print("updated text", new)
 
 
 def draw_roundrect(surface, rect, color, radius=0.4):
@@ -595,4 +592,3 @@ class GameLog(UIComponent):
 
     def reset(self):
         self.turnlist = GameLog.DEFAULT_TURNLIST.copy()
-        self.state = UIComponent.STATE_INVALID

@@ -235,8 +235,8 @@ class Robot(sprite.Sprite):
             elif cmd == "attack":
                 self.attack(int(arg))
         except Exception as e:
-            print("The AI failed to answer!", e)
-            self.game_over()
+            print("The AI of team {0} failed to answer!".format(self.team), e)
+            self.game_over(loser=self)
 
     def on_tick(self):
         result = self.animator.on_tick()
@@ -294,7 +294,7 @@ class Robot(sprite.Sprite):
         self.__health = max(new, 0)
         self._call_health_callbacks(self.__health)
         if self.__health <= 0:
-            self.game_over()
+            self.game_over(loser=self)
 
     def register_health_callback(self, func):
         self.health_callbacks.append(func)

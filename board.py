@@ -107,11 +107,13 @@ class Board:
     def on_event(self, event=None):
         pass
 
-    def game_over(self, winner=None):
-        if winner:
-            print("The game is over: Team {0} has won!".format(winner.team))
-        else:
+    def game_over(self, winner=None, loser=None):
+        if loser is not None:
+            winner = [b for b in self.bots if b != loser][0]
+        if winner is None:
             print("The game is over!")
+        else:
+            print("The game is over: Team {0} has won!".format(winner.team))
         if self.on_finish:
             self.on_finish()
 
@@ -132,7 +134,6 @@ class Board:
         if self.turns >= MAX_TURNS:
             # get winner: team with most fields
             team = self.map.get_most_team()
-            print("team with most fields", team)
             try:
                 bot = [b for b in self.bots if b.team == team][0]
             except KeyError:
