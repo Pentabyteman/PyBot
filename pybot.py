@@ -31,7 +31,7 @@ if sysconfig.get_python_version() != working_version:
 
 BOARD_SIZE = (1017, 1017)  # quadratisch praktisch gut
 WINDOW_SIZE = (1500, 1017)  # enough space for gui
-
+volume = 0.5
 
 class Game(App):
 
@@ -70,6 +70,7 @@ if __name__ == '__main__':
             speed = int(sys.argv[5]) == 1
             game = Game(display, ai1=ai1, ai2=ai2, start=start, speed=speed)
             debug = True
+            volume = int(sys.argv[6])*volume
         except:
             print("There is an error in your syntax! Starting normally!")
             game = Game(display)
@@ -79,7 +80,7 @@ if __name__ == '__main__':
     pygame.init()
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.mixer.init()
-    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.set_volume(volume)
     pygame.mixer.music.load('resources/bensound-pianomoment.mp3')
     pygame.mixer.music.play(-1)  # plays infinite loop
     game.exec_()
