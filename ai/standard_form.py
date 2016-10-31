@@ -20,9 +20,7 @@ def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
   #Attention:
   #If you try to attack a field where no robot stands, you loose automatically, so be sure to double-check this!
   
+  #"attack 0"
   #"attack 1"
-  #"attack 2
-  #"attack -1"
-  #"attack -2"
   
   return None #return movetype
