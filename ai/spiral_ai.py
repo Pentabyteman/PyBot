@@ -9,7 +9,7 @@ def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
     if position is not None and rotation is not None:
         pos = list(position)
         rot = rotation
-        passable, my_team, entity = ask_for_field(position[0], position[1])
+        my_team = ask_for_field(*position)[1]
 
     for i in range(0, 9):  # end is exclusive
         for j in range(0, 9):
