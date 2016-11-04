@@ -1,7 +1,5 @@
-import pygame
 import bot_exceptions
 import robot
-import sprite
 import random
 
 TYPE_FIELD, TYPE_WALL = 0, 1
@@ -46,38 +44,38 @@ class Map:
                 teams[field.team] += 1
         return max(teams, key=teams.get)  # sort by values
 
+    def compress(self):
+        width, height = len(self.fields[0]), len(self.fields)
+        res = [[None for _ in range(width)] for _ in range(height)]
+        for row, _ in enumerate(self.fields):
+            for col, field in enumerate(_):
+                res[row][col] = (field.kind, field.team)
+        return res
+
 
 class Board:
 
-    def __init__(self, size, shape=(9, 9), robot_count=2, on_finish=None,
+    def __init__(self, shape=(9, 9), on_finish=None,
                  start=None):
         self.shape = shape  # default 9 by 9
-        self.size = size  # actual size in pixels
         self.on_finish = on_finish
 
-        self.__speakers = None  # to play sounds
-
-        self.field_size = self.size[0] / 9, self.size[1] / 9
         obstacles = get_obstacles()
 
         # generate map
-        self.map = Map([[Field(self.field_size,
+        self.map = Map([[Field(
                                kind=(TYPE_WALL if (row, col) in obstacles
                                      else TYPE_FIELD))
                          for col in range(self.shape[1])]
                         for row in range(self.shape[0])])
 
         # n robots
-        ais = ["ai/test.py", "ai/other.py"]
         start_positions = [(2, 4, 0), (6, 4, 2)]
-        self.bots = [robot.Robot(self.field_size, team, self.map,
+        self.bots = [robot.Robot(team, self.map,
                                  self.game_over,
                                  start_positions[team][:-1],
-                                 start_positions[team][-1],
-                                 ais[team],)
-                     for team in range(robot_count)]
-        for bot in self.bots:
-            bot.speakers = self.speakers  # add speakers to the robots
+                                 start_positions[team][-1])
+                     for team in range(2)]
         if start == 1:
             self.bots.reverse()
         elif start is None:
@@ -85,24 +83,6 @@ class Board:
         self.__itbots = self._iter_bots()  # initialize bot generator
         self.turns = 0
         self.is_playing = False
-
-    def draw(self):
-        surf = pygame.Surface(self.size)
-        surf.fill((0, 0, 0))
-
-        # draw grid as background
-        for row, _ in enumerate(self.map.fields):
-            for col, _ in enumerate(_):
-                w, h = self.field_size
-                rect = pygame.Rect(col * w, row * h, w, h)
-                pygame.draw.rect(surf, (255, 255, 255), rect, 1)
-
-        # draw fields on top of it
-        for row, _ in enumerate(self.map.fields):
-            for col, field in enumerate(_):
-                x, y = col * self.field_size[0], row * self.field_size[1]
-                surf.blit(field.image, (x, y))
-        return surf
 
     def on_event(self, event=None):
         pass
@@ -124,12 +104,20 @@ class Board:
                            ais):
             bot.ai = ai
         self.is_playing = True
+        return self.map
 
     def on_turn(self):
         if not self.is_playing:
             return
         bot = self.next_bot()
-        bot.on_turn(MAX_TURNS - self.turns)
+        change = {}
+        move = bot.on_turn(MAX_TURNS - self.turns)  # e.g: move or attack
+        change[bot.team] = move
+        if move == "attack":
+            change[int(not bot.team)] = "hit"
+        else:
+            change[int(not bot.team)] = None
+
         self.turns += 1
         if self.turns >= MAX_TURNS:
             # get winner: team with most fields
@@ -140,6 +128,7 @@ class Board:
                 self.game_over()
             else:
                 self.game_over(winner=bot)
+        return {b.team: b.serialize(change[b.team]) for b in self.bots}
 
     def on_tick(self):
         for bot in self.bots:
@@ -159,39 +148,17 @@ class Board:
             else:
                 idx += 1
 
-    @property
-    def speakers(self):
-        return self.__speakers
 
-    @speakers.setter
-    def speakers(self, new):
-        self.__speakers = new
-        for bot in self.bots:
-            bot.speakers = new
+class Field():
 
-
-class Field(sprite.Sprite):
-
-    wall_image = None
-
-    def __init__(self, size, kind=TYPE_FIELD, team=None):
-        super(Field, self).__init__(size)
+    def __init__(self, kind=TYPE_FIELD, team=None):
         self.kind = kind
         self.entity = None
         self.team = None
-        if not Field.wall_image:
-            Field.wall_image = \
-                pygame.transform.scale(pygame.image.load("resources/wall.png"),
-                                       self.size)
 
     def __repr__(self):
         return "Field [{kind}]".format(kind="Field" if self.kind == TYPE_FIELD
                                        else "Wall")
-
-    def draw(self):
-        self.draw_background()
-        if self.entity:
-            self.surface.blit(self.entity.image, (0, 0))
 
     @property
     def entity(self):
@@ -202,27 +169,10 @@ class Field(sprite.Sprite):
         self.__entity = new
         if new is not None:
             self.team = new.team
-        self.state = sprite.Sprite.STATE_INVALID
 
     @property
     def passable(self):
         return self.kind != TYPE_WALL and self.entity is None
-
-    @property
-    def image(self):
-        if self.state == Field.STATE_INVALID or\
-                (self.entity is not None and
-                 self.entity.state == Field.STATE_INVALID):
-            self.draw()
-            self.state = Field.STATE_VALID
-        return self.surface
-
-    def draw_background(self):
-        if self.kind == TYPE_FIELD:
-            self.surface.fill((0, 0, 0, 0)) if self.team is None else\
-                self.surface.fill(robot.team_color(self.team, alpha=100))
-        elif self.kind == TYPE_WALL:
-            self.surface.blit(self.wall_image, (0, 0))
 
 
 def get_obstacles():
