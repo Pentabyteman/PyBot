@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-"
+
 import pygame
 from os.path import join
 import time
@@ -155,7 +158,7 @@ class Robot(sprite.Sprite):
         # validity of direction
         if not proportional:
             assert direction != 0 and -1 <= direction <= 1, "No valid movement"
-        # p: eigene position, d * (vorne/hinten): positionsÃ¤nderung
+        # p: eigene position, d * (vorne/hinten): positionsänderung
         self.pos = [p + (d * direction)
                     for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
         if self.speakers:

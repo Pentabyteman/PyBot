@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-"
+
 #This is the standard form your ai programm should follow
 #The spaces are left intentionally
 
