@@ -7,7 +7,7 @@
 # Most of the code is written "grauselig" on purpose
 
 
-def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
+def get_action(ask_for_field, turns_to_go, position=None, rotation=None):
     global pos, rot, my_team
     if position is not None and rotation is not None:
         pos = list(position)
