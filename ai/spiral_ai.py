@@ -1,10 +1,13 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-"
+
 # Written by Pentabyteman
 # This is for demonstration and training purposes only.
 # DON'T RELY ON THIS FOR THE TOURNAMENT
 # Most of the code is written "grauselig" on purpose
 
 
-def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
+def get_action(ask_for_field, turns_to_go, position=None, rotation=None):
     global pos, rot, my_team
     if position is not None and rotation is not None:
         pos = list(position)

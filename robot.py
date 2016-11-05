@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-"
+
 import pygame
 from os.path import join
 import time
@@ -133,7 +136,7 @@ class Robot(sprite.Sprite):
         electro = pygame.mixer.Sound('resources/Electro_Motor.wav')
         electro.set_volume(0.2)
         self.rotation += min(max(direction, -1), 1)
-        if self.rotation >= 3:
+        if self.rotation >= 4:
             self.rotation = 0
         elif self.rotation <= -1:
             self.rotation = 3
@@ -155,7 +158,7 @@ class Robot(sprite.Sprite):
         # validity of direction
         if not proportional:
             assert direction != 0 and -1 <= direction <= 1, "No valid movement"
-        # p: eigene position, d * (vorne/hinten): positionsÃ¤nderung
+        # p: eigene position, d * (vorne/hinten): positionsänderung
         self.pos = [p + (d * direction)
                     for p, d in zip(self.pos, DIRECTIONS[self.rotation])]
         if self.speakers:
@@ -223,10 +226,10 @@ class Robot(sprite.Sprite):
         else:
             pos, rot = None, None
         try:
-            move = self.ai.get_move(self.ask_for_field,
-                                    turns_to_go,
-                                    position=pos,
-                                    rotation=rot)
+            move = self.ai.get_action(self.ask_for_field,
+                                      turns_to_go,
+                                      position=pos,
+                                      rotation=rot)
             cmd, arg = move.split(" ")
             if cmd == "move":
                 self.move(int(arg))

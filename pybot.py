@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-"
+
 # MAIN FILE
 modules = ["pygame v1.9", "sysconfig", "time", "tkinter"]
 
@@ -31,18 +34,21 @@ if sysconfig.get_python_version() != working_version:
 
 BOARD_SIZE = (1017, 1017)  # quadratisch praktisch gut
 WINDOW_SIZE = (1500, 1017)  # enough space for gui
+DEFAULT_VOLUME = 0.5
 
 
 class Game(App):
 
-    def __init__(self, display, ai1=None, ai2=None, start=None, speed=False):
+    def __init__(self, display, ai1=None, ai2=None, start=None, speed=False,
+                 volume=DEFAULT_VOLUME):
         super(Game, self).__init__()
         self.display = display
 
         self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE,
                                      on_finish=self.stop,
                                      ai1=ai1, ai2=ai2,
-                                     start=start, speed=speed)
+                                     start=start, speed=speed,
+                                     volume=volume)
         self.last_time = time.time()
 
     def on_event(self, event):
@@ -63,13 +69,16 @@ if __name__ == '__main__':
     display = pygame.display.set_mode(WINDOW_SIZE)  # setup display
     # debug: --debug <ai1> <ai2> <starting_team> <speed (0 / 1)>
     speed, debug = False, False
+    volume = DEFAULT_VOLUME
     if "--debug" in sys.argv:
         try:
             ai1, ai2 = sys.argv[2:4]
             start = int(sys.argv[4])
             speed = int(sys.argv[5]) == 1
-            game = Game(display, ai1=ai1, ai2=ai2, start=start, speed=speed)
             debug = True
+            volume = int(sys.argv[6]) * volume
+            game = Game(display, ai1=ai1, ai2=ai2, start=start, speed=speed,
+                        volume=volume)
         except:
             print("There is an error in your syntax! Starting normally!")
             game = Game(display)
@@ -79,7 +88,7 @@ if __name__ == '__main__':
     pygame.init()
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.mixer.init()
-    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.set_volume(volume)
     pygame.mixer.music.load('resources/bensound-pianomoment.mp3')
     pygame.mixer.music.play(-1)  # plays infinite loop
     game.exec_()
