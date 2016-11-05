@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: iso-8859-15 -*-"
+# -*- coding: iso-8859-15 -*-
 
 pos, rot, rows_to_go, cols_to_go = 0, 0, 0, 0
 

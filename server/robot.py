@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: iso-8859-15 -*-"
+# -*- coding: iso-8859-15 -*-
 
 from bot_exceptions import IllegalMoveException, InvalidAiException
 import importlib.util as imputil

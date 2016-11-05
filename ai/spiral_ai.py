@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: iso-8859-15 -*-"
+# -*- coding: iso-8859-15 -*-
 
 # Written by Pentabyteman
 # This is for demonstration and training purposes only.
