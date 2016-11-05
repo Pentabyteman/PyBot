@@ -5,7 +5,11 @@
 # The spaces are left intentionally
 
 
-def get_action():
+def get_action(ask_for_field, turns_to_go, position=None, rotation=None):
+    # Watch out: You are only given the rotation and position at the first
+    # move. Every move after thay, you will have to calculate it yourself
+
+    # passable, team, is_entity = ask_for_field(row, col)
     # calculate best movements here
 
     # Attention:
