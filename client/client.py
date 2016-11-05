@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-"
+
 import socket_client
 from collections import deque
 import pygame

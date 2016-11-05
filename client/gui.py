@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-"
+
 import pygame
 import os
 from itertools import zip_longest

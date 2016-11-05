@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-"
+
 import pygame
 from os.path import join
 import time
