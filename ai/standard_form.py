@@ -5,7 +5,7 @@
 # The spaces are left intentionally
 
 
-def get_move():
+def get_action():
     # calculate best movements here
 
     # Attention:

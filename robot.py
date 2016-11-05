@@ -227,9 +227,9 @@ class Robot(sprite.Sprite):
             pos, rot = None, None
         try:
             move = self.ai.get_action(self.ask_for_field,
-                                    turns_to_go,
-                                    position=pos,
-                                    rotation=rot)
+                                      turns_to_go,
+                                      position=pos,
+                                      rotation=rot)
             cmd, arg = move.split(" ")
             if cmd == "move":
                 self.move(int(arg))
