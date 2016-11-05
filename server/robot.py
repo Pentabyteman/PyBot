@@ -113,7 +113,7 @@ class Robot():
         else:
             pos, rot = None, None
         try:
-            move = self.ai.get_move(self.ask_for_field,
+            move = self.ai.get_action(self.ask_for_field,
                                     turns_to_go,
                                     position=pos,
                                     rotation=rot)

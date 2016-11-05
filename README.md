@@ -1,10 +1,10 @@
-# PyBot v1.1.2
+# PyBotServer v1.0.0
 
 *******
-UPDATE: This version features major bug fixes. Be sure to allways download the latest version
+UPDATE: This is the first server version. You are, however, able to play local games
 *******
 
-Important Notice: It is vital to have the latest Python (3.5.4) installed, as well as pygame v1.9 and the time module.
+Important Notice: It is vital to have the latest Python (3.5.4) installed, as well as pygame v1.9, the time module and tkinter.
 
 Legal Notice: The background music is under a Creative Commons License music taken from http://www.bensound.com/royalty-free-music/cinematic/2. Special thanks to Bensound for sharing these files.
 

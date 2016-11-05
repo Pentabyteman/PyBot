@@ -4,7 +4,8 @@
 pos, rot, rows_to_go, cols_to_go = 0, 0, 0, 0
 
 
-def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
+def get_action(ask_for_field, turns_to_go, position=None,
+               rotation=None):
     global pos, rot, rows_to_go, cols_to_go
     if position is not None and rotation is not None:
         pos = list(position)
