@@ -34,8 +34,7 @@ def get_move(ask_for_field, turns_to_go, position=None, rotation=None):
         passable = False
         is_entity = False
     else:
-        passable, team, is_entity = ask_for_field(
-            field_ahead[0], field_ahead[1])
+        is_entity = ask_for_field(*field_ahead)[2]
 
     if is_entity:
         return "attack 1"
