@@ -23,7 +23,7 @@ class Speaker:
 class GameWindow:
 
     def __init__(self, size, board_size, on_finish=None, ai1=None, ai2=None,
-                 start=None, speed=False):
+                 start=None, speed=False, volume=0.5):
         # expects size only to be wider than board_size
         self.size = size
         self.speed = speed
@@ -33,7 +33,10 @@ class GameWindow:
         self.on_finish = on_finish
 
         self.last_time = time.time()
+        self.music_volume = pygame.mixer.music.get_volume()
         self.speaker = Speaker()
+        if volume <= 0:
+            self.speaker.muted = True
         self.init_board(start=start)
         self.surface = pygame.Surface(self.size)
 
@@ -64,7 +67,8 @@ class GameWindow:
                                     left_space.width * 0.25)
         self.ic_not_muted = pygame.image.load("resources/not_muted.png")
         self.ic_muted = pygame.image.load("resources/muted.png")
-        self.mute_btn = ImageButton(self.ic_not_muted, mute_btn_rect)
+        ic = self.ic_not_muted if volume > 0 else self.ic_muted
+        self.mute_btn = ImageButton(ic, mute_btn_rect)
         self.mute_btn.clicked = self.mute_sounds
         self.ui_components.add(self.mute_btn)
 
@@ -221,7 +225,6 @@ class GameWindow:
 
     def mute_sounds(self, event):
         if pygame.mixer.music.get_volume() > 0:
-            self.music_volume = pygame.mixer.music.get_volume()
             pygame.mixer.music.set_volume(0)
             self.speaker.muted = True
             self.mute_btn.icon = self.ic_muted
