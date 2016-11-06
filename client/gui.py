@@ -10,10 +10,22 @@ import board
 import tkinter
 from ui_components import ImageButton, Label, GameLog, FileSelectionWidget,\
     Progressbar, TextInputWidget, UIGroup, Button
+import settings
 
 # prepare file selection dialog
 root = tkinter.Tk()
 root.withdraw()
+
+# TODO: Valid escape keywords to add @ErichHasl please
+INFO_TEXT = """Welcome to PyBot {0}!
+This version includes a server implementation.
+Please enter username and server address in the two input fields
+provided.
+If you are having trouble to connect to a server,
+make sure that your computer is online and you
+have entered the correct server address.
+
+For troubleshooting, please visit www.github.com/Pentabyteman/PyBot/wiki""".format(settings.get_standard_settings()[2])
 
 
 class Speaker:
@@ -62,6 +74,7 @@ class ServerSelect(Window):
     def __init__(self, size, client, host="", username=""):
         super(ServerSelect, self).__init__(size)
         self.client = client
+        self.info_state = True
         heading_w, heading_h = self.rect.width * 0.3, self.rect.height * 0.1
         heading_rect = pygame.Rect(self.rect.width * 0.1,
                                    self.rect.height * 0.1,
@@ -72,7 +85,7 @@ class ServerSelect(Window):
                                  heading_rect.bottom + self.rect.height * 0.01,
                                  self.rect.width * 0.5,
                                  self.rect.height * 0.04)
-        self.login_widget = TextInputWidget(login_rect, "Username:",
+        self.login_widget = TextInputWidget(login_rect, "Username      :",
                                             (255, 255, 255, 255),
                                             (40, 40, 40, 255),
                                             30)
@@ -90,7 +103,7 @@ class ServerSelect(Window):
 
         conn_rect = pygame.Rect(self.rect.width * 0.125,
                                 server_rect.bottom + self.rect.height * 0.02,
-                                self.rect.width * 0.5,
+                                self.rect.width * 0.45,
                                 self.rect.height * 0.04)
         self.btn_conn = Button("Connect", conn_rect, 30)
         self.btn_conn.clicked = self.connect
@@ -99,9 +112,39 @@ class ServerSelect(Window):
         error_rect = pygame.Rect(self.rect.width * 0.125,
                                  conn_rect.bottom + self.rect.height * 0.02,
                                  self.rect.width * 0.5,
-                                 self.rect.height * 0.04)
+                                 self.rect.height * 0.4)
         self.error_label = Label("", error_rect, (255, 0, 0, 255), 30)
         self.ui_components.add(self.error_label)
+
+        info_rect = pygame.Rect(self.rect.width * 0.125,
+                                 conn_rect.bottom + self.rect.height * 0.1,
+                                 self.rect.width * 0.9,
+                                 self.rect.height * 0.4)
+        self.info_label = Label("", info_rect, (255, 255, 255, 255), 30)
+        self.ui_components.add(self.info_label)
+
+        info_btn_rect = pygame.Rect(self.rect.width * 0.625,
+                                    self.rect.height * 0.05,
+                                    self.rect.width * 0.25,
+                                    self.rect.width * 0.25)
+
+        # TODO: add question mark images @Pentabyteman
+        self.ic_no_info = pygame.image.load("resources/robot_red.png")
+        self.ic_info = pygame.image.load("resources/robot_blue.png")
+        self.info_image = self.ic_no_info
+        self.info_btn = ImageButton(self.info_image, info_btn_rect)
+        self.info_btn.clicked = self.show_info
+        self.ui_components.add(self.info_btn)
+
+    def show_info(self, event):
+        if self.info_state:
+            self.info_state = False
+            self.info_label.icon = self.ic_info
+            self.info_label.text = INFO_TEXT
+        else:
+            self.info_state = True
+            self.info_label.icon = self.ic_no_info
+            self.info_label.text = ""
 
     def connect(self, event):
         username = self.login_widget.text
@@ -123,6 +166,10 @@ class ServerSelect(Window):
             print("Invalid address", server)
             self.error_label.text = "Invalid server address"
             return
+
+        # IMPORTANT
+        settings.update_standard_settings(username, server)
+
         state = self.client.connect(host, port, username)
         if state:  # connected
             self.btn_conn.enabled, self.server_widget.enabled = False, False

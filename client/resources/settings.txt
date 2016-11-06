@@ -1,0 +1,3 @@
+USER: user
+HOST: host
+VERSION: 2.0

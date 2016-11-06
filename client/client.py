@@ -7,10 +7,15 @@ import pygame
 import app
 import gui
 import pickle
+import settings
 
 BOARD_SIZE = (1017, 1017)
 WINDOW_SIZE = (1500, 1017)
 IMAGE_PATH = "resources/animation_red/robot_red_normal.png"
+START_STRING = "Running PyBot {0} on {1}. with Python {2} \n ".format(settings.get_standard_settings[2],
+                                                               settings.get_pybot_platform(),
+                                                               settings.get_python_version())
+
 
 class Game(app.App):
 
@@ -18,8 +23,14 @@ class Game(app.App):
         super(Game, self).__init__()
         self.display = display
         self.client = GameClient()
+        try:
+            USER, HOST, Version = settings.get_standard_settings()
+        except:
+            print("ERROR: Settings not readable, restarting with factory settings")
+            USER = "user"
+            HOST = "host"
         self.window = gui.ServerSelect(WINDOW_SIZE, self.client,
-                                       host="localhost", username="fritz")
+                                       host=HOST, username=USER)
         self.window.has_connected = self.start_preparation
 
     def start_preparation(self):
@@ -75,7 +86,6 @@ class GameClient(socket_client.SocketClient):
             self.on_update(update)
 
     def on_init(self, init):
-        self.inits.append(init)
 
     def on_update(self, update):
         self.updates.append(update)
@@ -101,9 +111,10 @@ class GameClient(socket_client.SocketClient):
 
 if __name__ == '__main__':
     display = pygame.display.set_mode(WINDOW_SIZE)
-
+    print(START_STRING)
     # decorating the python window
-    pygame.display.set_caption('PyBot v2.0')
+    header = "PyBot {}".format(settings.get_standard_settings[2])
+    pygame.display.set_caption(header)
     icon = pygame.transform.scale(pygame.image.load(IMAGE_PATH), (32, 32))
     pygame.display.set_icon(icon)
 
