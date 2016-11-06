@@ -132,11 +132,10 @@ class ServerSelect(Window):
                                     self.rect.width * 0.25,
                                     self.rect.width * 0.25)
 
-        # TODO: add question mark images @Pentabyteman
-        self.ic_no_info = pygame.image.load("resources/robot_red.png")
-        self.ic_info = pygame.image.load("resources/robot_blue.png")
-        self.info_image = self.ic_no_info
-        self.info_btn = ImageButton(self.info_image, info_btn_rect)
+        # TODO: sqaure the images
+        self.ic_no_info = pygame.image.load("resources/question.png")
+        self.ic_info = pygame.image.load("resources/understood.png")
+        self.info_btn = ImageButton(self.ic_no_info, info_btn_rect)
         self.info_btn.clicked = self.show_info
         self.ui_components.add(self.info_btn)
 
@@ -176,9 +175,9 @@ class ServerSelect(Window):
         # TODO: Get this done properly
         if settings.get_standard_settings()[0] != 'true':
             frame = tkinter.Frame(root)
-            # What we need: A box that asks if the settings should be saved as default. (Yes, No)
-            # settings.enable_edits() / settings.disable_edits()
-            # A box underneath that if checked disables prompting: settings.disable_prompting()
+            # What we need: A box that asks if the settings should be saved. (Yes, No)
+            # settings.update_standard_settings / pass
+            # A box underneath that if checked either always updates or never updates (change EDIT_ENABLED and PROMPTING
             button = tkinter.Button(frame, text="Enable Editing", command=settings.enable_edits)
             button.pack()
 

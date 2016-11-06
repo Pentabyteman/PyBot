@@ -13,7 +13,7 @@ global USER, HOST, Version
 PROMPTING, EDIT, USER, HOST, Version = settings.get_standard_settings()
 BOARD_SIZE = (1017, 1017)
 WINDOW_SIZE = (1500, 1017)
-ICON_PATH = "resources/animation_red/robot_red_normal.png"
+ICON_PATH = "resources/pybot_logo_ver4.png"
 START_STRING = "Running PyBot {0} on {1}. with Python {2} \n ".format(Version, settings.get_pybot_platform(),
                                                                settings.get_python_version())
 
