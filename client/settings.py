@@ -27,7 +27,7 @@ def get_standard_settings():
             return settings_list
     except Exception as e:
         print("ERROR: Settings not readable. Forcing default settings.", e)
-        settings_list = ["user", "host", "2.0"]
+        settings_list = [None, None, "2.0"]
         return settings_list
 
 
