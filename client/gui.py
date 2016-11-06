@@ -242,7 +242,9 @@ class GamePreparation(Window):
 
         self.client.started_game = has_started
         self.client.players_changed = self.setup_labels
-        self.setup_labels()
+        if self.client.players_invalid:
+            self.setup_labels()
+            self.client.players_invalid = False
 
     def setup_labels(self):
         self.ui_components.remove(s for s in self.ui_components.sprites() if s
@@ -276,7 +278,7 @@ class GamePreparation(Window):
         self.client.send_ai(self.ai_selector.path_name)
 
     def play_game(self, event):
-        self.client.send("Start")
+        self.client.send("start")
         self.ai_selector.enabled = False
         self.btn_play.enabled = False
 

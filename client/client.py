@@ -59,6 +59,7 @@ class GameClient(socket_client.SocketClient):
         super(GameClient, self).__init__(*args, **kwargs)
         self.is_playing = False
         self.inits, self.updates = deque(), deque()
+        self.players_invalid = False
 
     def on_receive(self, query):
         args = query.split(b' ')
@@ -97,7 +98,7 @@ class GameClient(socket_client.SocketClient):
         pass
 
     def players_changed(self):
-        pass
+        self.players_invalid = True
 
     def send_ai(self, path):
         with open(path, 'r') as f:
