@@ -49,8 +49,7 @@ class SocketClient:
             except select.error:
                 self.socket.shutdown(2)
                 self.socket.close()
-                print("ERROR: Connection error")
-                break
+                print("FATAL ERROR: Connection error")
 
             if len(read_sockets) > 0:
                 raw_msglen = recvall(self.socket, 4)

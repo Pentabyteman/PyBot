@@ -15,7 +15,8 @@ import settings
 # prepare file selection dialog
 root = tkinter.Tk()
 root.withdraw()
-
+global USER, HOST, Version
+USER, HOST, Version = settings.get_standard_settings()
 # TODO: Valid escape keywords to add @ErichHasl please
 INFO_TEXT = """Welcome to PyBot {0}!
 This version includes a server implementation.
@@ -25,7 +26,7 @@ If you are having trouble to connect to a server,
 make sure that your computer is online and you
 have entered the correct server address.
 
-For troubleshooting, please visit www.github.com/Pentabyteman/PyBot/wiki""".format(settings.get_standard_settings()[2])
+For troubleshooting, please visit www.github.com/Pentabyteman/PyBot/wiki""".format(Version)
 
 
 class Speaker:

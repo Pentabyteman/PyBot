@@ -16,22 +16,26 @@ def get_python_version():
 # TODO: get this done! @Pentabyteman @EirchHasl
 def get_standard_settings():
     """This function returns the standard settings as a list"""
-    ioStream = open('resources/settings.txt', 'rt', encoding="ISO-8859-15")
-    text = str(ioStream)
-    row_list = text.split('\n')
-    settings_list = []
-    for row in row_list:
-        new_setting = row.split(': ')[1]
-        settings_list.append(settings_list)
-    return settings_list
+    try:
+        ioStream = open('resources/settings.txt', 'rt', encoding="ISO-8859-15")
+        text = str(ioStream)
+        row_list = text.split('\n')
+        settings_list = []
+        for row in row_list:
+            new_setting = row.split(': ')[1]
+            settings_list.append(settings_list)
+        return settings_list
+    except:
+        print("ERROR: Settings not readable. Forcing default settings.")
+        settings_list = ["user", "host", "2.0"]
+        return settings_list
 
 
 def update_standard_settings(user=None, host=None):
-    version = get_standard_settings()[2]
-    new_doc = "USER: {0}\nHOST: {1}\nVERSION: {2}".format(user, host, version)
-    open('resources/settings.text', 'w')
-    # TODO: delete all content and write the new_doc
-
-
-text = get_standard_settings()
-print(text)
+    try:
+        version = get_standard_settings()[2]
+        new_doc = "USER: {0}\nHOST: {1}\nVERSION: {2}".format(user, host, version)
+        open('resources/settings.text', 'w')
+        # TODO: delete all content and write the new_doc
+    except Exception as e:
+        print("FATAL ERROR: Settings not writable.", e)
