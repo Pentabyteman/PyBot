@@ -16,7 +16,7 @@ import settings
 root = tkinter.Tk()
 root.withdraw()
 global USER, HOST, Version
-USER, HOST, Version = settings.get_standard_settings()
+EDIT, USER, HOST, Version = settings.get_standard_settings()
 # TODO: Valid escape keywords to add @ErichHasl please
 INFO_TEXT = """Welcome to PyBot {0}!
 This version includes a server implementation.
@@ -137,7 +137,7 @@ class ServerSelect(Window):
         self.info_btn.clicked = self.show_info
         self.ui_components.add(self.info_btn)
 
-    def show_info(self):
+    def show_info(self, event):
         if self.info_state:
             self.info_state = False
             self.info_label.icon = self.ic_info

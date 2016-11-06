@@ -10,7 +10,7 @@ import pickle
 import settings
 
 global USER, HOST, Version
-USER, HOST, Version = settings.get_standard_settings()
+EDIT, USER, HOST, Version = settings.get_standard_settings()
 BOARD_SIZE = (1017, 1017)
 WINDOW_SIZE = (1500, 1017)
 ICON_PATH = "resources/animation_red/robot_red_normal.png"

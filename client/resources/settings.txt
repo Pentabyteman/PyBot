@@ -1,4 +1,4 @@
 EDIT_ENABLED: true
-USER:
-HOST: 
+USER: nils
+HOST: hubububu
 VERSION: 2.0
