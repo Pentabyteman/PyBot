@@ -137,7 +137,7 @@ class ServerSelect(Window):
         self.info_btn.clicked = self.show_info
         self.ui_components.add(self.info_btn)
 
-    def show_info(self, event):
+    def show_info(self):
         if self.info_state:
             self.info_state = False
             self.info_label.icon = self.ic_info

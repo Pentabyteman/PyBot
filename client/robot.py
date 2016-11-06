@@ -164,7 +164,7 @@ class Robot(sprite.Sprite):
 
     @property
     def pos(self):
-        return (self.__row, self.__col)
+        return self.__row, self.__col
 
     @pos.setter
     def pos(self, pos):

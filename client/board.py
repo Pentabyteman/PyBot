@@ -163,3 +163,4 @@ class Field(sprite.Sprite):
                 self.surface.fill(robot.team_color(self.team, alpha=100))
         elif self.kind == TYPE_WALL:
             self.surface.blit(self.wall_image, (0, 0))
+            

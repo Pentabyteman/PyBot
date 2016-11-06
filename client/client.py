@@ -13,7 +13,7 @@ global USER, HOST, Version
 USER, HOST, Version = settings.get_standard_settings()
 BOARD_SIZE = (1017, 1017)
 WINDOW_SIZE = (1500, 1017)
-IMAGE_PATH = "resources/animation_red/robot_red_normal.png"
+ICON_PATH = "resources/animation_red/robot_red_normal.png"
 START_STRING = "Running PyBot {0} on {1}. with Python {2} \n ".format(Version, settings.get_pybot_platform(),
                                                                settings.get_python_version())
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     # decorating the python window
     header = "PyBot {}".format(Version)
     pygame.display.set_caption(header)
-    icon = pygame.transform.scale(pygame.image.load(IMAGE_PATH), (32, 32))
+    icon = pygame.transform.scale(pygame.image.load(ICON_PATH), (32, 32))
     pygame.display.set_icon(icon)
 
     game = Game(display)

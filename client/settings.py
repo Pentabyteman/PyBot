@@ -33,10 +33,13 @@ def get_standard_settings():
 
 def update_standard_settings(user=None, host=None):
     try:
-        version = get_standard_settings()[2]
-        new_doc = "USER: {0}\nHOST: {1}\nVERSION: {2}".format(user, host, version)
-        with open('resources/settings.txt', 'w') as text:
-            text.seek(0)
-            text.write(new_doc)
+        if get_standard_settings()[0]:
+            version = get_standard_settings()[2]
+            new_doc = "EDIT_ENABLED: true\nUSER: {0}\nHOST: {1}\nVERSION: {2}".format(user, host, version)
+            with open('resources/settings.txt', 'w') as text:
+                text.seek(0)
+                text.write(new_doc)
+        else:
+            pass
     except Exception as e:
         print("FATAL ERROR: Settings not writable.", e)

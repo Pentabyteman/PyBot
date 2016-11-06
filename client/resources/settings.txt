@@ -1,3 +1,4 @@
+EDIT_ENABLED: true
 USER:
 HOST: 
 VERSION: 2.0
