@@ -16,7 +16,7 @@ import settings
 root = tkinter.Tk()
 root.withdraw()
 global USER, HOST, Version
-EDIT, USER, HOST, Version = settings.get_standard_settings()
+PROMPTING, EDIT, USER, HOST, Version = settings.get_standard_settings()
 # TODO: Valid escape keywords to add @ErichHasl please
 INFO_TEXT = """Welcome to PyBot {0}!
 This version includes a server implementation.
@@ -170,6 +170,14 @@ class ServerSelect(Window):
 
         # IMPORTANT
         settings.update_standard_settings(username, server)
+        # TODO: Get this done properly
+        if settings.get_standard_settings()[0] != 'true':
+            frame = tkinter.Frame(root)
+            # What we need: A box that asks if the settings should be saved as default. (Yes, No)
+            # settings.enable_edits() / settings.disable_edits()
+            # A box underneath that if checked disables prompting: settings.disable_prompting()
+            button = tkinter.Button(frame, text="Enable Editing", command=settings.enable_edits)
+            button.pack()
 
         state = self.client.connect(host, port, username)
         if state:  # connected
