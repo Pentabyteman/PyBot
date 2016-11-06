@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: iso-8859-15 -*-"
+# -*- coding: iso-8859-15 -*-
 
 # MAIN FILE
 modules = ["pygame v1.9", "sysconfig", "time", "tkinter"]
