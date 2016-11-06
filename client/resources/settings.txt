@@ -1,3 +1,0 @@
-USER: nils
-HOST: host
-VERSION: 2.0
