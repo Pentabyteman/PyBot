@@ -20,13 +20,13 @@ class UIGroup(pygame.sprite.Group):
         request_focus = False
         for sprite in self.sprites():
             if sprite.update(event):
-                print("wants focus")
+                # print("wants focus")
                 if self.focussed_sprite is not None and\
                    self.focussed_sprite != sprite:
                     self.focussed_sprite.focussed = False
                 sprite.focussed = True
                 self.focussed_sprite = sprite
-                print("now focussed", self.focussed_sprite)
+                # print("now focussed", self.focussed_sprite)
                 request_focus = True
         return request_focus
 
@@ -88,7 +88,7 @@ class UIComponent(pygame.sprite.DirtySprite):
             print("Reached target")
             self.target, self.step = None, None
         else:
-            print("not there yet", self.rect.topleft, self.target)
+            print("Not there yet", self.rect.topleft, self.target)
             self.virt_pos = [(own + step)
                              for own, step in zip(self.virt_pos,
                                                   self.step)]

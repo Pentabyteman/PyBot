@@ -10,7 +10,7 @@ import pickle
 
 BOARD_SIZE = (1017, 1017)
 WINDOW_SIZE = (1500, 1017)
-
+IMAGE_PATH = "resources/animation_red/robot_red_normal.png"
 
 class Game(app.App):
 
@@ -101,5 +101,11 @@ class GameClient(socket_client.SocketClient):
 
 if __name__ == '__main__':
     display = pygame.display.set_mode(WINDOW_SIZE)
+
+    # decorating the python window
+    pygame.display.set_caption('PyBot v2.0')
+    icon = pygame.transform.scale(pygame.image.load(IMAGE_PATH), (32, 32))
+    pygame.display.set_icon(icon)
+
     game = Game(display)
     game.exec_()

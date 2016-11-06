@@ -221,11 +221,11 @@ class GamePreparation(Window):
         if not os.path.isfile(self.ai_selector.path_name):
             self.lbl_error.text = "Invalid ai path"
             return
-        print("sending ai")
+        print("Sending ai")
         self.client.send_ai(self.ai_selector.path_name)
 
     def play_game(self, event):
-        self.client.send("start")
+        self.client.send("Start")
         self.ai_selector.enabled = False
         self.btn_play.enabled = False
 
@@ -358,7 +358,7 @@ class GameWindow(Window):
             self.mute_btn.icon = self.ic_not_muted
 
     def set_initial(self, initial):
-        print("setting initial setup of game window")
+        print("Setting initial setup of game window")
         self.board.set_initial(initial)
 
         # calculate some rects for the space available for the gui

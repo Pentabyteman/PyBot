@@ -11,7 +11,7 @@ class SocketClient:
 
     def __init__(self):
         self.terminated = False
-        print("initialized socket client")
+        print("Initialized socket client")
 
     def connect(self, host, port, username):
         try:
@@ -21,7 +21,7 @@ class SocketClient:
             self.start()
             return True
         except socket.error:
-            print("Error while connecting!")
+            print("ERROR: Error while connecting!")
             return False
 
     def start(self):
@@ -39,7 +39,7 @@ class SocketClient:
             msg = struct.pack('>I', len(data)) + data.encode()
             self.socket.sendall(msg)
         except Exception as e:
-            print("Error while sending", e)
+            print("ERROR: Error while sending", e)
 
     def handle_server(self):
         while not self.terminated:
@@ -49,7 +49,7 @@ class SocketClient:
             except select.error:
                 self.socket.shutdown(2)
                 self.socket.close()
-                print("Connection error")
+                print("ERROR: Connection error")
                 break
 
             if len(read_sockets) > 0:
