@@ -86,10 +86,12 @@ class ServerSelect(Window):
                                  heading_rect.bottom + self.rect.height * 0.01,
                                  self.rect.width * 0.5,
                                  self.rect.height * 0.04)
+        hintcolor = (100, 100, 100, 255)
         self.login_widget = TextInputWidget(login_rect, "Username      :",
                                             (255, 255, 255, 255),
                                             (40, 40, 40, 255),
-                                            30)
+                                            30, hint="Enter username",
+                                            hintcolor=hintcolor)
         self.login_widget.text = username
         self.ui_components.add(self.login_widget)
 
@@ -98,7 +100,8 @@ class ServerSelect(Window):
         self.server_widget = TextInputWidget(server_rect, "Server address:",
                                              (255, 255, 255, 255),
                                              (40, 40, 40, 255),
-                                             30)
+                                             30, hint="Enter server address",
+                                             hintcolor=hintcolor)
         self.server_widget.text = host
         self.ui_components.add(self.server_widget)
 
@@ -118,9 +121,9 @@ class ServerSelect(Window):
         self.ui_components.add(self.error_label)
 
         info_rect = pygame.Rect(self.rect.width * 0.125,
-                                 conn_rect.bottom + self.rect.height * 0.1,
-                                 self.rect.width * 0.9,
-                                 self.rect.height * 0.4)
+                                conn_rect.bottom + self.rect.height * 0.1,
+                                self.rect.width * 0.9,
+                                self.rect.height * 0.4)
         self.info_label = Label("", info_rect, (255, 255, 255, 255), 30)
         self.ui_components.add(self.info_label)
 
@@ -247,7 +250,9 @@ class GamePreparation(Window):
 
         self.client.started_game = has_started
         self.client.players_changed = self.setup_labels
-        self.setup_labels()
+        if self.client.players_invalid:
+            self.setup_labels()
+            self.client.players_invalid = False
 
     def setup_labels(self):
         self.ui_components.remove(s for s in self.ui_components.sprites() if s
@@ -281,7 +286,7 @@ class GamePreparation(Window):
         self.client.send_ai(self.ai_selector.path_name)
 
     def play_game(self, event):
-        self.client.send("Start")
+        self.client.send("start")
         self.ai_selector.enabled = False
         self.btn_play.enabled = False
 

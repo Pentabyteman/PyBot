@@ -378,13 +378,17 @@ class Label(UIComponent):
 
 class TextInputField(HoverableComponent):
 
-    def __init__(self, rect, fg_color, bg_color, text_size=15):
+    def __init__(self, rect, fg_color, bg_color, text_size=15, hint="",
+                 hintcolor=None):
         super(TextInputField, self).__init__(rect)
         self.text, self.fg_color, self.bg_color = [], fg_color, bg_color
         self._font = pygame.font.Font("resources/fantasque.ttf", text_size)
         self.cursor, self.max_len = 0, 50
         self.colors = {"bg": ((100, 100, 100, 255), bg_color),
                        "fg": ((0, 0, 0, 255), fg_color)}
+        self.hint, self.hintcolor = hint, hintcolor if hintcolor is not None\
+            else fg_color
+        print("initialized with hint", hint)
 
     def __repr__(self):
         return "TextInputField <{}>".format(self.text)
@@ -392,7 +396,12 @@ class TextInputField(HoverableComponent):
     def draw(self):
         self._image.fill((0, 0, 0, 0))
         draw_roundrect(self._image, self._image.get_rect(), self._bgcolor())
-        text = self._font.render("".join(self.text), True, self._fgcolor())
+        if len(self.text) == 0:
+            print("rendering hint", self.hint)
+            text = self._font.render(self.hint, True, self.hintcolor)
+        else:
+            print("rendering text")
+            text = self._font.render(self.text, True, self._fgcolor())
         if self.focussed:
             # draw cursor
             x_pos = self._font.size("".join(self.text[:self.cursor]))[0]
@@ -409,7 +418,16 @@ class TextInputField(HoverableComponent):
     def text(self, new):
         self.__text = new
         self.cursor = len(new)
-        self.state = Label.STATE_INVALID
+        self.state = UIComponent.STATE_INVALID
+
+    @property
+    def hint(self):
+        return self.__hint
+
+    @hint.setter
+    def hint(self, new):
+        self.__hint = new
+        self.state = UIComponent.STATE_INVALID
 
     def key_typed(self, key):
         self.state = UIComponent.STATE_INVALID
@@ -431,7 +449,8 @@ class TextInputField(HoverableComponent):
 
 class TextInputWidget(UIWidget):
 
-    def __init__(self, rect, label_text, fg_color, bg_color, text_size=15):
+    def __init__(self, rect, label_text, fg_color, bg_color, text_size=15,
+                 hint="", hintcolor=None):
         super(TextInputWidget, self).__init__(rect)
 
         label_rect = pygame.Rect(0, 0, self.rect.width * 0.4,
@@ -443,7 +462,8 @@ class TextInputWidget(UIWidget):
                               in_height)
         label = Label(label_text, label_rect, fg_color, text_size)
         self.add(label)
-        self.in_field = TextInputField(in_rect, fg_color, bg_color, text_size)
+        self.in_field = TextInputField(in_rect, fg_color, bg_color, text_size,
+                                       hint, hintcolor)
         self.add(self.in_field)
 
     @property
