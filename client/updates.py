@@ -11,7 +11,7 @@ def check_for_updates():
     print("Checking for updates")
     tag_liste = []
     url = "https://github.com/Pentabyteman/PyBot/releases/tag/v"
-    currentVersion = settings.get_standard_settings()[3]
+    currentVersion = settings.get_standard_settings()[4]
     major, minor, smallest = currentVersion.split('.')
     for i in range(1, 7):
         new_tag = "{}.{}.{}".format(int(major)+UPDATE_DICTIONARY[i][0], int(minor)+UPDATE_DICTIONARY[i][1], int(smallest)+UPDATE_DICTIONARY[i][2])
