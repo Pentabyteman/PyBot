@@ -13,7 +13,6 @@ def get_python_version():
     python_vers = str(sysconfig.get_python_version())
     return python_vers
 
-# TODO: get this done! @Pentabyteman @EirchHasl
 def get_standard_settings():
     """This function returns the standard settings as a list"""
     try:
@@ -30,7 +29,7 @@ def get_standard_settings():
         settings_list = ['none', "", "", "2.0"]
         return settings_list
 
-
+    
 def update_standard_settings(user=None, host=None):
     try:
         if user != get_standard_settings()[1] or host != get_standard_settings()[2]
