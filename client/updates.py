@@ -20,10 +20,11 @@ def check_for_updates():
         try:
             checking_url = str(url + tag)
             if str(urllib.request.urlopen(checking_url).getcode()) == "200":
-              print("NOTICE: UPDATE AVAILABLE")
-              return "update"
+                print("NOTICE: UPDATE AVAILABLE")
+                return "update"
         except Exception as e:
             pass
     #If we got to here, no update exists
     print("No updates available")
+    return None
    
