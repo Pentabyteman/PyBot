@@ -9,7 +9,7 @@ import time
 import board
 import tkinter
 from ui_components import ImageButton, Label, GameLog, FileSelectionWidget,\
-    Progressbar, TextInputWidget, UIGroup, Button
+    Progressbar, TextInputWidget, UIGroup, Button, ListView
 import settings
 
 # prepare file selection dialog
@@ -143,7 +143,7 @@ class ServerSelect(Window):
         if self.info_state:
             self.info_state = False
             self.info_label.icon = self.ic_no_info
-            self.info_label.text = INFO_TEXT.format(self.version)
+            self.info_label.text = INFO_TEXT.format(self.setup["version"])
         else:
             self.info_state = True
             self.info_label.icon = self.ic_info
@@ -186,6 +186,49 @@ class ServerSelect(Window):
 
     def has_connected(self):
         pass
+
+
+class HubWindow(Window):
+
+    def __init__(self, size, client, setup):
+        super(HubWindow, self).__init__(size)
+        self.client = client
+        self.setup = setup
+
+        btn_queue_rect = pygame.Rect(self.rect.width * 0.2,
+                                     self.rect.height * 0.2,
+                                     self.rect.width * 0.25,
+                                     self.rect.height * 0.1)
+        btn_queue = Button("Join queue", btn_queue_rect, 30)
+        btn_queue.clicked = self.join_queue
+        self.ui_components.add(btn_queue)
+
+        lblp_rect = pygame.Rect(self.rect.width * 0.7,
+                                self.rect.height * 0.05,
+                                self.rect.width * 0.25,
+                                self.rect.height * 0.05)
+        lbl_players = Label("Players", lblp_rect, (255, 255, 255, 255), 30)
+        self.ui_components.add(lbl_players)
+
+        lv_rect = pygame.Rect(self.rect.width * 0.71,
+                              lblp_rect.bottom + self.rect.height * 0.01,
+                              self.rect.width * 0.25,
+                              self.rect.height * 0.5)
+        self.lv_players = ListView(lv_rect, (255, 255, 255, 255),
+                                   text_size=25)
+        self.ui_components.add(self.lv_players)
+        self.client.players_changed = self.update_players
+        if self.client.players_invalid:
+            self.update_players()
+            self.client.players_invalid = False
+
+    def update_players(self):
+        print("update players", self.client.players)
+        self.lv_players.entries = [p for p in self.client.players
+                                   if self.setup["username"] != p]
+
+    def join_queue(self, event):
+        self.client.send("queue join")
 
 
 class GamePreparation(Window):

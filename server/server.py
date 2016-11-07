@@ -8,6 +8,35 @@ import board
 import time
 
 
+class HubServer(network.Hub):
+
+    def __init__(self, network):
+        super(HubServer, self).__init__(network)
+        self.queue = []
+
+    def on_input(self, user, cmd, body):
+        super(HubServer, self).on_input(user, cmd, body)
+        if cmd == "queue":
+            if body == "join" and user not in self.queue:
+                self.queue.append(user)
+                if len(self.queue) >= 2:
+                    self.match_queue()
+            elif body == "leave" and user in self.queue:
+                self.queue.remove(user)
+            print("Current queue", self.queue)
+
+    def match_queue(self):  # tries to match users in queue
+        while len(self.queue) >= 2:
+            available_servers = [s for s in self.network.servers if type(s) ==
+                                 GameServer and s.available]
+            if len(available_servers) < 1:
+                break
+            game_server = available_servers[0]
+            for _ in range(2):  # get first 2
+                self.network.move(self.queue[0], game_server)  # move
+                del self.queue[0]  # delete from queue
+
+
 class GameServer(network.VirtualServer):
 
     def __init__(self, network):
@@ -36,6 +65,8 @@ class GameServer(network.VirtualServer):
                 self.last_time = time.time()
         print("Game has finished")
         self.send_all("finished")
+        while len(self.users) > 0:
+            self.kick(self.users[0])
 
     def stop_game(self):
         self._running = False
@@ -74,12 +105,16 @@ class GameServer(network.VirtualServer):
             with open(ai_path(user.name), 'w+') as f:
                 f.write(body)
 
+    @property
+    def available(self):
+        return not self._running and len(self.users) < 2
+
 
 def ai_path(username):
     return os.path.join("ai", "{0}_ai.py".format(username))
 
 
 if __name__ == '__main__':
-    nw = network.Network()
+    nw = network.Network(HubServer)
     game_server = GameServer(nw)
     nw.servers.append(game_server)

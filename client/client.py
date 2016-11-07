@@ -20,9 +20,26 @@ class Game(app.App):
     def __init__(self, display, setup):
         super(Game, self).__init__()
         self.display = display
+        self.setup = setup
         self.client = GameClient()
-        self.window = gui.ServerSelect(WINDOW_SIZE, self.client, setup)
-        self.window.has_connected = self.start_preparation
+        self.client.on_move = self.update_window
+        self.window = gui.ServerSelect(WINDOW_SIZE, self.client, self.setup)
+        self.window.has_connected = self.lobby_view
+
+    def update_window(self, server):
+        if server == 0:
+            self.lobby_view()
+        elif server >= 0:
+            self.game_view()
+
+    def lobby_view(self):
+        self.window = gui.HubWindow(WINDOW_SIZE, self.client, self.setup)
+
+    def game_view(self):
+        if self.client.is_playing:
+            self.start_game()
+        else:
+            self.start_preparation()
 
     def start_preparation(self):
         self.window = gui.GamePreparation(WINDOW_SIZE, self.client,
@@ -67,6 +84,8 @@ class GameClient(socket_client.SocketClient):
                 self.started_game()
             self.is_playing = True
             self.playing_changed(self.is_playing)
+        elif key == 'finished':
+            self.is_playing = False
         elif key == "players":
             self.players = [x.decode("utf-8") for x in body.split(b" ")]
             self.players_changed()
@@ -76,12 +95,17 @@ class GameClient(socket_client.SocketClient):
         elif key == "update":
             update = pickle.loads(body)
             self.on_update(update)
+        elif key == "moved":
+            self.on_move(int(body))
 
     def on_init(self, init):
         self.inits.append(init)
 
     def on_update(self, update):
         self.updates.append(update)
+
+    def on_move(self, server):  # user was moved to server
+        pass
 
     def start_game(self):
         print("starting game")

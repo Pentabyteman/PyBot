@@ -4,11 +4,15 @@ from threading import Thread
 
 class Network(Server):
 
-    def __init__(self):
+    def __init__(self, lobby=None):
         super(Network, self).__init__()
         self.start()
         self.servers = []
-        self.lobby = Hub(self)
+        if not lobby:
+            self.lobby = Hub(self)
+        else:
+            print("initializing with", lobby)
+            self.lobby = lobby(self)
         self.servers.append(self.lobby)  # server 0 is lobby
         # self.servers.extend([LobbyServer(self) for _ in range(5)])
 
@@ -52,6 +56,7 @@ class Network(Server):
 
         if user.server is not None:
             user.server.leave(user)
+        user.connection.send("moved {}".format(target.id))
         target.join(user)
 
 
@@ -97,6 +102,9 @@ class VirtualServer:
 
     def on_leave(self, user):
         pass
+
+    def kick(self, user):
+        self.network.move(user, 0)
 
     def handle_input(self, user, query):
         args = query.split(" ", 1)

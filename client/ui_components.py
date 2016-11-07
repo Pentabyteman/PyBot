@@ -473,6 +473,42 @@ class TextInputWidget(UIWidget):
         self.in_field.text = list(new)
 
 
+class ListView(UIComponent):
+
+    def __init__(self, rect, color, entries=None, text_size=15):
+        super(ListView, self).__init__(rect.size, rect.x, rect.y)
+        if not entries:
+            entries = []
+        self.entries = entries
+        self.color = color
+        self._font = pygame.font.Font("resources/fantasque.ttf", text_size)
+        self.line_height = self._font.size("Gj")[1] * 1.1
+
+    def draw(self):
+        self._image.fill((0, 0, 0, 0))
+        for idx, entry in enumerate(self.entries):
+            text = self._font.render(entry, True, self.color)
+            text_pos = text.get_rect(top=idx * self.line_height)
+            self._image.blit(text, text_pos)
+
+    def add(self, entry):
+        self.entries.append(entry)
+        self.state = UIComponent.STATE_INVALID
+
+    def remove(self, entry):
+        self.entries.remove(entry)
+        self.state = UIComponent.STATE_INVALID
+
+    @property
+    def entries(self):
+        return self.__entries
+
+    @entries.setter
+    def entries(self, new):
+        self.__entries = new
+        self.state = UIComponent.STATE_INVALID
+
+
 def draw_roundrect(surface, rect, color, radius=0.4):
 
     rect = pygame.Rect(rect)
