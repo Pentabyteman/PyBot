@@ -11,6 +11,11 @@ import tkinter
 from ui_components import ImageButton, Label, GameLog, FileSelectionWidget,\
     Progressbar, TextInputWidget, UIGroup, Button
 import settings
+from PyQt5.QtWidgets import QWidget, QCheckBox, QPushButton, QToolTip, QDesktopWidget, QApplication
+from PyQt5.QtCore import Qt, QCoreApplication
+from PyQt5.QtGui import QFont
+import sys
+
 
 # prepare file selection dialog
 root = tkinter.Tk()
@@ -27,6 +32,67 @@ have entered the correct server address.
 For troubleshooting, please visit
 www.github.com/Pentabyteman/PyBot/wiki"""
 
+
+class Updating_Field(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        qbtn = QPushButton('Update', self)
+        qbtn.clicked.connect(self.update)
+        QToolTip.setFont(QFont('SansSerif', 10))
+        self.setToolTip('This will <b>update</b> your settings')
+        qbtn.resize(qbtn.sizeHint())
+        qbtn.move(20, 10)
+
+        qbtn = QPushButton("Don't Update", self)
+        qbtn.clicked.connect(self.no_update)
+        QToolTip.setFont(QFont('SansSerif', 10))
+        self.setToolTip("This <b>won't update</b> your settings")
+        qbtn.resize(qbtn.sizeHint())
+        qbtn.move(160, 10)
+
+        cb_always = QCheckBox('Always Update', self)
+        cb_always.move(20, 40)
+        cb_always.stateChanged.connect(self.changeAlwaysUpdating)
+
+        cb_never = QCheckBox('Never Update', self)
+        cb_never.move(160, 40)
+        cb_never.stateChanged.connect(self.changeNeverUpdating)
+
+        self.setGeometry(0, 0, 300, 80)
+        self.setWindowTitle('Update Settings')
+        self.center()
+        self.show()
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+    def update(self):
+        # TODO: How to get user?
+        settings.update_standard_settings(host, user)
+        QCoreApplication.instance().quit()
+
+    def no_update(self):
+        QCoreApplication.instance().quit()
+
+
+    def changeAlwaysUpdating(self, state):
+        if state == Qt.Checked:
+            pass
+        else:
+            pass
+
+    def changeNeverUpdating(selfself, state):
+        if state == Qt.Checked:
+            pass
+        else:
+            pass
 
 class Speaker:
 
@@ -69,69 +135,16 @@ class Window:
         self.state = Window.STATE_INVALID
 
 
-class ServerSelect(Window):
-
-    def __init__(self, size, client, setup):
-        super(ServerSelect, self).__init__(size)
+class ServerSelect(QWidget, size, client, setup):
+    def __init_(self):
+        super().__init__()
         self.client = client
         self.info_state = True
         self.setup = setup
-        heading_w, heading_h = self.rect.width * 0.3, self.rect.height * 0.1
-        heading_rect = pygame.Rect(self.rect.width * 0.1,
-                                   self.rect.height * 0.1,
-                                   heading_w, heading_h)
         self.heading = Label("PyBot", heading_rect, (255, 255, 255, 255), 90)
-        self.ui_components.add(self.heading)
-        login_rect = pygame.Rect(self.rect.width * 0.125,
-                                 heading_rect.bottom + self.rect.height * 0.01,
-                                 self.rect.width * 0.5,
-                                 self.rect.height * 0.04)
-        hintcolor = (100, 100, 100, 255)
-        self.login_widget = TextInputWidget(login_rect, "Username      :",
-                                            (255, 255, 255, 255),
-                                            (40, 40, 40, 255),
-                                            30, hint="Enter username",
-                                            hintcolor=hintcolor)
-        self.login_widget.text = setup["username"]
-        self.ui_components.add(self.login_widget)
+        self.initUI()
 
-        server_rect = login_rect.copy()
-        server_rect.top = login_rect.bottom + self.rect.height * 0.01
-        self.server_widget = TextInputWidget(server_rect, "Server address:",
-                                             (255, 255, 255, 255),
-                                             (40, 40, 40, 255),
-                                             30, hint="Enter server address",
-                                             hintcolor=hintcolor)
-        self.server_widget.text = setup["host"]
-        self.ui_components.add(self.server_widget)
-
-        conn_rect = pygame.Rect(self.rect.width * 0.125,
-                                server_rect.bottom + self.rect.height * 0.02,
-                                self.rect.width * 0.45,
-                                self.rect.height * 0.04)
-        self.btn_conn = Button("Connect", conn_rect, 30)
-        self.btn_conn.clicked = self.connect
-        self.ui_components.add(self.btn_conn)
-
-        error_rect = pygame.Rect(self.rect.width * 0.125,
-                                 conn_rect.bottom + self.rect.height * 0.02,
-                                 self.rect.width * 0.5,
-                                 self.rect.height * 0.4)
-        self.error_label = Label("", error_rect, (255, 0, 0, 255), 30)
-        self.ui_components.add(self.error_label)
-
-        info_rect = pygame.Rect(self.rect.width * 0.125,
-                                conn_rect.bottom + self.rect.height * 0.1,
-                                self.rect.width * 0.9,
-                                self.rect.height * 0.4)
-        self.info_label = Label("", info_rect, (255, 255, 255, 255), 30)
-        self.ui_components.add(self.info_label)
-
-        info_btn_rect = pygame.Rect(self.rect.width * 0.625,
-                                    self.rect.height * 0.05,
-                                    self.rect.width * 0.25,
-                                    self.rect.width * 0.25)
-
+    def initUI(self, ):
         # TODO: sqaure the images
         self.ic_no_info = pygame.image.load("resources/question.png")
         self.ic_info = pygame.image.load("resources/understood.png")
@@ -171,8 +184,10 @@ class ServerSelect(Window):
             return
 
         # IMPORTANT
-        self.setup["username"], self.setup["host"] = username, host
-        settings.update_standard_settings(self.setup)
+        if username != self.setup["username"] or host != self.setup["host"]:
+            app = QApplication(sys.argv)
+            ex = Updating_Field(username, host)
+            sys.exit(app.exec_())
 
         state = self.client.connect(host, port, username)
         if state:  # connected

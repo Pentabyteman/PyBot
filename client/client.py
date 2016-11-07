@@ -3,50 +3,47 @@
 
 import socket_client
 from collections import deque
-import pygame
-import app
-import gui
 import pickle
 import settings
 import updates
 
+
+
 BOARD_SIZE = (1017, 1017)
-WINDOW_SIZE = (1500, 1017)
-ICON_PATH = "resources/pybot_logo_ver4.png"
+WINDOW_SIZE = [1500, 1017]
+global ICON_PATH
+ICON_PATH= "resources/pybot_logo_ver4.png"
+
+import sys
+from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication
+from PyQt5.QtGui import QIcon
 
 
-class Game(app.App):
+class Window(QWidget):
+    def __init__(self):
+        super().__init__()
 
-    def __init__(self, display, setup):
-        super(Game, self).__init__()
-        self.display = display
-        self.client = GameClient()
-        self.window = gui.ServerSelect(WINDOW_SIZE, self.client, setup)
-        self.window.has_connected = self.start_preparation
+        self.initUI()
 
-    def start_preparation(self):
-        self.window = gui.GamePreparation(WINDOW_SIZE, self.client,
-                                          has_started=self.start_game)
+    def initUI(self):
+        self.setGeometry(300, 300, 300, 220)
+        self.center()
 
-    def start_game(self):
-        self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE,
-                                     client=self.client,
-                                     on_finish=self.stop)
+        setup = settings.get_standard_settings()
+        header = "PyBot {}".format(setup["version"])
+        self.setWindowTitle(header)
+        self.setWindowIcon(QIcon(ICON_PATH))
+        info = "Running PyBot {0} on {1}. with Python {2} \n " \
+            .format(setup["version"], settings.get_pybot_platform(),
+                    settings.get_python_version())
+        print(info)
+        self.show()
 
-    def stop(self, *args):
-        super(Game, self).stop(*args)
-        self.client.disconnect()
-
-    def on_event(self, event):
-        self.window.on_event(event)
-
-    def on_tick(self):
-        self.window.on_tick()
-
-    def on_render(self):
-        self.display.fill((255, 255, 255))
-        self.display.blit(self.window.image, (0, 0))
-        pygame.display.flip()
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
 
 class GameClient(socket_client.SocketClient):
@@ -103,21 +100,8 @@ class GameClient(socket_client.SocketClient):
 
 
 if __name__ == '__main__':
-    display = pygame.display.set_mode(WINDOW_SIZE)
-    setup = settings.get_standard_settings()
-    info = "Running PyBot {0} on {1}. with Python {2} \n "\
-        .format(setup["version"], settings.get_pybot_platform(),
-                settings.get_python_version())
-    print(info)
-    # decorating the python window
-    header = "PyBot {}".format(setup["version"])
-    pygame.display.set_caption(header)
-    icon = pygame.transform.scale(pygame.image.load(ICON_PATH), (32, 32))
-    pygame.display.set_icon(icon)
-    # Checking for updates
-    if updates.check_for_updates(setup["version"]):
-        # import tkinter
-        # tkinter.messagebox.showwarning('Updates', 'There is a new version of PyBot available. Please Update.')
-        print("new version available")
-    game = Game(display, setup)
-    game.exec_()
+    app = QApplication(sys.argv)
+
+    ex = Window()
+
+    sys.exit(app.exec_())

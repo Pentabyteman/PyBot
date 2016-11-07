@@ -13,6 +13,8 @@ def check_for_updates(version):
 
     tag = final_url.split("/")[-1]
     latest = tag.split("v")[-1]
+    if version_number[latest] > current_version:
+        pass
     return version_number(latest) > current_version
 
 
