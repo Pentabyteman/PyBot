@@ -35,10 +35,10 @@ def update_standard_settings(user=None, host=None):
     try:
         if user != get_standard_settings()[1] or host != get_standard_settings()[2]
         if get_standard_settings()[0] == 'none':
-            if tkinter.messagebox.askyesno('Update Settings', 'Do you want to update your settings'):
+            # TODO: Get a tkinter dialogue field that actually enables the user to change updating to never or always 
+            if tkinter.messagebox.askyesno('Update Settings', 'Do you want to update your server settings'):
                 version = get_standard_settings()[3]
-                new_doc = "PROMPTING: true\nEDIT_ENABLED: true\nUSER: {0}\nHOST: {1}\nVERSION: {2}".format(user, host,
-                                                                                                       version)
+                new_doc = "UPDATING: none\nUSER: {0}\nHOST: {1}\nVERSION: {2}".format(user, host, version)
                 with open('resources/settings.txt', 'w') as text:
                     text.seek(0)
                     text.write(new_doc)
@@ -49,6 +49,7 @@ def update_standard_settings(user=None, host=None):
                 with open('resources/settings.txt', 'w') as text:
                     text.seek(0)
                     text.write(new_doc)
+        else:
             pass
     except Exception as e:
         print("FATAL ERROR: Settings not writable.", e)
