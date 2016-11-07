@@ -8,6 +8,7 @@ import app
 import gui
 import pickle
 import settings
+import updates
 
 global USER, HOST, Version
 PROMPTING, EDIT, USER, HOST, Version = settings.get_standard_settings()
@@ -114,6 +115,9 @@ if __name__ == '__main__':
     pygame.display.set_caption(header)
     icon = pygame.transform.scale(pygame.image.load(ICON_PATH), (32, 32))
     pygame.display.set_icon(icon)
-
+    #Cheking for updates
+    if updates.check_for_updates() == "update":
+        import tkinter
+        tkinter.messagebox.showwarning('Updates', 'There is a new version of PyBot available. Please Update.')
     game = Game(display)
     game.exec_()
