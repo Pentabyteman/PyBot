@@ -1,4 +1,4 @@
-# PyBotServer v1.0.0
+# PyBot v1.3.0
 
 *******
 UPDATE: This is the first server version. You are, however, able to play local games
@@ -14,4 +14,4 @@ All Images are created by hand using digital features such as PowerPoint.
 
 Credits: Most of the programming done by ErichHasl, Inspiration and unhelpful comments by Pentabyteman
 
-copyright @ Pentabyteman, ErichHasl 25.10.16
+copyright @ Pentabyteman, ErichHasl 07.11.16
