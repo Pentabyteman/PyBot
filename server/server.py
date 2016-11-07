@@ -1,31 +1,26 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
 
-import socket_conn
+import network
 import pickle
 import os
-import sys
 import board
-from threading import Thread
 import time
 
 
-class GameServer(socket_conn.Server):
+class GameServer(network.VirtualServer):
 
-    def __init__(self):
-        self.connected_clients = []
-        super(GameServer, self).__init__()  # initialize the socket server
-        self._running = False
+    def __init__(self, network):
+        super(GameServer, self).__init__(network)
         self.last_time = 0
-
-    def exec_(self):
-        self.start()  # starts the socket server
+        self._running = False
+        self.ready = {}
 
     def run_game(self):
         """Starts a new game and runs it"""
         game_board = board.Board(on_finish=self.stop_game)
-        map_ = game_board.start_game([ai_path(c.username) for c in
-                                      self.connected_clients])
+        map_ = game_board.start_game([ai_path(c.name) for c in
+                                      self.users])
         info = {}
         info["map"] = map_.compress()
         info["bots"] = {b.team: b.serialize() for b in game_board.bots}
@@ -34,7 +29,7 @@ class GameServer(socket_conn.Server):
 
         self._running = True
         print("Game has started")
-        while(self._running and not self.terminated):
+        while(self._running):
             if time.time() - self.last_time > 2:
                 update = game_board.on_turn()
                 self.send_all(b'update ' + pickle.dumps(update), False)
@@ -45,61 +40,39 @@ class GameServer(socket_conn.Server):
     def stop_game(self):
         self._running = False
 
-    def on_connect(self, client):
-        if len(self.connected_clients) >= 2:
-            client.send("Server full!\n")
-            client.quit()
-            return
-        username = client.ask("username")
-        if username in [c.username for c in self.connected_clients]:
-            client.send("Username already used!")
-            client.quit()
-            return
+    def may_join(self, user):
+        return len(self.users) < 2
 
-        client.username = username
-        client.ready = False
-        print("{} joined the server".format(client.username))
-        self.connected_clients.append(client)
-        self.send_all("players {}".format(" ".join([c.username for c in
-                                                    self.connected_clients])))
+    def on_join(self, user):
+        self.ready[user.id] = False
 
-    def on_disconnect(self, client):
-        print("{} left the server".format(client.username))
-        self.connected_clients.remove(client)
-        if self._running and len(self.connected_clients) > 0:
-            winner = self.connected_clients[0].username
+    def on_leave(self, user):
+        if self._running and len(self.users) > 0:
+            winner = self.users[0].name
             print("{} won the game".format(winner))
             self.send_all("{} won".format(winner))
             self._running = False
 
-    def handle_client(self, client, query):
-        if query == "start":
+    def on_input(self, user, cmd, body):
+        if cmd == "start":
             if self._running:
                 return "already started"
-            if not os.path.isfile(ai_path(client.username)):
+            if not os.path.isfile(ai_path(user.name)):
                 return "no ai selected"  # ai/username_ai.py must exist
-            client.ready = True  # this client is ready
-            if len(self.connected_clients) == 2:
-                if not all(c.ready for c in self.connected_clients):
-                    return "not ready"  # not every client ready
-                Thread(target=self.run_game).start()
-                self.send_all("started")  # start game and inform clients
+            self.ready[user.id] = True
+            if len(self.users) == 2:
+                if not all(self.ready[c.id] for c in self.users):
+                    print("Not ready yet")
+                    return "not ready"  # not every user ready
+                self.run(self.run_game)
+                self.send_all("started")  # start game and inform users
             else:
                 print("Not enough players ({} / 2)"
-                      .format(len(self.connected_clients)))
-                return "not enough {} 2".format(len(self.connected_clients))
-        args = query.split(" ")
-        key = args[0]
-        if len(args) > 1:
-            body = " ".join(args[1:])
-        if key == "ai":
-            with open(ai_path(client.username), 'w+') as f:
+                      .format(len(self.users)))
+                return "not enough {} 2".format(len(self.users))
+        if cmd == "ai":
+            with open(ai_path(user.name), 'w+') as f:
                 f.write(body)
-
-    def send_all(self, query, encode=True):
-        for client in self.connected_clients:
-            print("sending to client", query)
-            client.send(query, encode)
 
 
 def ai_path(username):
@@ -107,7 +80,6 @@ def ai_path(username):
 
 
 if __name__ == '__main__':
-    server = GameServer()
-    server.exec_()
-    if '--debug' in sys.argv:
-        Thread(target=server.run_game).start()
+    nw = network.Network()
+    game_server = GameServer(nw)
+    nw.servers.append(game_server)

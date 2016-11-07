@@ -50,6 +50,7 @@ class Server:
         while not self.terminated:
             text = client.recv()
             if not text:
+                self.on_disconnect(client)
                 break
             print("Received:", text)
             if text.strip() == "quit":
