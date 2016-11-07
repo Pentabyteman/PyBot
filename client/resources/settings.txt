@@ -1,4 +1,0 @@
-UPDATING: none
-USER: nils
-HOST: localhost
-VERSION: 2.0.0

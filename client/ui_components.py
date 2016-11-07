@@ -397,10 +397,8 @@ class TextInputField(HoverableComponent):
         self._image.fill((0, 0, 0, 0))
         draw_roundrect(self._image, self._image.get_rect(), self._bgcolor())
         if len(self.text) == 0:
-            print("rendering hint", self.hint)
             text = self._font.render(self.hint, True, self.hintcolor)
         else:
-            print("rendering text")
             text = self._font.render(self.text, True, self._fgcolor())
         if self.focussed:
             # draw cursor

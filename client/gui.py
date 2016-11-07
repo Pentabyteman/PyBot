@@ -15,8 +15,6 @@ import settings
 # prepare file selection dialog
 root = tkinter.Tk()
 root.withdraw()
-global USER, HOST, Version
-UPDATING, USER, HOST, Version = settings.get_standard_settings()
 # TODO: Valid escape keywords to add @ErichHasl please
 INFO_TEXT = """Welcome to PyBot {0}!
 This version includes a server implementation.
@@ -26,7 +24,8 @@ If you are having trouble to connect to a server,
 make sure that your computer is online and you
 have entered the correct server address.
 
-For troubleshooting, please visit www.github.com/Pentabyteman/PyBot/wiki""".format(Version)
+For troubleshooting, please visit
+www.github.com/Pentabyteman/PyBot/wiki"""
 
 
 class Speaker:
@@ -72,10 +71,11 @@ class Window:
 
 class ServerSelect(Window):
 
-    def __init__(self, size, client, host="", username=""):
+    def __init__(self, size, client, setup):
         super(ServerSelect, self).__init__(size)
         self.client = client
         self.info_state = True
+        self.setup = setup
         heading_w, heading_h = self.rect.width * 0.3, self.rect.height * 0.1
         heading_rect = pygame.Rect(self.rect.width * 0.1,
                                    self.rect.height * 0.1,
@@ -92,7 +92,7 @@ class ServerSelect(Window):
                                             (40, 40, 40, 255),
                                             30, hint="Enter username",
                                             hintcolor=hintcolor)
-        self.login_widget.text = username
+        self.login_widget.text = setup["username"]
         self.ui_components.add(self.login_widget)
 
         server_rect = login_rect.copy()
@@ -102,7 +102,7 @@ class ServerSelect(Window):
                                              (40, 40, 40, 255),
                                              30, hint="Enter server address",
                                              hintcolor=hintcolor)
-        self.server_widget.text = host
+        self.server_widget.text = setup["host"]
         self.ui_components.add(self.server_widget)
 
         conn_rect = pygame.Rect(self.rect.width * 0.125,
@@ -143,7 +143,7 @@ class ServerSelect(Window):
         if self.info_state:
             self.info_state = False
             self.info_label.icon = self.ic_no_info
-            self.info_label.text = INFO_TEXT
+            self.info_label.text = INFO_TEXT.format(self.version)
         else:
             self.info_state = True
             self.info_label.icon = self.ic_info
@@ -171,7 +171,8 @@ class ServerSelect(Window):
             return
 
         # IMPORTANT
-        settings.update_standard_settings(username, server)
+        self.setup["username"], self.setup["host"] = username, host
+        settings.update_standard_settings(self.setup)
 
         state = self.client.connect(host, port, username)
         if state:  # connected

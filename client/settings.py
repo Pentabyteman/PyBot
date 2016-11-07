@@ -2,7 +2,12 @@
 # -*- coding: iso-8859-15 -*-
 
 import sysconfig
+import json
 import tkinter
+
+DEFAULT_SETTINGS = {"updating": "none", "username": "", "host": "",
+                    "version": "1.0.0"}
+
 
 def get_pybot_platform():
     platform = str(sysconfig.get_platform())
@@ -13,42 +18,34 @@ def get_python_version():
     python_vers = str(sysconfig.get_python_version())
     return python_vers
 
+
 def get_standard_settings():
     """This function returns the standard settings as a list"""
     try:
-        with open('resources/settings.txt', 'rt', encoding="ISO-8859-15") as text:
-            text_content = text.read()
-            row_list = text_content.split('\n')
-            settings_list = []
-            for row in row_list:
-                new_setting = row.split(': ')[1]
-                settings_list.append(new_setting)
-            return settings_list
+        with open('resources/settings.json', 'r') as text:
+            return json.load(text)
     except Exception as e:
         print("ERROR: Settings not readable. Forcing default settings.", e)
-        settings_list = ['none', "", "", "2.0"]
-        return settings_list
+        return DEFAULT_SETTINGS
 
-    
-def update_standard_settings(user=None, host=None):
+
+def write_standard_settings(settings):
+    with open('resources/settings.json', 'w+') as f:
+        json.dump(settings, f)
+
+
+def update_standard_settings(settings):
     try:
-        if user != get_standard_settings()[1] or host != get_standard_settings()[2]
-        if get_standard_settings()[0] == 'none':
-            # TODO: Get a tkinter dialogue field that actually enables the user to change updating to never or always 
-            if tkinter.messagebox.askyesno('Update Settings', 'Do you want to update your server settings'):
-                version = get_standard_settings()[3]
-                new_doc = "UPDATING: none\nUSER: {0}\nHOST: {1}\nVERSION: {2}".format(user, host, version)
-                with open('resources/settings.txt', 'w') as text:
-                    text.seek(0)
-                    text.write(new_doc)
-                                                                                                           
-        elif get_standard_settings()[0] == 'always':
-            version = get_standard_settings()[3]
-                new_doc = "UPDATING: always\nUSER: {0}\nHOST: {1}\nVERSION: {2}".format(user, host, version)
-                with open('resources/settings.txt', 'w') as text:
-                    text.seek(0)
-                    text.write(new_doc)
-        else:
-            pass
+        if settings["updating"] == 'none':
+            # TODO: Get a tkinter dialogue field that actually enables the user
+            # to change updating to never or always
+            # if tkinter.messagebox.askyesno(
+            # 'Update Settings',
+            # 'Do you want to update your server settings'):
+            # write_standard_settings(settings)
+            write_standard_settings(settings)
+
+        elif settings["updating"] == 'always':
+            write_standard_settings(settings)
     except Exception as e:
         print("FATAL ERROR: Settings not writable.", e)

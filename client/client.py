@@ -10,23 +10,18 @@ import pickle
 import settings
 import updates
 
-global USER, HOST, Version
-UPDATING, USER, HOST, Version = settings.get_standard_settings()
 BOARD_SIZE = (1017, 1017)
 WINDOW_SIZE = (1500, 1017)
 ICON_PATH = "resources/pybot_logo_ver4.png"
-START_STRING = "Running PyBot {0} on {1}. with Python {2} \n ".format(Version, settings.get_pybot_platform(),
-                                                               settings.get_python_version()[3])
 
 
 class Game(app.App):
 
-    def __init__(self, display):
+    def __init__(self, display, setup):
         super(Game, self).__init__()
         self.display = display
         self.client = GameClient()
-        self.window = gui.ServerSelect(WINDOW_SIZE, self.client,
-                                       host=HOST, username=USER)
+        self.window = gui.ServerSelect(WINDOW_SIZE, self.client, setup)
         self.window.has_connected = self.start_preparation
 
     def start_preparation(self):
@@ -109,15 +104,20 @@ class GameClient(socket_client.SocketClient):
 
 if __name__ == '__main__':
     display = pygame.display.set_mode(WINDOW_SIZE)
-    print(START_STRING)
+    setup = settings.get_standard_settings()
+    info = "Running PyBot {0} on {1}. with Python {2} \n "\
+        .format(setup["version"], settings.get_pybot_platform(),
+                settings.get_python_version())
+    print(info)
     # decorating the python window
-    header = "PyBot {}".format(Version)
+    header = "PyBot {}".format(setup["version"])
     pygame.display.set_caption(header)
     icon = pygame.transform.scale(pygame.image.load(ICON_PATH), (32, 32))
     pygame.display.set_icon(icon)
-    #Cheking for updates
-    if updates.check_for_updates() == "update":
-        import tkinter
-        tkinter.messagebox.showwarning('Updates', 'There is a new version of PyBot available. Please Update.')
-    game = Game(display)
+    # Checking for updates
+    if updates.check_for_updates(setup["version"]):
+        # import tkinter
+        # tkinter.messagebox.showwarning('Updates', 'There is a new version of PyBot available. Please Update.')
+        print("new version available")
+    game = Game(display, setup)
     game.exec_()
