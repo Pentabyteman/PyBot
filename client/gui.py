@@ -16,7 +16,7 @@ import settings
 root = tkinter.Tk()
 root.withdraw()
 global USER, HOST, Version
-PROMPTING, EDIT, USER, HOST, Version = settings.get_standard_settings()
+UPDATING, USER, HOST, Version = settings.get_standard_settings()
 # TODO: Valid escape keywords to add @ErichHasl please
 INFO_TEXT = """Welcome to PyBot {0}!
 This version includes a server implementation.
@@ -142,11 +142,11 @@ class ServerSelect(Window):
     def show_info(self, event):
         if self.info_state:
             self.info_state = False
-            self.info_label.icon = self.ic_info
+            self.info_label.icon = self.ic_no_info
             self.info_label.text = INFO_TEXT
         else:
             self.info_state = True
-            self.info_label.icon = self.ic_no_info
+            self.info_label.icon = self.ic_info
             self.info_label.text = ""
 
     def connect(self, event):
@@ -172,14 +172,6 @@ class ServerSelect(Window):
 
         # IMPORTANT
         settings.update_standard_settings(username, server)
-        # TODO: Get this done properly
-        if settings.get_standard_settings()[0] != 'true':
-            frame = tkinter.Frame(root)
-            # What we need: A box that asks if the settings should be saved. (Yes, No)
-            # settings.update_standard_settings / pass
-            # A box underneath that if checked either always updates or never updates (change EDIT_ENABLED and PROMPTING
-            button = tkinter.Button(frame, text="Enable Editing", command=settings.enable_edits)
-            button.pack()
 
         state = self.client.connect(host, port, username)
         if state:  # connected
