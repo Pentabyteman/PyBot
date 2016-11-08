@@ -15,19 +15,106 @@ global ICON_PATH
 ICON_PATH= "resources/pybot_logo_ver4.png"
 
 import sys
-from PyQt5.QtWidgets import QWidget, QDesktopWidget, QApplication
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QDesktopWidget, QApplication, QMainWindow, QLabel
+from PyQt5.QtGui import *
 
 
-class Window(QWidget):
+class Window(QMainWindow):
+    """heading_w, heading_h = self.rect.width * 0.3, self.rect.height * 0.1
+    heading_rect = pygame.Rect(self.rect.width * 0.1,
+                               self.rect.height * 0.1,
+                               heading_w, heading_h)
+    self.heading = Label("PyBot", heading_rect, (255, 255, 255, 255), 90)
+    self.ui_components.add(self.heading)
+    login_rect = pygame.Rect(self.rect.width * 0.125,
+                             heading_rect.bottom + self.rect.height * 0.01,
+                             self.rect.width * 0.5,
+                             self.rect.height * 0.04)
+    hintcolor = (100, 100, 100, 255)
+    self.login_widget = TextInputWidget(login_rect, "Username      :",
+                                        (255, 255, 255, 255),
+                                        (40, 40, 40, 255),
+                                        30, hint="Enter username",
+                                        hintcolor=hintcolor)
+    self.login_widget.text = setup["username"]
+    self.ui_components.add(self.login_widget)
+
+    server_rect = login_rect.copy()
+    server_rect.top = login_rect.bottom + self.rect.height * 0.01
+    self.server_widget = TextInputWidget(server_rect, "Server address:",
+                                         (255, 255, 255, 255),
+                                         (40, 40, 40, 255),
+                                         30, hint="Enter server address",
+                                         hintcolor=hintcolor)
+    self.server_widget.text = setup["host"]
+    self.ui_components.add(self.server_widget)
+
+    conn_rect = pygame.Rect(self.rect.width * 0.125,
+                            server_rect.bottom + self.rect.height * 0.02,
+                            self.rect.width * 0.45,
+                            self.rect.height * 0.04)
+    self.btn_conn = Button("Connect", conn_rect, 30)
+    self.btn_conn.clicked = self.connect
+    self.ui_components.add(self.btn_conn)
+
+    error_rect = pygame.Rect(self.rect.width * 0.125,
+                             conn_rect.bottom + self.rect.height * 0.02,
+                             self.rect.width * 0.5,
+                             self.rect.height * 0.4)
+    self.error_label = Label("", error_rect, (255, 0, 0, 255), 30)
+    self.ui_components.add(self.error_label)
+
+    info_rect = pygame.Rect(self.rect.width * 0.125,
+                            conn_rect.bottom + self.rect.height * 0.1,
+                            self.rect.width * 0.9,
+                            self.rect.height * 0.4)
+    self.info_label = Label("", info_rect, (255, 255, 255, 255), 30)
+    self.ui_components.add(self.info_label)
+
+    info_btn_rect = pygame.Rect(self.rect.width * 0.625,
+                                self.rect.height * 0.05,
+                                self.rect.width * 0.25,
+                                self.rect.width * 0.25)
+
+    # TODO: sqaure the images
+    self.ic_no_info = pygame.image.load("resources/question.png")
+    self.ic_info = pygame.image.load("resources/understood.png")
+    self.info_btn = ImageButton(self.ic_no_info, info_btn_rect)
+    self.info_btn.clicked = self.show_info"""
+
     def __init__(self):
         super().__init__()
 
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(300, 300, 300, 220)
+        self.setGeometry(300, 300, *WINDOW_SIZE)
         self.center()
+
+        self.statusBar()
+        self.statusBar().setStyleSheet("color:white")
+
+        palette = QPalette()
+        palette.setBrush(QPalette.Background, QBrush(QPixmap("resources/background.png")))
+        self.setPalette(palette)
+
+        heading_w, heading_h = WINDOW_SIZE[1] * 0.1, WINDOW_SIZE[0] * 0.1
+        heading = QLabel("PyBot", self)
+        heading.setStyleSheet("QLabel {font-size: 80px; color:white}")
+        heading.move(heading_h, heading_w)
+        heading.adjustSize()
+
+        login = QLabel("User: ", self)
+        login.setStyleSheet("QLabel {font-size: 40px; color: white}")
+        login_w, login_h = WINDOW_SIZE[1] * 0.3, WINDOW_SIZE[0] * 0.15
+        login.move(login_h, login_w)
+        login.adjustSize()
+
+        server = QLabel("Server: ", self)
+        server.setStyleSheet("QLabel {font-size: 40px; color: white}")
+        server_w, server_h = WINDOW_SIZE[1] * 0.375, WINDOW_SIZE[0] * 0.15
+        server.move(server_h, server_w)
+        server.adjustSize()
 
         setup = settings.get_standard_settings()
         header = "PyBot {}".format(setup["version"])
@@ -37,6 +124,7 @@ class Window(QWidget):
             .format(setup["version"], settings.get_pybot_platform(),
                     settings.get_python_version())
         print(info)
+        self.statusBar().showMessage(info)
         self.show()
 
     def center(self):

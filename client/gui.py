@@ -11,8 +11,8 @@ import tkinter
 from ui_components import ImageButton, Label, GameLog, FileSelectionWidget,\
     Progressbar, TextInputWidget, UIGroup, Button
 import settings
-from PyQt5.QtWidgets import QWidget, QCheckBox, QPushButton, QToolTip, QDesktopWidget, QApplication
-from PyQt5.QtCore import Qt, QCoreApplication
+from PyQt5.QtWidgets import QWidget, QCheckBox, QPushButton, QToolTip, QDesktopWidget, QApplication, QLabel
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 import sys
 
@@ -39,33 +39,49 @@ class Updating_Field(QWidget):
 
         self.initUI()
 
-    def initUI(self):
-        qbtn = QPushButton('Update', self)
-        qbtn.clicked.connect(self.update)
-        QToolTip.setFont(QFont('SansSerif', 10))
-        self.setToolTip('This will <b>update</b> your settings')
-        qbtn.resize(qbtn.sizeHint())
-        qbtn.move(20, 10)
+    class Updating_Field(QWidget):
+        def __init__(self):
+            super().__init__()
 
-        qbtn = QPushButton("Don't Update", self)
-        qbtn.clicked.connect(self.no_update)
-        QToolTip.setFont(QFont('SansSerif', 10))
-        self.setToolTip("This <b>won't update</b> your settings")
-        qbtn.resize(qbtn.sizeHint())
-        qbtn.move(160, 10)
+            self.initUI()
 
-        cb_always = QCheckBox('Always Update', self)
-        cb_always.move(20, 40)
-        cb_always.stateChanged.connect(self.changeAlwaysUpdating)
+        def initUI(self):
+            lbl1 = QLabel('Do you want to update your settings?', self)
+            lbl1.setStyleSheet("QLabel {font-size: 13px}")
+            lbl1.move(20, 10)
 
-        cb_never = QCheckBox('Never Update', self)
-        cb_never.move(160, 40)
-        cb_never.stateChanged.connect(self.changeNeverUpdating)
+            qbtn1 = QPushButton('Update', self)
+            qbtn1.clicked.connect(self.update)
+            QToolTip.setFont(QFont('SansSerif', 10))
+            self.setToolTip('This will <b>update</b> your settings')
+            qbtn1.resize(qbtn1.sizeHint())
+            qbtn1.setStyleSheet(
+                "QPushButton {color: black;} QPushButton:hover {background:LightSkyBlue; color: black;}")
+            qbtn1.move(20, 40)
 
-        self.setGeometry(0, 0, 300, 80)
-        self.setWindowTitle('Update Settings')
-        self.center()
-        self.show()
+            qbtn2 = QPushButton("Don't Update", self)
+            qbtn2.clicked.connect(self.no_update)
+            QToolTip.setFont(QFont('SansSerif', 10))
+            self.setToolTip("This <b>won't update</b> your settings")
+            qbtn2.resize(qbtn2.sizeHint())
+            qbtn2.setStyleSheet(
+                "QPushButton {color: black;} QPushButton:hover {background:LightSkyBlue; color: black;}")
+            qbtn2.move(160, 40)
+
+            cb_always = QCheckBox('Always Update', self)
+            cb_always.move(20, 70)
+            cb_always.setStyleSheet("QCheckBox {color:grey;} QCheckBox:hover {color: black;}")
+            cb_always.stateChanged.connect(self.changeAlwaysUpdating)
+
+            cb_never = QCheckBox('Never Update', self)
+            cb_never.move(160, 70)
+            cb_never.setStyleSheet("QCheckBox {color:grey;} QCheckBox:hover {color: black;}")
+            cb_never.stateChanged.connect(self.changeNeverUpdating)
+
+            self.setGeometry(0, 0, 300, 100)
+            self.setWindowTitle('Update Settings')
+            self.center()
+            self.show()
 
     def center(self):
         qr = self.frameGeometry()
@@ -76,11 +92,10 @@ class Updating_Field(QWidget):
     def update(self):
         # TODO: How to get user?
         settings.update_standard_settings(host, user)
-        QCoreApplication.instance().quit()
+        self.close()
 
     def no_update(self):
-        QCoreApplication.instance().quit()
-
+        self.close()
 
     def changeAlwaysUpdating(self, state):
         if state == Qt.Checked:
@@ -88,7 +103,7 @@ class Updating_Field(QWidget):
         else:
             pass
 
-    def changeNeverUpdating(selfself, state):
+    def changeNeverUpdating(self, state):
         if state == Qt.Checked:
             pass
         else:
