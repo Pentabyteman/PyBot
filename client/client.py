@@ -12,10 +12,10 @@ import updates
 BOARD_SIZE = (1017, 1017)
 WINDOW_SIZE = [1500, 1017]
 global ICON_PATH
-ICON_PATH= "resources/pybot_logo_ver4.png"
+ICON_PATH= "resources/pybot_logo_ver1.png"
 
 import sys
-from PyQt5.QtWidgets import QDesktopWidget, QApplication, QMainWindow, QLabel
+from PyQt5.QtWidgets import QDesktopWidget, QApplication, QMainWindow, QLabel, QLineEdit, QPushButton
 from PyQt5.QtGui import *
 
 
@@ -106,15 +106,64 @@ class Window(QMainWindow):
 
         login = QLabel("User: ", self)
         login.setStyleSheet("QLabel {font-size: 40px; color: white}")
-        login_w, login_h = WINDOW_SIZE[1] * 0.3, WINDOW_SIZE[0] * 0.15
+        login_w, login_h = WINDOW_SIZE[1] * 0.28, WINDOW_SIZE[0] * 0.15
         login.move(login_h, login_w)
+        print(login_w, login_h)
         login.adjustSize()
 
+        user = QLineEdit(self)
+        user.setMaxLength(15)
+        user.setStyleSheet(
+            "QLineEdit {background: white; font-size: 38px; color: black} QLineEdit:focus {background: lightgrey;}"
+            "QLineEdit:placeholder {color: white;}")
+        user_w, user_h = WINDOW_SIZE[1] * 0.28, WINDOW_SIZE[0] * 0.32
+        user.setPlaceholderText("Username")
+        user.move(user_h, user_w)
+        user.adjustSize()
+
+
+        psw = QLabel("Password: ", self)
+        psw.setStyleSheet("QLabel {font-size: 40px; color: white}")
+        psw_w, psw_h = WINDOW_SIZE[1] * 0.34, WINDOW_SIZE[0] * 0.15
+        psw.move(psw_h, psw_w)
+        psw.adjustSize()
+
+        password = QLineEdit(self)
+        password.setMaxLength(15)
+        password.setStyleSheet(
+            "QLineEdit {background: white; font-size: 38px; color: black} QLineEdit:focus {background: lightgrey;}"
+            "QLineEdit:placeholder {color: white}")
+        password_w, password_h = WINDOW_SIZE[1] * 0.34, WINDOW_SIZE[0] * 0.32
+        password.move(password_h, password_w)
+        password.setEchoMode(QLineEdit.Password)
+        password.setPlaceholderText("Password")
+        password.adjustSize()
+
         server = QLabel("Server: ", self)
-        server.setStyleSheet("QLabel {font-size: 40px; color: white}")
-        server_w, server_h = WINDOW_SIZE[1] * 0.375, WINDOW_SIZE[0] * 0.15
+        server.setStyleSheet("QLabel {font-size: 40px; color: white;}")
+        server_w, server_h = WINDOW_SIZE[1] * 0.45, WINDOW_SIZE[0] * 0.15
         server.move(server_h, server_w)
         server.adjustSize()
+
+        host = QLineEdit(self)
+        host.setMaxLength(15)
+        host.setStyleSheet(
+            "QLineEdit {background: white; font-size: 38px; color: black} QLineEdit:focus {background: lightgrey;} "
+            "QLineEdit:placeholder {color: white;}")
+        host_w, host_h = WINDOW_SIZE[1] * 0.45, WINDOW_SIZE[0] * 0.32
+        host.move(host_h, host_w)
+        host.setPlaceholderText("Server address")
+        host.adjustSize()
+
+        connect = QPushButton('Connect', self)
+        connect.setStyleSheet("QPushButton {font-size: 38px; background:white; color:black; width: 630px;} "
+                              "QPushButton:hover {background:black; color:white; width:200px; font-size:38px;}")
+        connect_w, connect_h = WINDOW_SIZE[1] * 0.6, WINDOW_SIZE[0] * 0.15
+        connect.move(connect_h, connect_w)
+        connect.clicked.connect(self.connect_to_server)
+        connect.adjustSize()
+
+
 
         setup = settings.get_standard_settings()
         header = "PyBot {}".format(setup["version"])
@@ -133,6 +182,8 @@ class Window(QMainWindow):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
+    def connect_to_server(self):
+        self.statusBar().showMessage("Connecting")
 
 class GameClient(socket_client.SocketClient):
 
