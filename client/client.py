@@ -154,6 +154,14 @@ class GameClient(socket_client.SocketClient):
         self.send("ai {}".format(content))
 
 
+def notify_updates(app, needed):
+    if not needed:
+        return
+    app.dialog = gui.AlertDialog((WINDOW_SIZE[0] * 0.3,
+                                  WINDOW_SIZE[1] * 0.2),
+                                 "New version available")
+
+
 if __name__ == '__main__':
     display = pygame.display.set_mode(WINDOW_SIZE)
     setup = settings.get_standard_settings()
@@ -168,9 +176,7 @@ if __name__ == '__main__':
     pygame.display.set_icon(icon)
     game = Game(display, setup)
     # Checking for updates
-    if updates.check_for_updates(setup["version"]):
-        game.dialog = gui.AlertDialog((WINDOW_SIZE[0] * 0.3,
-                                       WINDOW_SIZE[1] * 0.2),
-                                      "New version available")
-        print("new version available")
+    updates.check_for_updates(setup["version"],
+                              finished=lambda avail: notify_updates(game,
+                                                                    avail))
     game.exec_()
