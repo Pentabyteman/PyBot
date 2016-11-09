@@ -15,73 +15,13 @@ global ICON_PATH
 ICON_PATH= "resources/pybot_logo_ver1.png"
 
 import sys
-from PyQt5.QtWidgets import QDesktopWidget, QApplication, QMainWindow, QLabel, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QDesktopWidget, QApplication, QMainWindow, QLabel, QLineEdit, QPushButton, QAction
 from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 
-class Window(QMainWindow):
-    """heading_w, heading_h = self.rect.width * 0.3, self.rect.height * 0.1
-    heading_rect = pygame.Rect(self.rect.width * 0.1,
-                               self.rect.height * 0.1,
-                               heading_w, heading_h)
-    self.heading = Label("PyBot", heading_rect, (255, 255, 255, 255), 90)
-    self.ui_components.add(self.heading)
-    login_rect = pygame.Rect(self.rect.width * 0.125,
-                             heading_rect.bottom + self.rect.height * 0.01,
-                             self.rect.width * 0.5,
-                             self.rect.height * 0.04)
-    hintcolor = (100, 100, 100, 255)
-    self.login_widget = TextInputWidget(login_rect, "Username      :",
-                                        (255, 255, 255, 255),
-                                        (40, 40, 40, 255),
-                                        30, hint="Enter username",
-                                        hintcolor=hintcolor)
-    self.login_widget.text = setup["username"]
-    self.ui_components.add(self.login_widget)
 
-    server_rect = login_rect.copy()
-    server_rect.top = login_rect.bottom + self.rect.height * 0.01
-    self.server_widget = TextInputWidget(server_rect, "Server address:",
-                                         (255, 255, 255, 255),
-                                         (40, 40, 40, 255),
-                                         30, hint="Enter server address",
-                                         hintcolor=hintcolor)
-    self.server_widget.text = setup["host"]
-    self.ui_components.add(self.server_widget)
-
-    conn_rect = pygame.Rect(self.rect.width * 0.125,
-                            server_rect.bottom + self.rect.height * 0.02,
-                            self.rect.width * 0.45,
-                            self.rect.height * 0.04)
-    self.btn_conn = Button("Connect", conn_rect, 30)
-    self.btn_conn.clicked = self.connect
-    self.ui_components.add(self.btn_conn)
-
-    error_rect = pygame.Rect(self.rect.width * 0.125,
-                             conn_rect.bottom + self.rect.height * 0.02,
-                             self.rect.width * 0.5,
-                             self.rect.height * 0.4)
-    self.error_label = Label("", error_rect, (255, 0, 0, 255), 30)
-    self.ui_components.add(self.error_label)
-
-    info_rect = pygame.Rect(self.rect.width * 0.125,
-                            conn_rect.bottom + self.rect.height * 0.1,
-                            self.rect.width * 0.9,
-                            self.rect.height * 0.4)
-    self.info_label = Label("", info_rect, (255, 255, 255, 255), 30)
-    self.ui_components.add(self.info_label)
-
-    info_btn_rect = pygame.Rect(self.rect.width * 0.625,
-                                self.rect.height * 0.05,
-                                self.rect.width * 0.25,
-                                self.rect.width * 0.25)
-
-    # TODO: sqaure the images
-    self.ic_no_info = pygame.image.load("resources/question.png")
-    self.ic_info = pygame.image.load("resources/understood.png")
-    self.info_btn = ImageButton(self.ic_no_info, info_btn_rect)
-    self.info_btn.clicked = self.show_info"""
-
+class ServerSelect(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -108,7 +48,6 @@ class Window(QMainWindow):
         login.setStyleSheet("QLabel {font-size: 40px; color: white}")
         login_w, login_h = WINDOW_SIZE[1] * 0.28, WINDOW_SIZE[0] * 0.15
         login.move(login_h, login_w)
-        print(login_w, login_h)
         login.adjustSize()
 
         user = QLineEdit(self)
@@ -120,7 +59,6 @@ class Window(QMainWindow):
         user.setPlaceholderText("Username")
         user.move(user_h, user_w)
         user.adjustSize()
-
 
         psw = QLabel("Password: ", self)
         psw.setStyleSheet("QLabel {font-size: 40px; color: white}")
@@ -163,8 +101,6 @@ class Window(QMainWindow):
         connect.clicked.connect(self.connect_to_server)
         connect.adjustSize()
 
-
-
         setup = settings.get_standard_settings()
         header = "PyBot {}".format(setup["version"])
         self.setWindowTitle(header)
@@ -184,6 +120,57 @@ class Window(QMainWindow):
 
     def connect_to_server(self):
         self.statusBar().showMessage("Connecting")
+
+class Hub(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        self.setGeometry(300, 300, *WINDOW_SIZE)
+        self.center()
+
+        self.statusBar()
+        self.statusBar().setStyleSheet("color:white")
+
+        exitAction = QAction(QIcon('resources/quit.png'), 'Exit', self)
+        exitAction.setShortcut('Ctrl+Q')
+        exitAction.triggered.connect(app.quit)
+
+        self.button_quit = QPushButton()
+        self.button_quit.setIcon(QIcon('resources/wall.png'))
+        self.button_quit.setIconSize(QSize(100, 100))
+        self.button_quit.adjustSize()
+
+        palette = QPalette()
+        palette.setBrush(QPalette.Background, QBrush(QPixmap("resources/background.png")))
+        self.setPalette(palette)
+
+        heading_w, heading_h = WINDOW_SIZE[1] * 0.03, WINDOW_SIZE[0] * 0.03
+        heading = QLabel("Hub", self)
+        heading.setStyleSheet("QLabel {font-size: 80px; color:white}")
+        heading.move(heading_h, heading_w)
+        heading.adjustSize()
+
+        setup = settings.get_standard_settings()
+        header = "PyBot {}".format(setup["version"])
+        self.setWindowTitle(header)
+        self.setWindowIcon(QIcon(ICON_PATH))
+
+        self.show()
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+    def toolbtnpressed(self, button):
+        if button.text() == "quit":
+            app,quit()
+        string = "Hi"
+        self.statusBar().showMessage(string)
 
 class GameClient(socket_client.SocketClient):
 
@@ -241,6 +228,6 @@ class GameClient(socket_client.SocketClient):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    ex = Window()
+    ex = ServerSelect()
 
     sys.exit(app.exec_())
