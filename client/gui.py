@@ -9,7 +9,8 @@ import time
 import board
 import tkinter
 from ui_components import ImageButton, Label, GameLog, FileSelectionWidget,\
-    Progressbar, TextInputWidget, UIGroup, Button, ListView
+    Progressbar, TextInputWidget, UIGroup, Button, ListView,\
+    draw_roundrect
 import settings
 
 # prepare file selection dialog
@@ -46,11 +47,11 @@ class Window:
         self.size = size
         self.rect = pygame.Rect(0, 0, size[0], size[1])
         self.ui_components = UIGroup()
-        self.surface = pygame.Surface(self.size)
+        self.surface = pygame.Surface(self.size, pygame.SRCALPHA)
         self.state = Window.STATE_INVALID
 
     def draw(self):
-        self.surface.fill((0, 0, 0, 0))
+        self.surface.fill((0, 0, 0, 255))
         self.ui_components.draw(self.surface)
 
     @property
@@ -67,6 +68,54 @@ class Window:
     def on_event(self, event):
         self.ui_components.update(event)
         self.state = Window.STATE_INVALID
+
+
+class Dialog(Window):
+
+    def __init__(self, size):
+        super(Dialog, self).__init__(size)
+        self.shadow_rect = self.rect.copy()
+        self.shadow_rect.width = self.rect.width * 0.98
+        self.shadow_rect.height = self.rect.height * 0.98
+        self.area = self.rect.copy()
+        self.area.x += self.rect.width * 0.01
+        self.area.y += self.rect.height * 0.01
+        self.area.width = self.shadow_rect.width
+        self.area.height = self.shadow_rect.height
+        self.content = pygame.Surface(self.area.size, pygame.SRCALPHA)
+
+    def draw(self):
+        self.surface.fill((0, 0, 0, 0))
+        draw_roundrect(self.surface, self.shadow_rect,
+                       (180, 180, 180, 255))
+        draw_roundrect(self.surface, self.area,
+                       (255, 255, 255, 255))  # background
+        self.ui_components.draw(self.content)
+        self.surface.blit(self.content, self.area)
+
+    def on_finish(self):
+        pass
+
+
+class AlertDialog(Dialog):
+
+    def __init__(self, size, text):
+        super(AlertDialog, self).__init__(size)
+        lbl_rect = pygame.Rect(self.area.width * 0.1,
+                               self.area.height * 0.1,
+                               self.area.width * 0.8,
+                               self.area.height * 0.15)
+        lbl = Label(text, lbl_rect, (0, 0, 0, 255), 28, centered=True,
+                    bold=True)
+        self.ui_components.add(lbl)
+
+        btn_rect = pygame.Rect(self.area.width * 0.3,
+                               self.area.height * 0.6,
+                               self.area.width * 0.4,
+                               self.area.height * 0.2)
+        btn = Button("Ok", btn_rect, 30, True)
+        btn.clicked = lambda x: self.on_finish()
+        self.ui_components.add(btn)
 
 
 class ServerSelect(Window):

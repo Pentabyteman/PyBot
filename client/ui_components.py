@@ -180,10 +180,11 @@ class UIWidget(UIComponent):
 
 class HoverableComponent(UIComponent):
 
-    def __init__(self, rect):
+    def __init__(self, rect, reverse_color=False):
         super(HoverableComponent, self).__init__(rect.size, rect.x, rect.y)
         self.colors = {"bg": ((255, 255, 255, 255), (0, 0, 0, 255)),
                        "fg": ((0, 0, 0, 255), (255, 255, 255, 255))}
+        self._color_rev = reverse_color
 
     def mouse_entered(self):
         self.state = UIComponent.STATE_INVALID
@@ -192,21 +193,24 @@ class HoverableComponent(UIComponent):
         self.state = UIComponent.STATE_INVALID
 
     def _bgcolor(self):
-        return self.colors["bg"][0 if self.hovered else 1]
+        tag = "fg" if self._color_rev else "bg"
+        return self.colors[tag][0 if self.hovered else 1]
 
     def _fgcolor(self):
-        return self.colors["fg"][0 if self.hovered else 1]
+        tag = "bg" if self._color_rev else "fg"
+        return self.colors[tag][0 if self.hovered else 1]
 
 
 class Button(HoverableComponent):
 
-    def __init__(self, text, rect=None, text_size=15):
+    def __init__(self, text, rect=None, text_size=15,
+                 reverse_color=False):
         self.text = text
         self._font = pygame.font.Font("resources/fantasque.ttf", text_size)
         text_dim = [x * 1.2 for x in self._font.size(self.text)]
         if not rect:
             rect = pygame.Rect(0, 0, *text_dim)
-        super(Button, self).__init__(rect)
+        super(Button, self).__init__(rect, reverse_color=reverse_color)
 
     def draw(self):
         self._image.fill((0, 0, 0, 0))
@@ -352,10 +356,13 @@ class FileSelectionWidget(UIComponent):
 
 class Label(UIComponent):
 
-    def __init__(self, text, rect, color=(0, 0, 0, 255), text_size=15):
+    def __init__(self, text, rect, color=(0, 0, 0, 255), text_size=15,
+                 centered=False, bold=False):
         super(Label, self).__init__(rect.size, rect.x, rect.y)
         self.text, self.color = text, color
         self._font = pygame.font.Font("resources/fantasque.ttf", text_size)
+        self._font.set_bold(bold)
+        self.centered = centered
 
     def __repr__(self):
         return "Label <{0}>".format(self.text)
@@ -363,7 +370,9 @@ class Label(UIComponent):
     def draw(self):
         self._image.fill((0, 0, 0, 0))
         text = self._font.render(self.text, True, self.color)
-        textpos = self._image.get_rect()
+        textpos = text.get_rect()
+        if self.centered:
+            textpos.center = self._image.get_rect().center
         self._image.blit(text, textpos)
 
     @property

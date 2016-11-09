@@ -25,6 +25,7 @@ class Game(app.App):
         self.client.on_move = self.update_window
         self.window = gui.ServerSelect(WINDOW_SIZE, self.client, self.setup)
         self.window.has_connected = self.lobby_view
+        self.dialog = None
 
     def update_window(self, server):
         if server == 0:
@@ -55,7 +56,13 @@ class Game(app.App):
         self.client.disconnect()
 
     def on_event(self, event):
-        self.window.on_event(event)
+        if self.dialog is not None:
+            if hasattr(event, 'pos'):
+                p = [ev - dial for ev, dial in zip(event.pos, self.dialog_pos)]
+                event.pos = p
+            self.dialog.on_event(event)
+        else:
+            self.window.on_event(event)
 
     def on_tick(self):
         self.window.on_tick()
@@ -63,7 +70,28 @@ class Game(app.App):
     def on_render(self):
         self.display.fill((255, 255, 255))
         self.display.blit(self.window.image, (0, 0))
+        if self.dialog is not None:
+            self.display.blit(self.dialog.image, self.dialog_pos)
         pygame.display.flip()
+
+    @property
+    def dialog(self):
+        return self.__dialog
+
+    @dialog.setter
+    def dialog(self, new):
+        self.__dialog = new
+        if new is None:
+            return
+        new.on_finish = self.reset_dialog
+        rect = self.display.get_rect()
+        x = rect.centerx - new.size[0] * 0.5
+        y = rect.centery - new.size[1] * 0.8
+        print("x y", x, y)
+        self.dialog_pos = (x, y)
+
+    def reset_dialog(self):
+        self.dialog = None
 
 
 class GameClient(socket_client.SocketClient):
@@ -138,10 +166,11 @@ if __name__ == '__main__':
     pygame.display.set_caption(header)
     icon = pygame.transform.scale(pygame.image.load(ICON_PATH), (32, 32))
     pygame.display.set_icon(icon)
+    game = Game(display, setup)
     # Checking for updates
     if updates.check_for_updates(setup["version"]):
-        # import tkinter
-        # tkinter.messagebox.showwarning('Updates', 'There is a new version of PyBot available. Please Update.')
+        game.dialog = gui.AlertDialog((WINDOW_SIZE[0] * 0.3,
+                                       WINDOW_SIZE[1] * 0.2),
+                                      "New version available")
         print("new version available")
-    game = Game(display, setup)
     game.exec_()
