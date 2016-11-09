@@ -4,7 +4,7 @@ from threading import Thread
 
 class Network(Server):
 
-    def __init__(self, lobby=None):
+    def __init__(self, lobby=None, debug=False):
         super(Network, self).__init__()
         self.start()
         self.servers = []
@@ -14,9 +14,9 @@ class Network(Server):
             print("initializing with", lobby)
             self.lobby = lobby(self)
         self.servers.append(self.lobby)  # server 0 is lobby
-        # self.servers.extend([LobbyServer(self) for _ in range(5)])
 
         self.users = []  # keeps track of users connected to the network
+        self.debug = debug
 
     def on_connect(self, conn):
         username = conn.ask("username")

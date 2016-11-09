@@ -97,6 +97,7 @@ class Board:
             print("The game is over!")
         else:
             print("The game is over: Team {0} has won!".format(winner.team))
+        self.winner = winner.team
         if self.on_finish:
             self.on_finish()
 
