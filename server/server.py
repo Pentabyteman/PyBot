@@ -102,7 +102,9 @@ class GameServer(network.VirtualServer):
                       .format(len(self.users)))
                 return "not enough {} 2".format(len(self.users))
         if cmd == "ai":
-            with open(ai_path(user.name), 'w+') as f:
+            path = ai_path(user.name)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w+') as f:
                 f.write(body)
 
     @property
