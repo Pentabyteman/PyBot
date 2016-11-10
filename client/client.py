@@ -16,11 +16,13 @@ ICON_PATH= "resources/pybot_logo_ver1.png"
 
 import sys
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QCheckBox, QPushButton, QToolTip, \
-    QDesktopWidget, QApplication, QLabel, QLineEdit, QMdiSubWindow, QMdiArea, QScrollArea, QAbstractButton, QMessageBox
+    QDesktopWidget, QApplication, QLabel, QLineEdit, QMdiSubWindow, QMdiArea, QScrollArea, QAbstractButton, \
+    QMessageBox, QGroupBox, QFormLayout, QComboBox
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 PICTURE_DICT = {"self": "resources/self.png", "online": "resources/online.png", "ingame": "resources/ingame.png"}
+
 class PicButton(QAbstractButton):
     def __init__(self, pixmap, pixmap_hover, pixmap_pressed, pixmap_hover_pressed, parent=None):
         super(PicButton, self).__init__(parent)
@@ -177,6 +179,7 @@ class Hub(QMainWindow):
         self.difference = 100
         self.line_starting_height = 250
         self.chatBar = "passive"
+        self.layout = QHBoxLayout()
 
         self.initUI()
 
@@ -356,7 +359,7 @@ class Hub(QMainWindow):
                 self.chat.raise_()
 
                 self.host = QLineEdit(self)
-                self.host.setMaxLength(30)
+                self.host.setMaxLength(26)
                 self.host.setStyleSheet(
                     "QLineEdit {background: white; font-size: 30px; color: black} QLineEdit:focus {background: lightgrey;} "
                     "QLineEdit:placeholder {color: white;}")
@@ -371,9 +374,20 @@ class Hub(QMainWindow):
                 self.send.setFixedSize(40, 40)
                 send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
+
+                Label = QLabel()
+                Label.setFixedSize(QSize(500, 500))
+                Label.setText("aaaaaaaaa")
+                scroll = QScrollArea()
+                scroll.setWidget(Label)
+                scroll.setWidgetResizable(True)
+                scroll.setFixedHeight(400)
+                self.layout.addWidget(scroll)
+
                 self.chat.show()
                 self.host.show()
                 self.send.show()
+                self.show()
 
             else:
                 self.chat = PicButton(QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"),
@@ -386,7 +400,8 @@ class Hub(QMainWindow):
                 self.host = QLineEdit(self)
                 self.host.setMaxLength(30)
                 self.host.setStyleSheet(
-                    "QLineEdit {background: white; font-size: 30px; color: black} QLineEdit:focus {background: lightgrey;} "
+                    "QLineEdit {background: white; font-size: 30px; color: black} "
+                    "QLineEdit:focus {background: lightgrey;} "
                     "QLineEdit:placeholder {color: white;}")
                 host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
                 self.host.move(host_w, host_h)
@@ -397,6 +412,7 @@ class Hub(QMainWindow):
                 self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
                                       QPixmap("resources/play.png"),QPixmap("resources/play.png"), self)
                 self.send.setFixedSize(40, 40)
+                self.send.clicked.connect(self.send_message())
                 send_w, send_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
                 self.chat.show()
@@ -405,7 +421,6 @@ class Hub(QMainWindow):
 
     def show_settings(self):
         new_window = QDialog(self)
-        new_window.setStyleSheet(" QMessageBox {background:black; font:white")
         setting = settings.get_standard_settings()
         print(setting)
         string = "User: {}\nServer: {}\nVersion: {}".format(setting["username"], setting["host"], setting["version"])
