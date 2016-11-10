@@ -321,6 +321,7 @@ class Hub(QMainWindow):
                                  QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
                                  self)
                 self.chat.setFixedSize(QSize(798, 75))
+                self.setToolTip("")
                 self.chat.clicked.connect(self.update_chat)
                 self.chat.move(WINDOW_SIZE[0]-798, WINDOW_SIZE[1]-75)
                 self.chat.raise_()
@@ -341,7 +342,6 @@ class Hub(QMainWindow):
                 self.chat.raise_()
                 self.chat.show()
         else:
-            print("drawing active chat")
             if self.get_new_message() is None:
                 self.chat = PicButton(QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
                                  QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
@@ -361,13 +361,18 @@ class Hub(QMainWindow):
                 self.chat.show()
 
     def show_settings(self):
-        message = QMessageBox(self)
+        new_window = QDialog(self)
+        new_window.setStyleSheet(" QMessageBox {background:black; font:white")
         setting = settings.get_standard_settings()
         print(setting)
         string = "User: {}\nServer: {}\nVersion: {}".format(setting["username"], setting["host"], setting["version"])
-        message.setText(string)
-        message.move(500, 500)
-        message.show()
+        new_window.setModal(True)
+        new_window.move(500, 500)
+        new_window.setWindowTitle("Settings")
+        new_window.setGeometry(500, 500, 300, 300)
+        new_window.show()
+
+
 
 class GameClient(socket_client.SocketClient):
 
