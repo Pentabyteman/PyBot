@@ -1,3 +1,4 @@
+import database
 from socket_conn import Server
 from threading import Thread
 
@@ -17,11 +18,17 @@ class Network(Server):
 
         self.users = []  # keeps track of users connected to the network
         self.debug = debug
+        self.db = database.Database()
 
     def on_connect(self, conn):
         username = conn.ask("username")
+        password = conn.ask("password")
         if username in [u.name for u in self.users]:
-            conn.send("already used")
+            conn.send("user already logged in")
+            conn.quit()
+            return
+        if not self.db.verify(username, password):
+            conn.send("invalid username or password")
             conn.quit()
             return
         user = User(conn, username)
