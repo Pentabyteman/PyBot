@@ -313,6 +313,8 @@ class Hub(QMainWindow):
         if self.chatBar is "passive":
             try:
                 self.chat.deleteLater()
+                self.host.deleteLater()
+                self.send.deleteLater()
             except:
                 pass
             print("drawing passive chat")
@@ -329,6 +331,8 @@ class Hub(QMainWindow):
             else:
                 try:
                     self.chat.deleteLater()
+                    self.host.deleteLater()
+                    self.send.deleteLater()
                 except:
                     pass
                 self.chat = PicButton(QPixmap("resources/chat_new_collapsed.png"),
@@ -350,7 +354,27 @@ class Hub(QMainWindow):
                 self.chat.clicked.connect(self.update_chat)
                 self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
                 self.chat.raise_()
+
+                self.host = QLineEdit(self)
+                self.host.setMaxLength(30)
+                self.host.setStyleSheet(
+                    "QLineEdit {background: white; font-size: 30px; color: black} QLineEdit:focus {background: lightgrey;} "
+                    "QLineEdit:placeholder {color: white;}")
+                host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
+                self.host.move(host_w, host_h)
+                self.host.setPlaceholderText("Message")
+                self.host.setFixedSize(QSize(500, 40))
+                self.host.raise_()
+
+                self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
+                                      QPixmap("resources/play.png"), QPixmap("resources/play.png"), self)
+                self.send.setFixedSize(40, 40)
+                send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
+                self.send.move(send_w, send_h)
                 self.chat.show()
+                self.host.show()
+                self.send.show()
+
             else:
                 self.chat = PicButton(QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"),
                                  QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"), self)
@@ -358,7 +382,26 @@ class Hub(QMainWindow):
                 self.chat.clicked.connect(self.update_chat)
                 self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
                 self.chat.raise_()
+
+                self.host = QLineEdit(self)
+                self.host.setMaxLength(30)
+                self.host.setStyleSheet(
+                    "QLineEdit {background: white; font-size: 30px; color: black} QLineEdit:focus {background: lightgrey;} "
+                    "QLineEdit:placeholder {color: white;}")
+                host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
+                self.host.move(host_w, host_h)
+                self.host.setPlaceholderText("Message")
+                self.host.setFixedSize(QSize(500, 40))
+                self.host.raise_()
+
+                self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
+                                      QPixmap("resources/play.png"),QPixmap("resources/play.png"), self)
+                self.send.setFixedSize(40, 40)
+                send_w, send_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
+                self.send.move(send_w, send_h)
                 self.chat.show()
+                self.host.show()
+                self.send.show()
 
     def show_settings(self):
         new_window = QDialog(self)
@@ -372,7 +415,8 @@ class Hub(QMainWindow):
         new_window.setGeometry(500, 500, 300, 300)
         new_window.show()
 
-
+    def send_message(self):
+        pass
 
 class GameClient(socket_client.SocketClient):
 
