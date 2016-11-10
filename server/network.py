@@ -106,6 +106,10 @@ class VirtualServer:
     def kick(self, user):
         self.network.move(user, 0)
 
+    def kick_all(self):
+        while len(self.users) > 0:
+            self.kick(self.users[0])
+
     def handle_input(self, user, query):
         args = query.split(" ", 1)
         cmd = args[0]  # first part, telling the action

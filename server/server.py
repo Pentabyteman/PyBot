@@ -32,7 +32,7 @@ class HubServer(network.Hub):
             elif body == "create":
                 if self.tourn is not None:
                     return "tournament already existing"
-                self.tourn = tournament.Tournament()
+                self.tourn = tournament.Tournament(self.network.debug)
             elif body == "remove":
                 if self.tourn is None:
                     return
@@ -71,8 +71,7 @@ class HubServer(network.Hub):
 
 
 if __name__ == '__main__':
-    if '--debug' in sys.argv:
-        debug = True
+    debug = '--debug' in sys.argv
     nw = network.Network(HubServer, debug)
     tourn_server = tournament.TournamentServer(nw)
     nw.servers.append(tourn_server)

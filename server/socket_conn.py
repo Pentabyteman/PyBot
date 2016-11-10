@@ -103,7 +103,6 @@ class ClientConnection:
         if encode:
             query = query.encode()
         msg = struct.pack('>I', len(query)) + query
-        print("sending message", msg, "len", len(query))
         self.conn.sendall(msg)
 
     def on_recv(self):
