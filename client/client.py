@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QChe
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
+PICTURE_DICT = {"self": "resources/self.png", "online": "resources/online.png", "ingame": "resources/ingame.png"}
 class PicButton(QAbstractButton):
     def __init__(self, pixmap, pixmap_hover, pixmap_pressed, pixmap_hover_pressed, parent=None):
         super(PicButton, self).__init__(parent)
@@ -171,7 +172,7 @@ class Hub(QMainWindow):
         super().__init__()
         self.players = ["Erich Hasl", "Nils Hebach", "Malte Schneider", "Moritz Heller"]
         self.user_stats = ["10P", "1000P", "10P", "10P"]
-        self.status = ["self", "online", "ingame", "ingame"]
+        self.status = ["self", "self", "self", "self"]
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
         self.line_starting_height = 250
@@ -200,16 +201,17 @@ class Hub(QMainWindow):
         self.button.setToolTip("Start a new game")
         self.button.setFixedSize(QSize(150, 150))
 
-        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
-                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button = PicButton(QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"),
+                                QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"), self)
         self.button.move(WINDOW_SIZE[1] * 0.05, 500)
         self.button.setToolTip("Chat with an online user")
         self.button.setFixedSize(QSize(150, 150))
 
-        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
-                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
-        self.button.move(WINDOW_SIZE[1] * 0.05, 750)
-        self.button.setFixedSize(QSize(150, 150))
+        self.settings = PicButton(QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"),
+                                QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"), self)
+        self.setToolTip("View Settings")
+        self.settings.move(WINDOW_SIZE[1] * 0.05, 750)
+        self.settings.setFixedSize(QSize(150, 150))
 
         self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
                                 QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
@@ -220,18 +222,26 @@ class Hub(QMainWindow):
         self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
                                 QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
         self.button.move(WINDOW_SIZE[0] * 0.8, 20)
-        self.button.setToolTip("??")
+        self.button.setToolTip("Browse AI's")
         self.button.setFixedSize(QSize(100, 100))
 
-        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
-                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
-        self.button.move(WINDOW_SIZE[0] * 0.9, 20)
-        self.button.setToolTip("Join Tournament")
-        self.button.setFixedSize(QSize(100, 100))
+        self.join_tournament = PicButton(QPixmap("resources/join_tournament.png"), QPixmap("resources/join_tournament_hover.png"),
+                                QPixmap("resources/join_tournament.png"), QPixmap("resources/join_tournament_hover.png"), self)
+        self.join_tournament.move(WINDOW_SIZE[0] * 0.9, 20)
+        self.join_tournament.setToolTip("Join Tournament")
+        self.join_tournament.setFixedSize(QSize(100, 100))
 
         for player in self.players:
             #TODO: Sort so that user is at the top and ingame players at the bottom
             #TODO: add player status
+            statusImage = QLabel(self)
+            statusImage.setFixedSize(QSize(32, 32))
+            statusPicture = QPixmap(PICTURE_DICT[self.status[self.players.index(player)]])
+            myScaledPixmap = statusPicture.scaled(statusImage.size(), Qt.KeepAspectRatio)
+            statusImage.setPixmap(myScaledPixmap)
+            height, width = self.starting_height + self.difference * self.players.index(player) + 10, self.starting_width - 150
+            statusImage.move(width, height)
+
             label = QLabel(player, self)
             label.setStyleSheet("QLabel {font-size: 40px; color: white}")
             height, width = self.starting_height + self.difference * self.players.index(player), self.starting_width
@@ -242,8 +252,7 @@ class Hub(QMainWindow):
             label2.move(1200, height)
             label2.adjustSize()
 
-            if self.chatBar is "passive":
-                pass
+        self.draw_chat()
         setup = settings.get_standard_settings()
         header = "PyBot {}".format(setup["version"])
         self.setWindowTitle(header)
@@ -283,6 +292,52 @@ class Hub(QMainWindow):
         string = "Quitting the application"
         self.statusBar().showMessage(string)
 
+    def get_new_message(self):
+        return None
+
+    def update_chat(self):
+        print("Hi")
+        if self.chatBar == "passive":
+            self.chatBar = "active"
+            print(self.chatBar)
+            self.initUI()
+        else:
+            self.chatBar = "passive"
+            print(self.chatBar)
+            self.initUI()
+
+    def draw_chat(self):
+        if self.chatBar is "passive":
+            if self.get_new_message() is None:
+                self.chat = PicButton(QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
+                                 QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
+                                 self)
+                self.chat.setFixedSize(QSize(798, 75))
+                self.chat.clicked.connect(self.update_chat)
+                self.chat.move(WINDOW_SIZE[0]-798, WINDOW_SIZE[1]-75)
+            else:
+                self.chat = PicButton(QPixmap("resources/chat_new_collapsed.png"),
+                                 QPixmap("resources/chat_new_collapsed.png"),
+                                 QPixmap("resources/chat_new_collapsed.png"),
+                                 QPixmap("resources/chat_new_collapsed.png"),
+                                 self)
+                self.chat.setFixedSize(QSize(798, 75))
+                self.chat.clicked.connect(self.update_chat)
+                self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 75)
+        else:
+            if self.get_new_message() is None:
+                self.chat = PicButton(QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
+                                 QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
+                                 self)
+                self.chat.setFixedSize(QSize(798, 547))
+                self.chat.clicked.connect(self.update_chat)
+                self.chat.move(WINDOW_SIZE[0]-798, WINDOW_SIZE[1]-547)
+            else:
+                self.chat = PicButton(QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"),
+                                 QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"), self)
+                self.chat.setFixedSize(QSize(798, 547))
+                self.chat.clicked.connect(self.update_chat)
+                self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
 
 class GameClient(socket_client.SocketClient):
 
