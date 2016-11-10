@@ -210,6 +210,7 @@ class Hub(QMainWindow):
         self.settings = PicButton(QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"),
                                 QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"), self)
         self.setToolTip("View Settings")
+        self.settings.clicked.connect(self.show_settings)
         self.settings.move(WINDOW_SIZE[1] * 0.05, 750)
         self.settings.setFixedSize(QSize(150, 150))
 
@@ -253,6 +254,7 @@ class Hub(QMainWindow):
             label2.adjustSize()
 
         self.draw_chat()
+
         setup = settings.get_standard_settings()
         header = "PyBot {}".format(setup["version"])
         self.setWindowTitle(header)
@@ -300,14 +302,20 @@ class Hub(QMainWindow):
         if self.chatBar == "passive":
             self.chatBar = "active"
             print(self.chatBar)
-            self.initUI()
+            self.draw_chat()
         else:
             self.chatBar = "passive"
             print(self.chatBar)
-            self.initUI()
+            self.draw_chat()
 
     def draw_chat(self):
+        print("drawing")
         if self.chatBar is "passive":
+            try:
+                self.chat.deleteLater()
+            except:
+                pass
+            print("drawing passive chat")
             if self.get_new_message() is None:
                 self.chat = PicButton(QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
                                  QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
@@ -315,7 +323,13 @@ class Hub(QMainWindow):
                 self.chat.setFixedSize(QSize(798, 75))
                 self.chat.clicked.connect(self.update_chat)
                 self.chat.move(WINDOW_SIZE[0]-798, WINDOW_SIZE[1]-75)
+                self.chat.raise_()
+                self.chat.show()
             else:
+                try:
+                    self.chat.deleteLater()
+                except:
+                    pass
                 self.chat = PicButton(QPixmap("resources/chat_new_collapsed.png"),
                                  QPixmap("resources/chat_new_collapsed.png"),
                                  QPixmap("resources/chat_new_collapsed.png"),
@@ -324,20 +338,36 @@ class Hub(QMainWindow):
                 self.chat.setFixedSize(QSize(798, 75))
                 self.chat.clicked.connect(self.update_chat)
                 self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 75)
+                self.chat.raise_()
+                self.chat.show()
         else:
+            print("drawing active chat")
             if self.get_new_message() is None:
                 self.chat = PicButton(QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
                                  QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
                                  self)
                 self.chat.setFixedSize(QSize(798, 547))
                 self.chat.clicked.connect(self.update_chat)
-                self.chat.move(WINDOW_SIZE[0]-798, WINDOW_SIZE[1]-547)
+                self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
+                self.chat.raise_()
+                self.chat.show()
             else:
                 self.chat = PicButton(QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"),
                                  QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"), self)
                 self.chat.setFixedSize(QSize(798, 547))
                 self.chat.clicked.connect(self.update_chat)
                 self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
+                self.chat.raise_()
+                self.chat.show()
+
+    def show_settings(self):
+        message = QMessageBox(self)
+        setting = settings.get_standard_settings()
+        print(setting)
+        string = "User: {}\nServer: {}\nVersion: {}".format(setting["username"], setting["host"], setting["version"])
+        message.setText(string)
+        message.move(500, 500)
+        message.show()
 
 class GameClient(socket_client.SocketClient):
 
