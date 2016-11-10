@@ -16,7 +16,7 @@ ICON_PATH= "resources/pybot_logo_ver1.png"
 
 import sys
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QCheckBox, QPushButton, QToolTip, \
-    QDesktopWidget, QApplication, QLabel, QLineEdit, QMdiSubWindow, QMdiArea, QScrollArea, QAbstractButton
+    QDesktopWidget, QApplication, QLabel, QLineEdit, QMdiSubWindow, QMdiArea, QScrollArea, QAbstractButton, QMessageBox
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
@@ -33,7 +33,6 @@ class PicButton(QAbstractButton):
         self.released.connect(self.update)
 
     def paintEvent(self, event):
-        print(self.isChecked())
         if self.isChecked():
             if self.underMouse():
                 pix = self.pixmap_hover_pressed
@@ -197,11 +196,42 @@ class Hub(QMainWindow):
 
         self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
                                 QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
-        self.button.move(500, 500)
-        self.button.setFixedSize(QSize(300, 300))
+        self.button.move(WINDOW_SIZE[1] * 0.05, 250)
+        self.button.setToolTip("Start a new game")
+        self.button.setFixedSize(QSize(150, 150))
+
+        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button.move(WINDOW_SIZE[1] * 0.05, 500)
+        self.button.setToolTip("Chat with an online user")
+        self.button.setFixedSize(QSize(150, 150))
+
+        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button.move(WINDOW_SIZE[1] * 0.05, 750)
+        self.button.setFixedSize(QSize(150, 150))
+
+        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button.move(WINDOW_SIZE[0] * 0.7, 20)
+        self.button.setToolTip("Message Admin")
+        self.button.setFixedSize(QSize(100, 100))
+
+        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button.move(WINDOW_SIZE[0] * 0.8, 20)
+        self.button.setToolTip("??")
+        self.button.setFixedSize(QSize(100, 100))
+
+        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button.move(WINDOW_SIZE[0] * 0.9, 20)
+        self.button.setToolTip("Join Tournament")
+        self.button.setFixedSize(QSize(100, 100))
 
         for player in self.players:
             #TODO: Sort so that user is at the top and ingame players at the bottom
+            #TODO: add player status
             label = QLabel(player, self)
             label.setStyleSheet("QLabel {font-size: 40px; color: white}")
             height, width = self.starting_height + self.difference * self.players.index(player), self.starting_width
