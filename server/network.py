@@ -25,19 +25,20 @@ class Network(Server):
         password = conn.ask("password")
         if username in [u.name for u in self.users]:
             conn.send("user already logged in")
-            conn.quit()
-            return
+            return False
         if not self.db.verify(username, password):
             conn.send("invalid username or password")
-            conn.quit()
-            return
+            return False
         user = User(conn, username)
         self.users.append(user)
         print("{} joined the network".format(user))
         self.lobby.join(user)
+        return True
 
     def on_disconnect(self, conn):
         user = self.find_user_by_conn(conn)
+        if user is None:
+            return
         self.lobby.leave(user)
         self.users.remove(user)
         print("{} left the network".format(user))

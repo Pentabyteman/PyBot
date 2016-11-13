@@ -2,6 +2,7 @@
 # -*- coding: iso-8859-15 -*-
 
 import socket
+import ssl
 import struct
 from threading import Thread
 
@@ -11,6 +12,10 @@ class Server:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket = ssl.wrap_socket(self.socket,
+                                      certfile='server.crt',
+                                      keyfile='server.key',
+                                      server_side=True)
         host = ''  # localhost
         port = 12345  # just random port
         try:
@@ -34,7 +39,7 @@ class Server:
         try:
             conn, addr = self.socket.accept()
         except OSError as e:
-            print("Error", str(e))
+            print("OSError while accepting connection", str(e))
             return
         Thread(target=self.pre_handle_client, args=(conn, addr)).start()
 
@@ -45,9 +50,9 @@ class Server:
 
     def pre_handle_client(self, conn, addr):
         client = ClientConnection(conn)
-        self.on_connect(client)
+        connected = self.on_connect(client)
 
-        while not self.terminated:
+        while not self.terminated and connected:
             text = client.recv()
             if not text:
                 self.on_disconnect(client)
@@ -96,7 +101,7 @@ class ClientConnection:
             recv = recvall(self.conn, msglen)
             return recv.decode("utf-8")
         except Exception as e:
-            print("Error", str(e))
+            print("Error while receiving", str(e))
             return None
 
     def send(self, query, encode=True):

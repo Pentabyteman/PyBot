@@ -30,7 +30,7 @@ class HubServer(network.Hub):
                     return
                 return "tournament info {}".format(self.tourn.info)
             elif body == "create":
-                if self.tourn is not None:
+                if self.tourn is not None and not self.tourn.closed:
                     return "tournament already existing"
                 self.tourn = tournament.Tournament(self.network.debug)
             elif body == "remove":
@@ -38,7 +38,7 @@ class HubServer(network.Hub):
                     return
                 self.tourn = None
             elif body.startswith("join"):
-                if self.tourn is None:
+                if self.tourn is None or self.tourn.closed:
                     return "tournament not existing"
                 if self.tourn.has_started:
                     return "tournament already started"
@@ -67,7 +67,10 @@ class HubServer(network.Hub):
             game_server = available_servers[0]
             for _ in range(2):  # get first 2
                 self.network.move(self.queue[0], game_server)  # move
-                del self.queue[0]  # delete from queue
+
+    def on_leave(self, user):
+        if user in self.queue:
+            self.queue.remove(user)
 
 
 if __name__ == '__main__':

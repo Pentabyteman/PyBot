@@ -52,6 +52,7 @@ class Tournament:
         self.has_started = False
         self.server = None
         self.debug = debug
+        self.closed = False
         print("New tournament created")
 
     def join(self, player, ai_data=None):
@@ -79,6 +80,7 @@ class Tournament:
         if self.server is not None:
             self.server.kick_all()
         print("Tournament was closed!")
+        self.closed = True
 
     @property
     def info(self):
@@ -105,17 +107,17 @@ class Tournament:
             couples = join_up(self.players)
             for couple in couples:
                 loser = self.match_up(couple)
-                if loser is not None:
-                    self.leave(loser)
+                self.leave(*couple if loser is None else loser)
 
         # alle gegen alle
         points = {p: 0 for p in self.players}
         for couple in combinations(self.players, 2):
             loser = self.match_up(list(couple))
-            winner = next(x for x in couple if x != loser)
-            print("{} won against {}".format(winner, loser))
-            points[winner] += 1
-            print("Point balance: {}".format(points))
+            if loser is not None:
+                winner = next(x for x in couple if x != loser)
+                print("{} won against {}".format(winner, loser))
+                points[winner] += 1
+                print("Point balance: {}".format(points))
 
         highest = max(points.values())
         final = [pl for pl, po in points.items() if po == highest]
@@ -143,11 +145,13 @@ class Tournament:
             random.shuffle(match)
             print("Match", match)
 
-            paths = [game.ai_path(player.name) for player in match]
             # winner is 0, 1 or None (winning team)
-            winner = self.server.run_game(*paths, kick=False)
+            winner = self.server.run_match(*match, kick=False)
             if winner is not None:
-                points[match[winner]] += 1
+                points[winner] += 1
+            else:
+                print("Both failed")
+                return None
 
         return min(points, key=points.get)  # loser
 
