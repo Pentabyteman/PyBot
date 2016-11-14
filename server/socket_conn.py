@@ -17,7 +17,7 @@ class Server:
                                       keyfile='server.key',
                                       server_side=True)
         host = ''  # localhost
-        port = 12345  # just random port
+        port = 25555  # 'official' pybot port
         try:
             self.socket.bind((host, port))
         except socket.error as e:

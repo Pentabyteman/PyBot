@@ -213,7 +213,7 @@ class ServerSelect(Window):
             if len(parts) > 1:
                 port = int(parts[1])
             else:
-                port = 12345
+                port = 25555
         except Exception:
             print("Invalid address", server)
             self.error_label.text = "Invalid server address"

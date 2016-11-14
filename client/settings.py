@@ -3,7 +3,6 @@
 
 import sysconfig
 import json
-import tkinter
 
 DEFAULT_SETTINGS = {"updating": "none", "username": "", "host": "",
                     "version": "1.0.0"}
