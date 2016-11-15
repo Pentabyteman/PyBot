@@ -205,11 +205,12 @@ class Hub(QMainWindow):
         self.button.setToolTip("Start a new game")
         self.button.setFixedSize(QSize(150, 150))
 
-        self.button = PicButton(QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"),
+        self.chat_button = PicButton(QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"),
                                 QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"), self)
-        self.button.move(WINDOW_SIZE[1] * 0.05, 500)
-        self.button.setToolTip("Chat with an online user")
-        self.button.setFixedSize(QSize(150, 150))
+        self.chat_button.move(WINDOW_SIZE[1] * 0.05, 500)
+        self.chat_button.setToolTip("Chat with an online user")
+        self.chat_button.clicked.connect(self.choose_chat_user)
+        self.chat_button.setFixedSize(QSize(150, 150))
 
         self.settings = PicButton(QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"),
                                 QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"), self)
@@ -419,6 +420,13 @@ class Hub(QMainWindow):
                 self.chat.show()
                 self.message.show()
                 self.send.show()
+
+    def choose_chat_user(self):
+        chatable_user = []
+        for status in self.status:
+            if status == "online":
+                chatable_user.append(self.players[self.status.index(status)])
+        print(chatable_user)
 
     def show_settings(self):
         self.statusBar().showMessage("Opening settings...")
