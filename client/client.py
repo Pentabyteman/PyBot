@@ -23,6 +23,7 @@ from PyQt5.QtCore import *
 
 PICTURE_DICT = {"self": "resources/self.png", "online": "resources/online.png", "ingame": "resources/ingame.png"}
 
+
 class PicButton(QAbstractButton):
     def __init__(self, pixmap, pixmap_hover, pixmap_pressed, pixmap_hover_pressed, parent=None):
         super(PicButton, self).__init__(parent)
@@ -301,18 +302,18 @@ class Hub(QMainWindow):
         return None
 
     def update_chat(self):
-        print("Hi")
         if self.chatBar == "passive":
             self.chatBar = "active"
-            print(self.chatBar)
+            string = "The chat is now {}".format(self.chatBar)
+            self.statusBar().showMessage(string)
             self.draw_chat()
         else:
             self.chatBar = "passive"
-            print(self.chatBar)
+            string = "The chat is now {}".format(self.chatBar)
+            self.statusBar().showMessage(string)
             self.draw_chat()
 
     def draw_chat(self):
-        print("drawing")
         if self.chatBar is "passive":
             try:
                 self.chat.deleteLater()
@@ -320,7 +321,6 @@ class Hub(QMainWindow):
                 self.send.deleteLater()
             except:
                 pass
-            print("drawing passive chat")
             if self.get_new_message() is None:
                 self.chat = PicButton(QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
                                  QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
@@ -358,16 +358,16 @@ class Hub(QMainWindow):
                 self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
                 self.chat.raise_()
 
-                self.host = QLineEdit(self)
-                self.host.setMaxLength(26)
+                self.message = QLineEdit(self)
+                self.message.setMaxLength(26)
                 self.host.setStyleSheet(
                     "QLineEdit {background: white; font-size: 30px; color: black} QLineEdit:focus {background: lightgrey;} "
                     "QLineEdit:placeholder {color: white;}")
                 host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
-                self.host.move(host_w, host_h)
-                self.host.setPlaceholderText("Message")
-                self.host.setFixedSize(QSize(500, 40))
-                self.host.raise_()
+                self.message.move(host_w, host_h)
+                self.message.setPlaceholderText("Message")
+                self.message.setFixedSize(QSize(500, 40))
+                self.message.raise_()
 
                 self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
                                       QPixmap("resources/play.png"), QPixmap("resources/play.png"), self)
@@ -375,17 +375,18 @@ class Hub(QMainWindow):
                 send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
 
-                Label = QLabel()
-                Label.setFixedSize(QSize(500, 500))
-                Label.setText("aaaaaaaaa")
+                label = QLabel(self)
+                label.setFixedSize(QSize(500, 500))
+                label.setText("aaaaaaaaa")
+                label.setStyleSheet("QLabel {font-size:80px;}")
                 scroll = QScrollArea()
-                scroll.setWidget(Label)
+                scroll.setWidget(label)
                 scroll.setWidgetResizable(True)
                 scroll.setFixedHeight(400)
                 self.layout.addWidget(scroll)
 
                 self.chat.show()
-                self.host.show()
+                self.message.show()
                 self.send.show()
                 self.show()
 
@@ -397,41 +398,118 @@ class Hub(QMainWindow):
                 self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
                 self.chat.raise_()
 
-                self.host = QLineEdit(self)
-                self.host.setMaxLength(30)
-                self.host.setStyleSheet(
+                self.message = QLineEdit(self)
+                self.message.setMaxLength(30)
+                self.message.setStyleSheet(
                     "QLineEdit {background: white; font-size: 30px; color: black} "
                     "QLineEdit:focus {background: lightgrey;} "
                     "QLineEdit:placeholder {color: white;}")
                 host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
-                self.host.move(host_w, host_h)
-                self.host.setPlaceholderText("Message")
-                self.host.setFixedSize(QSize(500, 40))
-                self.host.raise_()
+                self.message.move(host_w, host_h)
+                self.message.setPlaceholderText("Message")
+                self.message.setFixedSize(QSize(500, 40))
+                self.message.raise_()
 
-                self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
+                self.message = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
                                       QPixmap("resources/play.png"),QPixmap("resources/play.png"), self)
                 self.send.setFixedSize(40, 40)
-                self.send.clicked.connect(self.send_message())
+                self.send.clicked.connect(self.send_message)
                 send_w, send_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
                 self.chat.show()
-                self.host.show()
+                self.message.show()
                 self.send.show()
 
     def show_settings(self):
-        new_window = QDialog(self)
+        self.statusBar().showMessage("Opening settings...")
+        self.new_window = QDialog(self)
         setting = settings.get_standard_settings()
-        print(setting)
-        string = "User: {}\nServer: {}\nVersion: {}".format(setting["username"], setting["host"], setting["version"])
-        new_window.setModal(True)
-        new_window.move(500, 500)
-        new_window.setWindowTitle("Settings")
-        new_window.setGeometry(500, 500, 300, 300)
-        new_window.show()
+        username_label = QLabel("Username: ", self.new_window)
+        username_label.setStyleSheet("QLabel {font-size: 15px; color: black}")
+        username_label.move(15, 14)
+        self.user = QLineEdit(self.new_window)
+        self.user.setMaxLength(15)
+        self.user.setStyleSheet(
+            "QLineEdit {background: white; font-size: 15px; color: black} QLineEdit:focus {background: lightgrey;}"
+            "QLineEdit:placeholder {color: white;}")
+        old_username = setting["username"]
+        self.user.setPlaceholderText(old_username)
+        self.user.move(120, 10)
+        self.user.adjustSize()
+        hostname = QLabel("Host: ", self.new_window)
+        hostname.setStyleSheet("QLabel {font-size: 15px; color: black}")
+        hostname.move(15, 54)
+        self.host = QLineEdit(self.new_window)
+        self.host.setMaxLength(15)
+        self.host.setStyleSheet(
+            "QLineEdit {background: white; font-size: 15px; color: black} QLineEdit:focus {background: lightgrey;}"
+            "QLineEdit:placeholder {color: white;}")
+        old_hostname = setting["host"]
+        self.host.setPlaceholderText(old_hostname)
+        self.host.move(120, 50)
+        self.host.adjustSize()
+        update_behaviour = QLabel("Update settings:", self.new_window)
+        update_behaviour.setStyleSheet("QLabel {font-size: 15px; color: black}")
+        update_behaviour.move(75, 125)
+        self.always_update = QPushButton("Always", self.new_window)
+        self.always_update.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:lightblue}"
+                                    "QPushButton:checked {background:black; color:white}")
+        self.always_update.setCheckable(True)
+        if setting["updating"]=="always":
+            self.always_update.setChecked(True)
+        self.always_update.move(50, 150)
+        self.always_update.clicked.connect(self.disable_never)
+        self.never_update = QPushButton("Never", self.new_window)
+        self.never_update.setCheckable(True)
+        if setting["updating"] == "never":
+            self.never_update.setChecked(True)
+        self.never_update.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:lightblue}"
+                                   "QPushButton:checked {color:white; background:black}")
+        self.never_update.move(175, 150)
+        self.never_update.clicked.connect(self.disable_always)
+        version_string = "Version {}".format(setting["version"])
+        version = QLabel(version_string, self.new_window)
+        version.setStyleSheet("QLabel {font-size: 12px; color: black}")
+        version.move(15, 280)
+        self.ok = QPushButton("Ok", self.new_window)
+        self.ok.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:lightblue}")
+        self.ok.clicked.connect(self.update_settings)
+        self.ok.move(15, 225)
+        self.cancel = QPushButton("Cancel", self.new_window)
+        self.cancel.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:red; color:white}")
+        self.cancel.clicked.connect(self.cancle)
+        self.cancel.move(150, 225)
+        self.new_window.setModal(True)
+        self.new_window.move(500, 500)
+        self.new_window.setWindowTitle("Settings")
+        self.new_window.setGeometry(500, 500, 300, 300)
+        self.new_window.show()
 
     def send_message(self):
-        pass
+        self.statusBar().showMessage("Sending message...")
+
+    def disable_always(self):
+        self.always_update.setChecked(False)
+
+    def disable_never(self):
+        self.never_update.setChecked(False)
+
+    def update_settings(self):
+        setting = settings.get_standard_settings()
+        if self.host.text() != "":
+            setting["host"] = self.host.text()
+        if self.user.text() != "":
+            setting["username"] = self.user.text()
+        if self.always_update.isChecked():
+            setting["updating"] = "always"
+        if self.never_update.isChecked():
+            setting["updating"] = "never"
+        settings.update_standard_settings(setting)
+        self.new_window.close()
+
+    def cancle(self):
+        self.new_window.close()
+
 
 class GameClient(socket_client.SocketClient):
 
