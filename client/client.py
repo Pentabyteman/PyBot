@@ -17,7 +17,7 @@ ICON_PATH= "resources/pybot_logo_ver1.png"
 import sys
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QCheckBox, QPushButton, QToolTip, \
     QDesktopWidget, QApplication, QLabel, QLineEdit, QMdiSubWindow, QMdiArea, QScrollArea, QAbstractButton, \
-    QMessageBox, QGroupBox, QFormLayout, QComboBox
+    QMessageBox, QGroupBox, QFormLayout, QComboBox, QWidget
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
@@ -91,6 +91,8 @@ class ServerSelect(QMainWindow):
         self.login.adjustSize()
 
         self.user = QLineEdit(self)
+        setting = settings.get_standard_settings()
+        self.user.setText(setting["username"])
         self.user.setMaxLength(15)
         self.user.setStyleSheet(
             "QLineEdit {background: white; font-size: 38px; color: black} QLineEdit:focus {background: lightgrey;}"
@@ -131,6 +133,7 @@ class ServerSelect(QMainWindow):
         host_w, host_h = WINDOW_SIZE[1] * 0.45, WINDOW_SIZE[0] * 0.32
         self.host.move(host_h, host_w)
         self.host.setPlaceholderText("Server address")
+        self.host.setText(setting["host"])
         self.host.adjustSize()
 
         self.connect = QPushButton('Connect', self)
@@ -156,6 +159,7 @@ class ServerSelect(QMainWindow):
                     settings.get_python_version())
         print(info)
         self.statusBar().showMessage(info)
+        self.setFixedSize(*WINDOW_SIZE)
         self.show()
 
     def center(self):
@@ -165,6 +169,37 @@ class ServerSelect(QMainWindow):
         self.move(qr.topLeft())
 
     def connect_to_server(self):
+        setting = settings.get_standard_settings()
+        if setting["updating"] == "always":
+            setting["host"] = self.host.text()
+            setting["username"] = self.user.text()
+            settings.update_standard_settings(setting)
+        elif setting["updating"] == "none":
+            if self.host.text() != setting["host"] or self.user.text() != setting["username"]:
+                setting["host"] = self.host.text()
+                setting["username"] = self.user.text()
+                self.ask_to_update = QDialog(self)
+                self.ask_to_update.setWindowTitle("Update Settings?")
+                self.ask_to_update.setStyleSheet("QDialog {background:plum}")
+                label1 = QLabel("Update Settings?", self.ask_to_update)
+                label1.setStyleSheet("QLabel {color:white; font:24px}")
+                button1 = QPushButton("Ok", self.ask_to_update)
+                button1.setStyleSheet("QPushButton {background:salmon} QPushButton:hover {background:skyblue}")
+                button2 = QPushButton("No", self.ask_to_update)
+                button2.setStyleSheet("QPushButton {background:salmon} QPushButton:hover {background:skyblue}")
+                button1.move(50, 50)
+                button1.setFixedSize(QSize(90, 50))
+                button2.setFixedSize(QSize(90, 50))
+                button2.move(150, 50)
+                label1.move(50, 10)
+                self.ask_to_update.setModal(True)
+                self.ask_to_update.setFixedSize(300, 125)
+                self.ask_to_update.setGeometry(400, 400, 300, 125)
+                self.ask_to_update.show()
+            else:
+                pass
+        else:
+            pass
         self.statusBar().showMessage("Connecting...")
         self.error_label.setText("ERROR: Can't connect to server")
         self.error_label.adjustSize()
@@ -265,6 +300,7 @@ class Hub(QMainWindow):
         self.setWindowTitle(header)
         self.setWindowIcon(QIcon(ICON_PATH))
         self.setGeometry(300, 300, *WINDOW_SIZE)
+        self.setFixedSize(*WINDOW_SIZE)
         self.center()
 
         self.show()
@@ -389,13 +425,11 @@ class Hub(QMainWindow):
                 send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
 
-                label = QLabel(self)
-                label.setFixedSize(QSize(500, 500))
-                label.setText("aaaaaaaaa")
-                label.setStyleSheet("QLabel {font-size:80px;}")
                 scroll = QScrollArea()
-                scroll.setWidget(label)
-                scroll.setWidgetResizable(True)
+                scrollContent = QWidget(scroll)
+                scrollLayout = QVBoxLayout(scroll)
+                scrollContent.setLayout(scrollLayout)
+                scroll.setWidgetResizable(False)
                 scroll.setFixedHeight(400)
                 self.layout.addWidget(scroll)
 
@@ -454,17 +488,22 @@ class Hub(QMainWindow):
         self.chat_choose_window.setWindowTitle("Choose a User")
         user_button_list = []
         for i in range(0, len(chatable_user)):
-            user_button = QPushButton(chatable_user[i], self.chat_choose_window)
+            user_button = QPushButton(str(chatable_user[i]), self.chat_choose_window)
+            user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
+                                           "QPushButton:hover {background:skyblue; color:black;}")
             width, height = chat_choose_width, chat_choose_height/len(chatable_user)
             user_button.setFixedSize(QSize(width, height))
-            user_button.clicked.connect(lambda: self.start_chat(user_button_list[i].text()))
             user_button.move(0, height*i)
+            text = str(user_button.text())
             user_button_list.append(user_button)
+            user_button.clicked.connect(lambda text=str(text): self.start_chat(text))
         for button in user_button_list:
             button.show()
+        self.chat_choose_window.setFixedSize(chat_choose_height, chat_choose_width)
         self.chat_choose_window.show()
 
     def start_chat(self, username):
+        print(username)
         self.chat_choose_window.close()
         self.chatBar = "active"
         self.draw_chat(receiver=username)
@@ -533,6 +572,7 @@ class Hub(QMainWindow):
         self.new_window.move(500, 500)
         self.new_window.setWindowTitle("Settings")
         self.new_window.setGeometry(500, 500, 300, 300)
+        self.new_window.setFixedSize(300, 300)
         self.new_window.show()
 
     def send_message(self):
