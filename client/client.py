@@ -175,7 +175,7 @@ class Hub(QMainWindow):
         super().__init__()
         self.players = ["Erich Hasl", "Nils Hebach", "Malte Schneider", "Moritz Heller"]
         self.user_stats = ["10P", "1000P", "10P", "10P"]
-        self.status = ["self", "self", "self", "self"]
+        self.status = ["self", "online", "ingame", "ingame"]
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
         self.line_starting_height = 250
@@ -258,7 +258,7 @@ class Hub(QMainWindow):
             label2.move(1200, height)
             label2.adjustSize()
 
-        self.draw_chat()
+        self.draw_chat("Global Chat")
 
         setup = settings.get_standard_settings()
         header = "PyBot {}".format(setup["version"])
@@ -307,19 +307,20 @@ class Hub(QMainWindow):
             self.chatBar = "active"
             string = "The chat is now {}".format(self.chatBar)
             self.statusBar().showMessage(string)
-            self.draw_chat()
+            self.draw_chat(receiver="Global Chat")
         else:
             self.chatBar = "passive"
             string = "The chat is now {}".format(self.chatBar)
             self.statusBar().showMessage(string)
-            self.draw_chat()
+            self.draw_chat(receiver="Global Chat")
 
-    def draw_chat(self):
+    def draw_chat(self, receiver):
         if self.chatBar is "passive":
             try:
                 self.chat.deleteLater()
-                self.host.deleteLater()
+                self.message.deleteLater()
                 self.send.deleteLater()
+                self.heading.deleteLater()
             except:
                 pass
             if self.get_new_message() is None:
@@ -335,7 +336,7 @@ class Hub(QMainWindow):
             else:
                 try:
                     self.chat.deleteLater()
-                    self.host.deleteLater()
+                    self.message.deleteLater()
                     self.send.deleteLater()
                 except:
                     pass
@@ -350,6 +351,13 @@ class Hub(QMainWindow):
                 self.chat.raise_()
                 self.chat.show()
         else:
+            try:
+                self.chat.deleteLater()
+                self.message.deleteLater()
+                self.send.deleteLater()
+                self.heading.deleteLater()
+            except:
+                pass
             if self.get_new_message() is None:
                 self.chat = PicButton(QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
                                  QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
@@ -359,9 +367,14 @@ class Hub(QMainWindow):
                 self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
                 self.chat.raise_()
 
+                self.heading = QLabel(receiver, self)
+                self.heading.move(WINDOW_SIZE[0] - 550, WINDOW_SIZE[1] - 475)
+                self.heading.setStyleSheet("QLabel {color:black; font-size:40px}")
+                self.heading.adjustSize()
+
                 self.message = QLineEdit(self)
                 self.message.setMaxLength(26)
-                self.host.setStyleSheet(
+                self.message.setStyleSheet(
                     "QLineEdit {background: white; font-size: 30px; color: black} QLineEdit:focus {background: lightgrey;} "
                     "QLineEdit:placeholder {color: white;}")
                 host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
@@ -389,6 +402,7 @@ class Hub(QMainWindow):
                 self.chat.show()
                 self.message.show()
                 self.send.show()
+                self.heading.show()
                 self.show()
 
             else:
@@ -398,6 +412,11 @@ class Hub(QMainWindow):
                 self.chat.clicked.connect(self.update_chat)
                 self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
                 self.chat.raise_()
+
+                self.heading = QLabel(receiver, self)
+                self.heading.move(WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 500)
+                self.heading.setStyleSheet("QLabel {color:black; font-size:18px}")
+                self.heading.adjustSize()
 
                 self.message = QLineEdit(self)
                 self.message.setMaxLength(30)
@@ -420,13 +439,36 @@ class Hub(QMainWindow):
                 self.chat.show()
                 self.message.show()
                 self.send.show()
+                self.heading.show()
+                self.show()
 
     def choose_chat_user(self):
-        chatable_user = []
+        chatable_user = ['Global Chat']
         for status in self.status:
             if status == "online":
                 chatable_user.append(self.players[self.status.index(status)])
-        print(chatable_user)
+        self.chat_choose_window = QDialog(self)
+        chat_choose_width = 300
+        chat_choose_height = 300
+        self.chat_choose_window.setGeometry(300, 300, chat_choose_height, chat_choose_width)
+        self.chat_choose_window.setWindowTitle("Choose a User")
+        user_button_list = []
+        for i in range(0, len(chatable_user)):
+            user_button = QPushButton(chatable_user[i], self.chat_choose_window)
+            width, height = chat_choose_width, chat_choose_height/len(chatable_user)
+            user_button.setFixedSize(QSize(width, height))
+            user_button.clicked.connect(lambda: self.start_chat(user_button_list[i].text()))
+            user_button.move(0, height*i)
+            user_button_list.append(user_button)
+        for button in user_button_list:
+            button.show()
+        self.chat_choose_window.show()
+
+    def start_chat(self, username):
+        self.chat_choose_window.close()
+        self.chatBar = "active"
+        self.draw_chat(receiver=username)
+
 
     def show_settings(self):
         self.statusBar().showMessage("Opening settings...")
