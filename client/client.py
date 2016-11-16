@@ -425,19 +425,21 @@ class Hub(QMainWindow):
                 send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
 
-                scroll = QScrollArea()
-                scrollContent = QWidget(scroll)
-                scrollLayout = QVBoxLayout(scroll)
+                self.scroll = QScrollArea()
+                scrollContent = QWidget(self.scroll)
+                scrollLayout = QVBoxLayout(scrollContent)
                 scrollContent.setLayout(scrollLayout)
-                scroll.setWidgetResizable(False)
-                scroll.setFixedHeight(400)
-                self.layout.addWidget(scroll)
+                for i in range(0, 1000):
+                    scrollLayout.addWidget(QPushButton(str(i)))
+                self.scroll.setWidget(scrollContent)
+                self.scroll.setWidgetResizable(False)
 
                 self.chat.show()
                 self.message.show()
                 self.send.show()
                 self.heading.show()
                 self.show()
+                self.scroll.show()
 
             else:
                 self.chat = PicButton(QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"),
