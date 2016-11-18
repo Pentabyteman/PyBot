@@ -209,7 +209,7 @@ class Hub(QMainWindow):
     def __init__(self):
         super().__init__()
         self.players = ["Erich Hasl", "Nils Hebach", "Malte Schneider", "Moritz Heller"]
-        self.user_stats = ["10P", "1000P", "10P", "10P"]
+        self.user_stats = ["10P", "42P", "10P", "10P"]
         self.status = ["self", "online", "online", "online"]
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
@@ -234,11 +234,12 @@ class Hub(QMainWindow):
         heading.move(heading_h, heading_w)
         heading.adjustSize()
 
-        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+        self.new_game = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
                                 QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
-        self.button.move(WINDOW_SIZE[1] * 0.05, 250)
-        self.button.setToolTip("Start a new game")
-        self.button.setFixedSize(QSize(150, 150))
+        self.new_game.move(WINDOW_SIZE[1] * 0.05, 250)
+        self.new_game.setToolTip("Start a new game")
+        self.new_game.clicked.connect(self.game_challenge)
+        self.new_game.setFixedSize(QSize(150, 150))
 
         self.chat_button = PicButton(QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"),
                                 QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"), self)
@@ -424,7 +425,7 @@ class Hub(QMainWindow):
                 self.send.move(send_w, send_h)
 
                 self.scroll = QScrollArea(self)
-                self.scroll.setStyleSheet("QScrollArea {background:white}")
+                self.scroll.setStyleSheet("QScrollArea {background:white; border:none}")
                 self.scroll.move(WINDOW_SIZE[0]- 700, WINDOW_SIZE[1]- 400)
                 self.scroll.setFixedSize(590, 250)
                 self.scroll.raise_()
@@ -507,6 +508,39 @@ class Hub(QMainWindow):
             button.show()
         self.chat_choose_window.setFixedSize(chat_choose_height, chat_choose_width)
         self.chat_choose_window.show()
+
+    def game_challenge(self):
+        playable_user = []
+        for i in range(0, len(self.status)):
+            if self.status[i] == "online":
+                playable_user.append(self.players[i])
+        self.challenge = QDialog(self)
+        chat_choose_width = 300
+        chat_choose_height = 300
+        print(playable_user)
+        self.challenge.setGeometry(300, 300, chat_choose_height, chat_choose_width)
+        self.challenge.setWindowTitle("Choose an Opponent")
+        user_button_list = []
+        for i in range(0, len(playable_user)):
+            user_button = QPushButton(str(playable_user[i]), self.challenge)
+            user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
+                                           "QPushButton:hover {background:skyblue; color:black;}")
+            width, height = chat_choose_width, chat_choose_height/len(playable_user)
+            user_button.setFixedSize(QSize(width, height))
+            user_button.move(0, height*i)
+            usertext = str(user_button.text())
+            user_button_list.append(user_button)
+            user_button.clicked.connect(lambda text_=str(usertext): self.start_game(text_))
+        for button in user_button_list:
+            button.show()
+        self.challenge.setFixedSize(chat_choose_height, chat_choose_width)
+        self.challenge.show()
+
+    def start_game(self, user):
+        print("yay")
+        print(user)
+        self.challenge.close()
+        self.statusBar().showMessage("Starting game against ")
 
     def start_chat(self, username_):
         self.chat_choose_window.close()
