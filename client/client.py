@@ -210,7 +210,7 @@ class Hub(QMainWindow):
         super().__init__()
         self.players = ["Erich Hasl", "Nils Hebach", "Malte Schneider", "Moritz Heller"]
         self.user_stats = ["10P", "1000P", "10P", "10P"]
-        self.status = ["self", "online", "ingame", "ingame"]
+        self.status = ["self", "online", "online", "online"]
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
         self.line_starting_height = 250
@@ -480,16 +480,18 @@ class Hub(QMainWindow):
 
     def choose_chat_user(self):
         chatable_user = ['Global Chat']
-        for status in self.status:
-            if status == "online":
-                chatable_user.append(self.players[self.status.index(status)])
+        for i in range(0, len(self.status)):
+            if self.status[i] == "online":
+                chatable_user.append(self.players[i])
         self.chat_choose_window = QDialog(self)
         chat_choose_width = 300
         chat_choose_height = 300
+        print(chatable_user)
         self.chat_choose_window.setGeometry(300, 300, chat_choose_height, chat_choose_width)
         self.chat_choose_window.setWindowTitle("Choose a User")
         user_button_list = []
         for i in range(0, len(chatable_user)):
+            print(chatable_user[i])
             user_button = QPushButton(str(chatable_user[i]), self.chat_choose_window)
             user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
                                            "QPushButton:hover {background:skyblue; color:black;}")
@@ -505,7 +507,6 @@ class Hub(QMainWindow):
         self.chat_choose_window.show()
 
     def start_chat(self, username):
-        print(username)
         self.chat_choose_window.close()
         self.chatBar = "active"
         self.draw_chat(receiver=username)
