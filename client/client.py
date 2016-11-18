@@ -353,10 +353,12 @@ class Hub(QMainWindow):
     def draw_chat(self, receiver):
         if self.chatBar is "passive":
             try:
+                #deleting previous items
                 self.chat.deleteLater()
                 self.message.deleteLater()
                 self.send.deleteLater()
                 self.heading.deleteLater()
+                self.scroll.deleteLater()
             except:
                 pass
             if self.get_new_message() is None:
@@ -370,12 +372,6 @@ class Hub(QMainWindow):
                 self.chat.raise_()
                 self.chat.show()
             else:
-                try:
-                    self.chat.deleteLater()
-                    self.message.deleteLater()
-                    self.send.deleteLater()
-                except:
-                    pass
                 self.chat = PicButton(QPixmap("resources/chat_new_collapsed.png"),
                                  QPixmap("resources/chat_new_collapsed.png"),
                                  QPixmap("resources/chat_new_collapsed.png"),
@@ -388,10 +384,12 @@ class Hub(QMainWindow):
                 self.chat.show()
         else:
             try:
+                #deleting previous items
                 self.chat.deleteLater()
                 self.message.deleteLater()
                 self.send.deleteLater()
                 self.heading.deleteLater()
+                self.scroll.deleteLater()
             except:
                 pass
             if self.get_new_message() is None:
@@ -428,7 +426,7 @@ class Hub(QMainWindow):
                 self.scroll = QScrollArea(self)
                 self.scroll.setStyleSheet("QScrollArea {background:white}")
                 self.scroll.move(WINDOW_SIZE[0]- 700, WINDOW_SIZE[1]- 400)
-                self.scroll.setFixedSize(575, 250)
+                self.scroll.setFixedSize(590, 250)
                 self.scroll.raise_()
                 scrollContent = QWidget(self.scroll)
                 scrollLayout = QVBoxLayout(scrollContent)
@@ -502,18 +500,18 @@ class Hub(QMainWindow):
             width, height = chat_choose_width, chat_choose_height/len(chatable_user)
             user_button.setFixedSize(QSize(width, height))
             user_button.move(0, height*i)
-            text = str(user_button.text())
+            usertext = str(user_button.text())
             user_button_list.append(user_button)
-            user_button.clicked.connect(lambda text=str(text): self.start_chat(text))
+            user_button.clicked.connect(lambda text_=str(usertext): self.start_chat(text_))
         for button in user_button_list:
             button.show()
         self.chat_choose_window.setFixedSize(chat_choose_height, chat_choose_width)
         self.chat_choose_window.show()
 
-    def start_chat(self, username):
+    def start_chat(self, username_):
         self.chat_choose_window.close()
         self.chatBar = "active"
-        self.draw_chat(receiver=username)
+        self.draw_chat(receiver=username_)
 
 
     def show_settings(self):
