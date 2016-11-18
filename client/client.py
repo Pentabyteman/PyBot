@@ -425,7 +425,11 @@ class Hub(QMainWindow):
                 send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
 
-                self.scroll = QScrollArea()
+                self.scroll = QScrollArea(self)
+                self.scroll.setStyleSheet("QScrollArea {background:white}")
+                self.scroll.move(WINDOW_SIZE[0]- 700, WINDOW_SIZE[1]- 400)
+                self.scroll.setFixedSize(575, 250)
+                self.scroll.raise_()
                 scrollContent = QWidget(self.scroll)
                 scrollLayout = QVBoxLayout(scrollContent)
                 scrollContent.setLayout(scrollLayout)
