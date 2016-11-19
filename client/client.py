@@ -6,14 +6,6 @@ from collections import deque
 import pickle
 import settings
 import updates
-
-
-
-BOARD_SIZE = (1017, 1017)
-WINDOW_SIZE = [1500, 1017]
-global ICON_PATH
-ICON_PATH= "resources/pybot_logo_ver1.png"
-
 import sys
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QCheckBox, QPushButton, QToolTip, \
     QDesktopWidget, QApplication, QLabel, QLineEdit, QMdiSubWindow, QMdiArea, QScrollArea, QAbstractButton, \
@@ -21,6 +13,10 @@ from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QChe
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
+
+BOARD_SIZE = (1017, 1017)
+WINDOW_SIZE = [1500, 1017]
+ICON_PATH= "resources/pybot_logo_ver1.png"
 PICTURE_DICT = {"self": "resources/self.png", "online": "resources/online.png", "ingame": "resources/ingame.png"}
 
 
@@ -211,11 +207,14 @@ class Hub(QMainWindow):
         self.players = ["Erich Hasl", "Nils Hebach", "Malte Schneider", "Moritz Heller"]
         self.user_stats = ["10P", "42P", "10P", "10P"]
         self.status = ["self", "online", "online", "online"]
+        self.user = self.players[self.status.index('self')]
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
         self.line_starting_height = 250
         self.chatBar = "passive"
         self.layout = QHBoxLayout()
+        self.chatDictionary = {}
+        self.chatListDictionary = {}
 
         self.initUI()
 
@@ -223,6 +222,7 @@ class Hub(QMainWindow):
         self.mdi = QMdiArea
         self.statusBar()
         self.statusBar().setStyleSheet("color:white")
+        self.statusBar().showMessage("Initialising")
 
         palette = QPalette()
         palette.setBrush(QPalette.Background, QBrush(QPixmap("resources/background.png")))
@@ -295,7 +295,6 @@ class Hub(QMainWindow):
             label2.adjustSize()
 
         self.draw_chat("Global Chat")
-
         setup = settings.get_standard_settings()
         header = "PyBot {}".format(setup["version"])
         self.setWindowTitle(header)
@@ -303,7 +302,6 @@ class Hub(QMainWindow):
         self.setGeometry(300, 300, *WINDOW_SIZE)
         self.setFixedSize(*WINDOW_SIZE)
         self.center()
-
         self.show()
 
     def paintEvent(self, e):
@@ -322,7 +320,6 @@ class Hub(QMainWindow):
             qp.setPen(pen)
             line_height = self.line_starting_height + self.difference * self.players.index(player)
             qp.drawLine(250, line_height, WINDOW_SIZE[0], line_height)
-
 
     def center(self):
         qr = self.frameGeometry()
@@ -352,6 +349,7 @@ class Hub(QMainWindow):
             self.draw_chat(receiver="Global Chat")
 
     def draw_chat(self, receiver):
+        self.initChatDict()
         if self.chatBar is "passive":
             try:
                 #deleting previous items
@@ -430,10 +428,22 @@ class Hub(QMainWindow):
                 self.scroll.setFixedSize(590, 250)
                 self.scroll.raise_()
                 scrollContent = QWidget(self.scroll)
+                scrollContent.setStyleSheet("QWidget {background:white}")
                 scrollLayout = QVBoxLayout(scrollContent)
                 scrollContent.setLayout(scrollLayout)
-                for i in range(0, 1000):
-                    scrollLayout.addWidget(QPushButton(str(i)))
+                for message in self.chatDictionary[receiver]:
+                    sender, real_message = message.split('&')
+                    if sender != self.user:
+                        real_message = "".join([sender, ": ", real_message])
+                        messageLabel = QLabel(real_message)
+                        messageLabel.setFixedSize(570, 50)
+                        messageLabel.setStyleSheet("QLabel {background:white;font-size:24px;text-align:left;}")
+                    else:
+                        real_message = "".join([self.user, ": ", real_message])
+                        messageLabel = QLabel(real_message)
+                        messageLabel.setFixedSize(570, 50)
+                        messageLabel.setStyleSheet("QLabel {background:white;font-size:24px;text-align:right;}")
+                    scrollLayout.addWidget(messageLabel)
                 self.scroll.setWidget(scrollContent)
                 self.scroll.setWidgetResizable(False)
 
@@ -547,7 +557,6 @@ class Hub(QMainWindow):
         self.chatBar = "active"
         self.draw_chat(receiver=username_)
 
-
     def show_settings(self):
         self.statusBar().showMessage("Opening settings...")
         self.new_window = QDialog(self)
@@ -614,8 +623,17 @@ class Hub(QMainWindow):
         self.new_window.setFixedSize(300, 300)
         self.new_window.show()
 
-    def send_message(self):
+    def send_message(self, receiver, message):
         self.statusBar().showMessage("Sending message...")
+        messageList = self.chatDictionary[receiver]
+        message = "{}&{}".format(self.user, message)
+        messageList.append(message)
+        print(message)
+        self.chatDictionary[receiver] = messageList
+
+    def clearStatusBar(self):
+        print("clearing...")
+        self.statusBar().showMessage("")
 
     def disable_always(self):
         self.always_update.setChecked(False)
@@ -638,6 +656,24 @@ class Hub(QMainWindow):
 
     def cancle(self):
         self.new_window.close()
+
+    def initChatDict(self):
+        for player in self.players:
+            if not player == self.user:
+                try:
+                    self.chatDictionary[player]
+                except:
+                    listkey = ''.join([player, "_list"])
+                    self.chatListDictionary.update({listkey : []})
+                    self.chatDictionary.update({player : self.chatListDictionary[listkey]})
+                    self.send_message(player, "Hello There")
+        try:
+            self.chatDictionary["Global Chat"]
+        except:
+            listkey = ''.join(["Global Chat", "_list"])
+            self.chatListDictionary.update({listkey: []})
+            self.chatDictionary.update({"Global Chat": self.chatListDictionary[listkey]})
+            self.send_message("Global Chat", "Hello There")
 
 
 class GameClient(socket_client.SocketClient):
