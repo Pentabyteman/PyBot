@@ -424,9 +424,9 @@ class Hub(QMainWindow):
                 self.send.move(send_w, send_h)
                 self.send.clicked.connect(lambda ignore, receiver_ = str(receiver):
                                           self.send_message(receiver_, self.message.text()))
-
+                self.send.setShortcut(QKeySequence("Return"))
                 self.scroll = QScrollArea(self)
-                self.scroll.setStyleSheet("QScrollArea {background:white; border:none}")
+                self.scroll.setStyleSheet("QScrollArea {background:white; border:1px dotted grey}")
                 self.scroll.move(WINDOW_SIZE[0]- 700, WINDOW_SIZE[1]- 400)
                 self.scroll.setFixedSize(590, 250)
                 self.scroll.raise_()
@@ -439,17 +439,17 @@ class Hub(QMainWindow):
                     if sender != self.user:
                         real_message = "".join([sender, ": ", real_message])
                         messageLabel = QLabel(real_message)
-                        messageLabel.setFixedSize(570, 50)
+                        messageLabel.setFixedSize(550, 50)
                         messageLabel.setStyleSheet("QLabel {background:white;font-size:24px;text-align:left;}")
                     else:
                         real_message = "".join([self.user, ": ", real_message])
                         messageLabel = QLabel(real_message)
-                        messageLabel.setFixedSize(570, 50)
+                        messageLabel.setFixedSize(550, 50)
                         messageLabel.setStyleSheet("QLabel {background:white;font-size:24px;text-align:right;}")
                     scrollLayout.addWidget(messageLabel)
                 self.scroll.setWidget(scrollContent)
                 self.scroll.setWidgetResizable(False)
-
+                self.message.setFocus()
                 self.chat.show()
                 self.message.show()
                 self.send.show()
@@ -489,6 +489,7 @@ class Hub(QMainWindow):
                 send_w, send_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
                 self.chat.show()
+                self.message.setFocus()
                 self.message.show()
                 self.send.show()
                 self.heading.show()
@@ -618,12 +619,15 @@ class Hub(QMainWindow):
         self.new_window.show()
 
     def send_message(self, receiver, message):
-        self.statusBar().showMessage("Sending message...")
-        messageList = self.chatDictionary[receiver]
-        message = "{}&{}".format(self.user, message)
-        messageList.append(message)
-        self.chatDictionary[receiver] = messageList
-        self.draw_chat(receiver=receiver)
+        if message is not "":
+            self.statusBar().showMessage("Sending message...")
+            messageList = self.chatDictionary[receiver]
+            message = "{}&{}".format(self.user, message)
+            messageList.append(message)
+            self.chatDictionary[receiver] = messageList
+            self.draw_chat(receiver=receiver)
+        else:
+            self.draw_chat(receiver=receiver)
 
     def clearStatusBar(self):
         print("clearing...")
