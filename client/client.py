@@ -422,7 +422,7 @@ class Hub(QMainWindow):
                 self.send.setFixedSize(40, 40)
                 send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
-                self.send.clicked.connect(lambda receiver_ = receiver, message = self.message.text():
+                self.send.clicked.connect(lambda ignore, receiver_ = str(receiver), message = str(self.message.text()):
                                           self.send_message(receiver_, message))
 
                 self.scroll = QScrollArea(self)
@@ -516,7 +516,7 @@ class Hub(QMainWindow):
             user_button.move(0, height*i)
             usertext = str(user_button.text())
             user_button_list.append(user_button)
-            user_button.clicked.connect(lambda text_=str(usertext): self.start_chat(text_))
+            user_button.clicked.connect(lambda ignore, text_=str(usertext): self.start_chat(text_))
         for button in user_button_list:
             button.show()
         self.chat_choose_window.setFixedSize(chat_choose_height, chat_choose_width)
@@ -530,10 +530,8 @@ class Hub(QMainWindow):
         self.challenge = QDialog(self)
         chat_choose_width = 300
         chat_choose_height = 300
-        print(playable_user)
         self.challenge.setGeometry(300, 300, chat_choose_height, chat_choose_width)
         self.challenge.setWindowTitle("Choose an Opponent")
-        user_button_list = []
         for i in range(0, len(playable_user)):
             user_button = QPushButton(str(playable_user[i]), self.challenge)
             user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
@@ -542,18 +540,13 @@ class Hub(QMainWindow):
             user_button.setFixedSize(QSize(width, height))
             user_button.move(0, height*i)
             usertext = str(user_button.text())
-            user_button_list.append(user_button)
-            user_button.clicked.connect(lambda text_=str(usertext): self.start_game(text_))
-        for button in user_button_list:
-            button.show()
+            user_button.clicked.connect(lambda usertext=usertext: self.start_game(usertext))
         self.challenge.setFixedSize(chat_choose_height, chat_choose_width)
         self.challenge.show()
 
     def start_game(self, user):
-        print("yay")
-        print(user)
         self.challenge.close()
-        self.statusBar().showMessage("Starting game against ")
+        self.statusBar().showMessage("Starting game against {}".format(user))
 
     def start_chat(self, username_):
         self.chat_choose_window.close()
@@ -631,7 +624,6 @@ class Hub(QMainWindow):
         messageList = self.chatDictionary[receiver]
         message = "{}&{}".format(self.user, message)
         messageList.append(message)
-        print(message)
         self.chatDictionary[receiver] = messageList
 
     def clearStatusBar(self):
@@ -676,7 +668,6 @@ class Hub(QMainWindow):
             listkey = ''.join(["Global Chat", "_list"])
             self.chatListDictionary.update({listkey: []})
             self.chatDictionary.update({"Global Chat": self.chatListDictionary[listkey]})
-            self.send_message("Global Chat", "Hello There")
 
 
 class GameClient(socket_client.SocketClient):
@@ -735,6 +726,6 @@ class GameClient(socket_client.SocketClient):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    ex = ServerSelect()
+    ex = Hub()
 
     sys.exit(app.exec_())
