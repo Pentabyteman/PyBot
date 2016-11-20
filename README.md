@@ -1,4 +1,4 @@
-# PyBotServer v1.0.0
+# PyBot v1.3.0
 
 *******
 UPDATE: This is the first server version. You are, however, able to play local games
