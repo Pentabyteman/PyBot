@@ -422,8 +422,8 @@ class Hub(QMainWindow):
                 self.send.setFixedSize(40, 40)
                 send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
-                self.send.clicked.connect(lambda ignore, receiver_ = str(receiver), message = str(self.message.text()):
-                                          self.send_message(receiver_, message))
+                self.send.clicked.connect(lambda ignore, receiver_ = str(receiver):
+                                          self.send_message(receiver_, self.message.text()))
 
                 self.scroll = QScrollArea(self)
                 self.scroll.setStyleSheet("QScrollArea {background:white; border:none}")
@@ -435,7 +435,7 @@ class Hub(QMainWindow):
                 scrollLayout = QVBoxLayout(scrollContent)
                 scrollContent.setLayout(scrollLayout)
                 for message in self.chatDictionary[receiver]:
-                    sender, real_message = message.split('&')
+                    sender, real_message = message.split('&', 1) #The 1 is necessary to prevent unpacking to many vals.
                     if sender != self.user:
                         real_message = "".join([sender, ": ", real_message])
                         messageLabel = QLabel(real_message)
@@ -502,12 +502,10 @@ class Hub(QMainWindow):
         self.chat_choose_window = QDialog(self)
         chat_choose_width = 300
         chat_choose_height = 300
-        print(chatable_user)
         self.chat_choose_window.setGeometry(300, 300, chat_choose_height, chat_choose_width)
         self.chat_choose_window.setWindowTitle("Choose a User")
         user_button_list = []
         for i in range(0, len(chatable_user)):
-            print(chatable_user[i])
             user_button = QPushButton(str(chatable_user[i]), self.chat_choose_window)
             user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
                                            "QPushButton:hover {background:skyblue; color:black;}")
@@ -625,6 +623,7 @@ class Hub(QMainWindow):
         message = "{}&{}".format(self.user, message)
         messageList.append(message)
         self.chatDictionary[receiver] = messageList
+        self.draw_chat(receiver=receiver)
 
     def clearStatusBar(self):
         print("clearing...")
