@@ -187,6 +187,7 @@ class ServerSelect(QMainWindow):
                 button1.setFixedSize(QSize(90, 50))
                 button2.setFixedSize(QSize(90, 50))
                 button2.move(150, 50)
+                #TODO: add func
                 label1.move(50, 10)
                 self.ask_to_update.setModal(True)
                 self.ask_to_update.setFixedSize(300, 125)
@@ -421,6 +422,8 @@ class Hub(QMainWindow):
                 self.send.setFixedSize(40, 40)
                 send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
+                self.send.clicked.connect(lambda receiver_ = receiver, message = self.message.text():
+                                          self.send_message(receiver_, message))
 
                 self.scroll = QScrollArea(self)
                 self.scroll.setStyleSheet("QScrollArea {background:white; border:none}")
@@ -732,6 +735,6 @@ class GameClient(socket_client.SocketClient):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    ex = Hub()
+    ex = ServerSelect()
 
     sys.exit(app.exec_())
