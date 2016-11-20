@@ -241,6 +241,7 @@ class Hub(QMainWindow):
         self.new_game.setToolTip("Start a new game")
         self.new_game.clicked.connect(self.game_challenge)
         self.new_game.setFixedSize(QSize(150, 150))
+        self.new_game.setShortcut(QKeySequence("Ctrl+N"))
 
         self.chat_button = PicButton(QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"),
                                 QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"), self)
@@ -248,6 +249,7 @@ class Hub(QMainWindow):
         self.chat_button.setToolTip("Chat with an online user")
         self.chat_button.clicked.connect(self.choose_chat_user)
         self.chat_button.setFixedSize(QSize(150, 150))
+        self.chat_button.setShortcut(QKeySequence("Ctrl+C"))
 
         self.settings = PicButton(QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"),
                                 QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"), self)
@@ -486,6 +488,7 @@ class Hub(QMainWindow):
                                       QPixmap("resources/play.png"),QPixmap("resources/play.png"), self)
                 self.send.setFixedSize(40, 40)
                 self.send.clicked.connect(self.send_message)
+                self.send.setShortcut(QKeySequence("Return"))
                 send_w, send_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
                 self.chat.show()
@@ -505,7 +508,6 @@ class Hub(QMainWindow):
         chat_choose_height = 300
         self.chat_choose_window.setGeometry(300, 300, chat_choose_height, chat_choose_width)
         self.chat_choose_window.setWindowTitle("Choose a User")
-        user_button_list = []
         for i in range(0, len(chatable_user)):
             user_button = QPushButton(str(chatable_user[i]), self.chat_choose_window)
             user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
@@ -514,10 +516,7 @@ class Hub(QMainWindow):
             user_button.setFixedSize(QSize(width, height))
             user_button.move(0, height*i)
             usertext = str(user_button.text())
-            user_button_list.append(user_button)
             user_button.clicked.connect(lambda ignore, text_=str(usertext): self.start_chat(text_))
-        for button in user_button_list:
-            button.show()
         self.chat_choose_window.setFixedSize(chat_choose_height, chat_choose_width)
         self.chat_choose_window.show()
 
@@ -664,7 +663,6 @@ class Hub(QMainWindow):
                     listkey = ''.join([player, "_list"])
                     self.chatListDictionary.update({listkey : []})
                     self.chatDictionary.update({player : self.chatListDictionary[listkey]})
-                    self.send_message(player, "Hello There")
         try:
             self.chatDictionary["Global Chat"]
         except:

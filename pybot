@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+DIR=$(find /home -name 'client' -print -quit)
+cd $DIR
+python3 client.py
