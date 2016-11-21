@@ -1,19 +1,20 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
 
-import socket_client
-from collections import deque
 import pickle
-import settings
-import updates
 import sys
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QCheckBox, QPushButton, QToolTip, \
-    QDesktopWidget, QApplication, QLabel, QLineEdit, QMdiSubWindow, QMdiArea, QScrollArea, QAbstractButton, \
-    QMessageBox, QGroupBox, QFormLayout, QComboBox, QWidget
-from PyQt5.QtGui import *
+from collections import deque
+
+import settings
+import socket_client
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QPushButton, QDesktopWidget, QApplication, QLabel, QLineEdit, \
+    QMdiArea, QScrollArea, QAbstractButton, \
+    QWidget
+from PyQt5.QtMultimedia import  QSound
 
-
+SOUND_LIST = {"intro" : QSound("/resources/bensound-pianomoment.mp3")}
 BOARD_SIZE = (1017, 1017)
 WINDOW_SIZE = [1500, 1017]
 ICON_PATH= "resources/pybot_logo_ver1.png"
@@ -56,6 +57,7 @@ class PicButton(QAbstractButton):
 
     def sizeHint(self):
         return QSize(200, 200)
+
 
 class ServerSelect(QMainWindow):
     def __init__(self):
@@ -605,11 +607,11 @@ class Hub(QMainWindow):
         self.ok = QPushButton("Ok", self.new_window)
         self.ok.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:lightblue}")
         self.ok.clicked.connect(self.update_settings)
-        self.ok.move(15, 225)
+        self.ok.move(40, 225)
         self.cancel = QPushButton("Cancel", self.new_window)
         self.cancel.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:red; color:white}")
         self.cancel.clicked.connect(self.cancle)
-        self.cancel.move(150, 225)
+        self.cancel.move(185, 225)
         self.new_window.setModal(True)
         self.new_window.move(500, 500)
         self.new_window.setWindowTitle("Settings")
