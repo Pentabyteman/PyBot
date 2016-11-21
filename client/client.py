@@ -24,7 +24,7 @@ class Game(app.App):
         self.client = GameClient()
         self.client.on_move = self.update_window
         self.window = gui.ServerSelect(WINDOW_SIZE, self.client, self.setup)
-        self.window.has_connected = self.lobby_view
+        self.client.on_connect = self.lobby_view
         self.dialog = None
 
     def update_window(self, server):
@@ -34,6 +34,7 @@ class Game(app.App):
             self.game_view()
 
     def lobby_view(self):
+        print("lobby view")
         self.window = gui.HubWindow(WINDOW_SIZE, self.client, self.setup)
 
     def game_view(self):
@@ -107,6 +108,13 @@ class GameClient(socket_client.SocketClient):
         key, body = args[0].decode("utf-8"), b" ".join(args[1:])
         if key == 'username':
             self.send(self.username)
+        elif key == 'password':
+            self.send(self.password)
+        elif key == 'invalid':
+            self.on_login_failed()
+        elif key == 'connected':
+            print("connected")
+            self.on_connect()
         elif key == 'started':
             if not self.is_playing:
                 self.started_game()
@@ -133,6 +141,15 @@ class GameClient(socket_client.SocketClient):
         self.updates.append(update)
 
     def on_move(self, server):  # user was moved to server
+        pass
+
+    def on_login_failed(self):
+        pass
+
+    def on_connect(self):
+        print("Default on connect")
+
+    def on_disconnect(self):
         pass
 
     def start_game(self):

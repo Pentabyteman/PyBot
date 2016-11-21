@@ -14,13 +14,13 @@ class SocketClient:
         self.terminated = False
         print("Initialized socket client")
 
-    def connect(self, host, port, username):
+    def connect(self, host, port, username, password):
         try:
             self.socket = socket.socket()
             self.socket = ssl.wrap_socket(self.socket,
                                           ca_certs='server.crt',
                                           cert_reqs=ssl.CERT_REQUIRED)
-            self.username = username
+            self.username, self.password = username, password
             self.socket.connect((host, port))
             self.start()
             return True

@@ -136,7 +136,7 @@ class ServerSelect(Window):
                                  self.rect.width * 0.5,
                                  self.rect.height * 0.04)
         hintcolor = (100, 100, 100, 255)
-        self.login_widget = TextInputWidget(login_rect, "Username      :",
+        self.login_widget = TextInputWidget(login_rect, "Username:",
                                             (255, 255, 255, 255),
                                             (40, 40, 40, 255),
                                             30, hint="Enter username",
@@ -144,8 +144,18 @@ class ServerSelect(Window):
         self.login_widget.text = setup["username"]
         self.ui_components.add(self.login_widget)
 
-        server_rect = login_rect.copy()
-        server_rect.top = login_rect.bottom + self.rect.height * 0.01
+        pwd_rect = login_rect.copy()
+        pwd_rect.top = login_rect.bottom + self.rect.height * 0.01
+        self.pwd_widget = TextInputWidget(pwd_rect, "Password:",
+                                          (255, 255, 255, 255),
+                                          (40, 40, 40, 255),
+                                          30, hint="Enter password",
+                                          hintcolor=hintcolor)
+        self.pwd_widget.text = setup["password"]
+        self.ui_components.add(self.pwd_widget)
+
+        server_rect = pwd_rect.copy()
+        server_rect.top = pwd_rect.bottom + self.rect.height * 0.01
         self.server_widget = TextInputWidget(server_rect, "Server address:",
                                              (255, 255, 255, 255),
                                              (40, 40, 40, 255),
@@ -187,6 +197,7 @@ class ServerSelect(Window):
         self.info_btn = ImageButton(self.ic_no_info, info_btn_rect)
         self.info_btn.clicked = self.show_info
         self.ui_components.add(self.info_btn)
+        self.client.on_login_failed = self.login_failed
 
     def show_info(self, event):
         if self.info_state:
@@ -205,6 +216,7 @@ class ServerSelect(Window):
             print("Invalid username")
             self.error_label.text = "Invalid username"
             return
+        password = self.pwd_widget.text
         server = self.server_widget.text
         try:
             parts = server.split(":")
@@ -221,17 +233,22 @@ class ServerSelect(Window):
 
         # IMPORTANT
         self.setup["username"], self.setup["host"] = username, host
+        self.setup["password"] = password
         settings.update_standard_settings(self.setup)
 
-        state = self.client.connect(host, port, username)
-        if state:  # connected
+        state = self.client.connect(host, port, username, password)
+        if state:  # connected, trying to login
             self.btn_conn.enabled, self.server_widget.enabled = False, False
-            self.login_widget.enabled = False
+            self.login_widget.enabled, self.pwd_widget.enabled = False, False
             self.error_label.text = ""
             print("Established connection")
-            self.has_connected()
-        else:  # not connected
+        else:  # not connected, could not reach server
             self.error_label.text = "Can't connect to server!"
+
+    def login_failed(self):
+        self.btn_conn.enabled, self.server_widget.enabled = True, True
+        self.login_widget.enabled, self.pwd_widget.enabled = True, True
+        self.error_label.text = "Invalid username or password!"
 
     def has_connected(self):
         pass
@@ -244,10 +261,17 @@ class HubWindow(Window):
         self.client = client
         self.setup = setup
 
-        btn_queue_rect = pygame.Rect(self.rect.width * 0.2,
+        heading_w, heading_h = self.rect.width * 0.3, self.rect.height * 0.1
+        heading_rect = pygame.Rect(self.rect.width * 0.1,
+                                   self.rect.height * 0.1,
+                                   heading_w, heading_h)
+        self.heading = Label("Hub", heading_rect, (255, 255, 255, 255), 90)
+        self.ui_components.add(self.heading)
+
+        btn_queue_rect = pygame.Rect(self.rect.width * 0.1,
                                      self.rect.height * 0.2,
-                                     self.rect.width * 0.25,
-                                     self.rect.height * 0.1)
+                                     self.rect.width * 0.15,
+                                     self.rect.height * 0.05)
         btn_queue = Button("Join queue", btn_queue_rect, 30)
         btn_queue.clicked = self.join_queue
         self.ui_components.add(btn_queue)
