@@ -1,80 +1,123 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
 
-import pygame
-import os
-from itertools import zip_longest
-import string
-import time
-import board
-import tkinter
-from ui_components import ImageButton, Label, GameLog, FileSelectionWidget,\
-    Progressbar, TextInputWidget, UIGroup, Button
 import settings
-from PyQt5.QtWidgets import QWidget, QCheckBox, QPushButton, QToolTip, QDesktopWidget, QApplication, QLabel, QLineEdit
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-import sys
+import string
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QPushButton, QDesktopWidget, QApplication, QLabel, QLineEdit, \
+    QMdiArea, QScrollArea, QAbstractButton, \
+    QWidget
 
 
-# prepare file selection dialog
-root = tkinter.Tk()
-root.withdraw()
-# TODO: Valid escape keywords to add @ErichHasl please
-INFO_TEXT = """Welcome to PyBot {0}!
-This version includes a server implementation.
-Please enter username and server address in the two input fields
-provided.
-If you are having trouble to connect to a server,
-make sure that your computer is online and you
-have entered the correct server address.
-
-For troubleshooting, please visit
-www.github.com/Pentabyteman/PyBot/wiki"""
+BOARD_SIZE = (1017, 1017)
+WINDOW_SIZE = [1500, 1017]
+ICON_PATH = "resources/pybot_logo_ver1.png"
+PICTURE_DICT = {"self": "resources/self.png", "online": "resources/online.png", "ingame": "resources/ingame.png"}
 
 
-class Updating_Field(QWidget):
-    def __init__(self):
+class ServerSelect(QMainWindow):
+    def __init__(self, client):
         super().__init__()
+        self.client = client
+        self.info_state = True
 
         self.initUI()
 
     def initUI(self):
-        lbl1 = QLabel('Do you want to update your settings?', self)
-        lbl1.setStyleSheet("QLabel {font-size: 13px}")
-        lbl1.move(20, 10)
-
-        qbtn1 = QPushButton('Update', self)
-        qbtn1.clicked.connect(self.update)
-        QToolTip.setFont(QFont('SansSerif', 10))
-        self.setToolTip('This will <b>update</b> your settings')
-        qbtn1.resize(qbtn1.sizeHint())
-        qbtn1.setStyleSheet(
-            "QPushButton {color: black;} QPushButton:hover {background:LightSkyBlue; color: black;}")
-        qbtn1.move(20, 40)
-
-        qbtn2 = QPushButton("Don't Update", self)
-        qbtn2.clicked.connect(self.no_update)
-        QToolTip.setFont(QFont('SansSerif', 10))
-        self.setToolTip("This <b>won't update</b> your settings")
-        qbtn2.resize(qbtn2.sizeHint())
-        qbtn2.setStyleSheet(
-            "QPushButton {color: black;} QPushButton:hover {background:LightSkyBlue; color: black;}")
-        qbtn2.move(160, 40)
-
-        cb_always = QCheckBox('Always Update', self)
-        cb_always.move(20, 70)
-        cb_always.setStyleSheet("QCheckBox {color:grey;} QCheckBox:hover {color: black;}")
-        cb_always.stateChanged.connect(self.changeAlwaysUpdating)
-
-        cb_never = QCheckBox('Never Update', self)
-        cb_never.move(160, 70)
-        cb_never.setStyleSheet("QCheckBox {color:grey;} QCheckBox:hover {color: black;}")
-        cb_never.stateChanged.connect(self.changeNeverUpdating)
-
-        self.setGeometry(0, 0, 300, 100)
-        self.setWindowTitle('Update Settings')
+        self.setGeometry(300, 300, *WINDOW_SIZE)
         self.center()
+
+        self.statusBar()
+        self.statusBar().setStyleSheet("color:white")
+
+        palette = QPalette()
+        palette.setBrush(QPalette.Background, QBrush(QPixmap("resources/background.png")))
+        self.setPalette(palette)
+
+        heading_w, heading_h = WINDOW_SIZE[1] * 0.1, WINDOW_SIZE[0] * 0.1
+        self.heading = QLabel("PyBot", self)
+        self.heading.setStyleSheet("QLabel {font-size: 80px; color:white}")
+        self.heading.move(heading_h, heading_w)
+        self.heading.adjustSize()
+
+        self.login = QLabel("User: ", self)
+        self.login.setStyleSheet("QLabel {font-size: 40px; color: white}")
+        login_w, login_h = WINDOW_SIZE[1] * 0.28, WINDOW_SIZE[0] * 0.15
+        self.login.move(login_h, login_w)
+        self.login.adjustSize()
+
+        self.user = QLineEdit(self)
+        setting = settings.get_standard_settings()
+        self.user.setText(setting["username"])
+        self.user.setMaxLength(15)
+        self.user.setStyleSheet(
+            "QLineEdit {background: white; font-size: 38px; color: black} QLineEdit:focus {background: lightgrey;}"
+            "QLineEdit:placeholder {color: white;}")
+        user_w, user_h = WINDOW_SIZE[1] * 0.28, WINDOW_SIZE[0] * 0.32
+        self.user.setPlaceholderText("Username")
+        self.user.move(user_h, user_w)
+        self.user.adjustSize()
+
+        self.psw = QLabel("Password: ", self)
+        self.psw.setStyleSheet("QLabel {font-size: 40px; color: white}")
+        psw_w, psw_h = WINDOW_SIZE[1] * 0.34, WINDOW_SIZE[0] * 0.15
+        self.psw.move(psw_h, psw_w)
+        self.psw.adjustSize()
+
+        self.password = QLineEdit(self)
+        self.password.setMaxLength(15)
+        self.password.setStyleSheet(
+            "QLineEdit {background: white; font-size: 38px; color: black} QLineEdit:focus {background: lightgrey;}"
+            "QLineEdit:placeholder {color: white}")
+        password_w, password_h = WINDOW_SIZE[1] * 0.34, WINDOW_SIZE[0] * 0.32
+        self.password.move(password_h, password_w)
+        self.password.setEchoMode(QLineEdit.Password)
+        self.password.setPlaceholderText("Password")
+        self.password.adjustSize()
+
+        self.server = QLabel("Server: ", self)
+        self.server.setStyleSheet("QLabel {font-size: 40px; color: white;}")
+        server_w, server_h = WINDOW_SIZE[1] * 0.45, WINDOW_SIZE[0] * 0.15
+        self.server.move(server_h, server_w)
+        self.server.adjustSize()
+
+        self.host = QLineEdit(self)
+        self.host.setMaxLength(15)
+        self.host.setStyleSheet(
+            "QLineEdit {background: white; font-size: 38px; color: black} QLineEdit:focus {background: lightgrey;} "
+            "QLineEdit:placeholder {color: white;}")
+        host_w, host_h = WINDOW_SIZE[1] * 0.45, WINDOW_SIZE[0] * 0.32
+        self.host.move(host_h, host_w)
+        self.host.setPlaceholderText("Server address")
+        self.host.setText(setting["host"])
+        self.host.adjustSize()
+
+        self.connect = QPushButton('Connect', self)
+        self.connect.setStyleSheet("QPushButton {font-size: 38px; background:white; color:black; width: 630px;} "
+                              "QPushButton:hover {background:black; color:white; width:200px; font-size:38px;}")
+        connect_w, connect_h = WINDOW_SIZE[1] * 0.6, WINDOW_SIZE[0] * 0.15
+        self.connect.move(connect_h, connect_w)
+        self.connect.clicked.connect(lambda ignore, username = self.user.text(), server = self.host.text():
+                                     self.connect_to_server(username, server))
+        self.connect.adjustSize()
+
+        self.error_label = QLabel('', self)
+        self.error_label.setStyleSheet("QLabel {font-size: 38px; color: darkred;}")
+        error_w, error_h = WINDOW_SIZE[1] * 0.7, WINDOW_SIZE[0] * 0.15
+        self.error_label.move(error_h, error_w)
+        self.error_label.adjustSize()
+
+        setup = settings.get_standard_settings()
+        header = "PyBot {}".format(setup["version"])
+        self.setWindowTitle(header)
+        self.setWindowIcon(QIcon(ICON_PATH))
+        info = "Running PyBot {0} on {1}. with Python {2} \n " \
+            .format(setup["version"], settings.get_pybot_platform(),
+                    settings.get_python_version())
+        print(info)
+        self.statusBar().showMessage(info)
+        self.setFixedSize(*WINDOW_SIZE)
         self.show()
 
     def center(self):
@@ -83,102 +126,48 @@ class Updating_Field(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def update(self):
-        # TODO: How to get user?
-        settings.update_standard_settings(host, user)
-        self.close()
-
-    def no_update(self):
-        self.close()
-
-    def changeAlwaysUpdating(self, state):
-        if state == Qt.Checked:
-            self.setStyleSheet("QCheckBox {color: black;} QCheckBox:hover {color: grey}")
+    def connect_to_server(self, username_, server_):
+        setting = settings.get_standard_settings()
+        if setting["updating"] == "always":
+            setting["host"] = self.host.text()
+            setting["username"] = self.user.text()
+            settings.update_standard_settings(setting)
+        elif setting["updating"] == "none":
+            if self.host.text() != setting["host"] or self.user.text() != setting["username"]:
+                setting["host"] = self.host.text()
+                setting["username"] = self.user.text()
+                self.ask_to_update = QDialog(self)
+                self.ask_to_update.setWindowTitle("Update Settings?")
+                self.ask_to_update.setStyleSheet("QDialog {background:plum}")
+                label1 = QLabel("Update Settings?", self.ask_to_update)
+                label1.setStyleSheet("QLabel {color:white; font:24px}")
+                button1 = QPushButton("Ok", self.ask_to_update)
+                button1.setStyleSheet("QPushButton {background:salmon} QPushButton:hover {background:skyblue}")
+                button2 = QPushButton("No", self.ask_to_update)
+                button2.setStyleSheet("QPushButton {background:salmon} QPushButton:hover {background:skyblue}")
+                button1.move(50, 50)
+                button1.setFixedSize(QSize(90, 50))
+                button2.setFixedSize(QSize(90, 50))
+                button2.move(150, 50)
+                button1.clicked.connect(lambda ignore, username = self.user.text(), host = self.host.text():
+                                        self.update_setting(username, host))
+                button2.clicked.connect(self.quit)
+                label1.move(50, 10)
+                self.ask_to_update.setModal(True)
+                self.ask_to_update.setFixedSize(300, 125)
+                self.ask_to_update.setGeometry(400, 400, 300, 125)
+                self.ask_to_update.show()
+            else:
+                pass
         else:
-            self.setStyleSheet("QCheckBox {color:grey;} QCheckBox:hover {color: black;}")
-
-    def changeNeverUpdating(self, state):
-        if state == Qt.Checked:
-            self.setStyleSheet("QCheckBox {color: black;} QCheckBox:hover {color: grey}")
-        else:
-            self.setStyleSheet("QCheckBox {color:grey;} QCheckBox:hover {color: black;}")
-
-class Speaker:
-
-    def __init__(self):
-        self.muted = False
-
-    def play(self, sound):
-        if not self.muted:
-            sound.play()
-
-
-class Window:
-
-    STATE_VALID, STATE_INVALID = 1, 0
-
-    def __init__(self, size):
-        self.size = size
-        self.rect = pygame.Rect(0, 0, size[0], size[1])
-        self.ui_components = UIGroup()
-        self.surface = pygame.Surface(self.size)
-        self.state = Window.STATE_INVALID
-
-    def draw(self):
-        self.surface.fill((0, 0, 0, 0))
-        self.ui_components.draw(self.surface)
-
-    @property
-    def image(self):
-        if self.state == Window.STATE_INVALID:
-            self.draw()
-            self.state = Window.STATE_VALID
-        return self.surface
-
-    def on_tick(self):
-        self.ui_components.on_tick()
-        self.state = Window.STATE_INVALID
-
-    def on_event(self, event):
-        self.ui_components.update(event)
-        self.state = Window.STATE_INVALID
-
-
-class ServerSelect(QWidget, size, client, setup):
-    def __init_(self):
-        super().__init__()
-        self.client = client
-        self.info_state = True
-        self.setup = setup
-        self.heading = Label("PyBot", heading_rect, (255, 255, 255, 255), 90)
-        self.initUI()
-
-    def initUI(self, ):
-        # TODO: sqaure the images
-        self.ic_no_info = pygame.image.load("resources/question.png")
-        self.ic_info = pygame.image.load("resources/understood.png")
-        self.info_btn = ImageButton(self.ic_no_info, info_btn_rect)
-        self.info_btn.clicked = self.show_info
-        self.ui_components.add(self.info_btn)
-
-    def show_info(self, event):
-        if self.info_state:
-            self.info_state = False
-            self.info_label.icon = self.ic_no_info
-            self.info_label.text = INFO_TEXT.format(self.version)
-        else:
-            self.info_state = True
-            self.info_label.icon = self.ic_info
-            self.info_label.text = ""
-
-    def connect(self, event):
-        username = self.login_widget.text
+            pass
+        username = username_
+        server = server_
         if len(username) < 4 or any(x not in string.ascii_lowercase for x in
                                     username):
             print("Invalid username")
-            self.error_label.text = "Invalid username"
+            self.error_label.setText("Invalid username")
             return
-        server = self.server_widget.text
         try:
             parts = server.split(":")
             host = parts[0]
@@ -186,283 +175,539 @@ class ServerSelect(QWidget, size, client, setup):
             if len(parts) > 1:
                 port = int(parts[1])
             else:
-                port = 12345
+                port = 25555
         except Exception:
             print("Invalid address", server)
-            self.error_label.text = "Invalid server address"
+            self.error_label.setText("Invalid server address")
             return
-
-        # IMPORTANT
-        if username != self.setup["username"] or host != self.setup["host"]:
-            app = QApplication(sys.argv)
-            ex = Updating_Field(username, host)
-            sys.exit(app.exec_())
-
         state = self.client.connect(host, port, username)
         if state:  # connected
             self.btn_conn.enabled, self.server_widget.enabled = False, False
             self.login_widget.enabled = False
-            self.error_label.text = ""
+            self.error_label.setText("")
             print("Established connection")
             self.has_connected()
         else:  # not connected
-            self.error_label.text = "Can't connect to server!"
+            self.error_label.setText("Can't connect to server!")
+        self.statusBar().showMessage("Connecting...")
+        self.error_label.adjustSize()
+
 
     def has_connected(self):
         pass
 
+    def update_setting(self, username, host):
+        setting = settings.get_standard_settings()
+        setting["host"] = self.host.text()
+        setting["username"] = self.user.text()
+        settings.update_standard_settings(setting)
+        self.ask_to_update.close()
 
-class GamePreparation(Window):
+    def quit(self):
+        self.ask_to_update.close()
 
-    def __init__(self, size, client, has_started):
-        super(GamePreparation, self).__init__(size)
-        self.client = client
-        self.player_labels = []
+class PicButton(QAbstractButton):
+    def __init__(self, pixmap, pixmap_hover, pixmap_pressed, pixmap_hover_pressed, parent=None):
+        super(PicButton, self).__init__(parent)
+        self.pixmap = pixmap
+        self.pixmap_hover = pixmap_hover
+        self.pixmap_pressed = pixmap_pressed
+        self.pixmap_hover_pressed = pixmap_hover_pressed
+        self.setCheckable(True)
+        self.setChecked(False)
+        self.pressed.connect(self.update)
+        self.released.connect(self.update)
 
-        lbl_vs_width = self.rect.width * 0.1
-        lbl_vs_height = self.rect.height * 0.1
-        lbl_vs_rect = pygame.Rect(self.rect.width * 0.5 - lbl_vs_width / 2,
-                                  self.rect.height * 0.1,
-                                  lbl_vs_width,
-                                  lbl_vs_height)
-        lbl_vs = Label("vs", lbl_vs_rect, (255, 255, 255, 255), 40)
-        self.ui_components.add(lbl_vs)
-
-        lbl_ai_rect = pygame.Rect(self.rect.width * 0.1,
-                                  self.rect.height * 0.3,
-                                  self.rect.width * 0.3,
-                                  self.rect.height * 0.045)
-        lbl_ai = Label("Pick your ai file", lbl_ai_rect, (255, 255, 255, 255),
-                       40)
-        self.ui_components.add(lbl_ai)
-
-        ai_height = self.rect.height * 0.1
-        ai_rect = pygame.Rect(lbl_ai_rect.right + self.rect.width * 0.05,
-                              lbl_ai_rect.centery - ai_height / 2,
-                              self.rect.width * 0.3,
-                              ai_height)
-        self.ai_selector = FileSelectionWidget(ai_rect)
-        self.ai_selector.on_selected = self.select_ai
-        self.ui_components.add(self.ai_selector)
-
-        lbl_error_rect = pygame.Rect(lbl_ai_rect.left,
-                                     lbl_ai_rect.bottom + self.rect.height *
-                                     0.05,
-                                     self.rect.width * 0.3,
-                                     self.rect.height * 0.045)
-        self.lbl_error = Label("", lbl_error_rect, (255, 0, 0, 255),
-                               40)
-        self.ui_components.add(self.lbl_error)
-
-        # button to start game
-        btn_rect = pygame.Rect(lbl_error_rect.left,
-                               lbl_error_rect.bottom + self.rect.height * 0.1,
-                               self.rect.width * 0.3,
-                               self.rect.height * 0.05)
-        self.btn_play = Button("Ready to play", btn_rect, 30)
-        self.btn_play.clicked = self.play_game
-        self.request_start = False
-        self.ui_components.add(self.btn_play)
-
-        self.client.started_game = has_started
-        self.client.players_changed = self.setup_labels
-        if self.client.players_invalid:
-            self.setup_labels()
-            self.client.players_invalid = False
-
-    def setup_labels(self):
-        self.ui_components.remove(s for s in self.ui_components.sprites() if s
-                                  in self.player_labels)
-        for idx, player in zip_longest(range(2), self.client.players):
-            print("adding label", idx, player)
-
-            lbl_player_height = self.rect.height * 0.1
-            lbl_player_width = self.rect.width * 0.3
-            x_pos = self.rect.width * (0.25 + 0.5 * idx) - lbl_player_width / 2
-            lbl_player_rect = pygame.Rect(x_pos,
-                                          self.rect.height * 0.1,
-                                          lbl_player_width,
-                                          lbl_player_height)
-            lbl_player = Label(player if player is not None
-                               else "Waiting for opponent ...",
-                               lbl_player_rect,
-                               (255, 0, 0, 255) if idx == 0 else
-                               (0, 0, 255, 255),
-                               80 if player is not None else 40)
-            print("lbl", lbl_player.text, lbl_player.rect)
-            self.ui_components.add(lbl_player)
-            self.player_labels.append(lbl_player)
-        print(len(self.ui_components))
-
-    def select_ai(self):
-        if not os.path.isfile(self.ai_selector.path_name):
-            self.lbl_error.text = "Invalid ai path"
-            return
-        print("Sending ai")
-        self.client.send_ai(self.ai_selector.path_name)
-
-    def play_game(self, event):
-        self.client.send("start")
-        self.ai_selector.enabled = False
-        self.btn_play.enabled = False
-
-
-class GameWindow(Window):
-
-    def __init__(self, size, board_size, client, on_finish=None,
-                 ai1=None, ai2=None, start=None, speed=False):
-        super(GameWindow, self).__init__(size)
-
-        self.speed = speed
-        # expects size only to be wider than board_size
-        self.board_size = min(board_size, size)  # may not be larger than size
-        self.board_pos = [round(0.5 * (s - b))
-                          for s, b in zip(self.size, self.board_size)]
-        self.on_finish = on_finish
-
-        self.last_time = time.time()
-        self.speaker = Speaker()
-        self.init_board()
-
-        # calculate some rects for the space available for the gui
-        left_space = pygame.Rect(0, 0, self.board_pos[0], self.size[1])
-        right_space = pygame.Rect(self.board_pos[0] + self.board_size[0],
-                                  self.board_pos[1],
-                                  self.board_pos[0],
-                                  self.size[1])
-
-        # add a quit button
-        quit_btn_rect = pygame.Rect(left_space.width * 0.125,
-                                    left_space.height * 0.05,
-                                    left_space.width * 0.25,
-                                    left_space.width * 0.25)
-        ic_quit = pygame.image.load("resources/quit.png")
-        quit_btn = ImageButton(ic_quit, quit_btn_rect)
-        if on_finish is not None:
-            quit_btn.clicked = on_finish
-        self.ui_components.add(quit_btn)
-
-        # add a mute button (finally!!)
-        mute_btn_rect = pygame.Rect(left_space.width * 0.625,
-                                    left_space.height * 0.05,
-                                    left_space.width * 0.25,
-                                    left_space.width * 0.25)
-        self.ic_not_muted = pygame.image.load("resources/not_muted.png")
-        self.ic_muted = pygame.image.load("resources/muted.png")
-        self.mute_btn = ImageButton(self.ic_not_muted, mute_btn_rect)
-        self.mute_btn.clicked = self.mute_sounds
-        self.ui_components.add(self.mute_btn)
-
-        # add the button to play/pause the game
-        btn_rect = pygame.Rect(left_space.width * 0.1,
-                               left_space.height * 0.2,
-                               left_space.width * 0.4,
-                               left_space.width * 0.4)
-        self.ic_play = pygame.image.load("resources/play.png")
-        self.ic_pause = pygame.image.load("resources/pause.png")
-        self.btn_play = ImageButton(self.ic_play, btn_rect)
-        self.btn_play.clicked = self.play
-        self.has_started = False
-
-        # button to reset the game
-        btn_reset_rect = pygame.Rect(left_space.width * 0.5,
-                                     left_space.height * 0.2,
-                                     left_space.width * 0.4,
-                                     left_space.width * 0.4)
-        ic_reset = pygame.image.load("resources/reset.png")
-        btn_reset = ImageButton(ic_reset, btn_reset_rect)
-        btn_reset.clicked = self.reset
-        self.ui_components.add(btn_reset)
-
-        # GameLog
-        gameLog_top_x = int(right_space.x + right_space.width * 0.0625)
-        gameLog_top_y = int(right_space.height * 0.4)
-        gameLog_width = right_space.width * 0.875
-        gameLog_height = right_space.height * 0.55
-        gamelog_size = (gameLog_width, gameLog_height)
-        self.gameLog = GameLog(gamelog_size, gameLog_top_x, gameLog_top_y)
-
-        self.ui_components.add(self.gameLog)
-
-        self.ui_components.add(self.btn_play)
-
-        # socket client to communicate
-        self.client = client
-        self.client.on_init = lambda init: self.set_initial(init)
-        self.client.on_update = lambda update: self.board.update(update)
-        self.client.playing_changed = lambda new: self.update_play_icon(new)
-
-        if len(self.client.inits) > 0:
-            self.set_initial(self.client.inits.pop())
-
-    def draw(self):
-        self.surface.fill((0, 0, 0, 0))  # clean up
-        self.surface.blit(self.board.draw(), self.board_pos)
-        self.ui_components.draw(self.surface)
-
-    def on_tick(self):
-        """Called every tick"""
-        super(GameWindow, self).on_tick()
-        self.board.on_tick()
-        self.state = Window.STATE_INVALID
-
-    def play(self, event):
-        self.client.start_game()
-
-    def update_play_icon(self, state):
-        self.btn_play.icon = self.ic_pause if state\
-            else self.ic_play
-
-    def init_board(self, initial=None):
-        self.board = board.Board(self.board_size, initial)
-        self.board.speakers = self.speaker
-
-    def reset(self, event):
-        self.init_board()
-        self.has_started = False
-        self.btn_play.icon = self.ic_play
-        self.gameLog.reset()
-
-    def mute_sounds(self, event):
-        if pygame.mixer.music.get_volume() > 0:
-            self.music_volume = pygame.mixer.music.get_volume()
-            pygame.mixer.music.set_volume(0)
-            self.speaker.muted = True
-            self.mute_btn.icon = self.ic_muted
+    def paintEvent(self, event):
+        if self.isChecked():
+            if self.underMouse():
+                pix = self.pixmap_hover_pressed
+            else:
+                pix = self.pixmap_pressed
         else:
-            pygame.mixer.music.set_volume(self.music_volume)
-            self.speaker.muted = False
-            self.mute_btn.icon = self.ic_not_muted
+            if self.underMouse():
+                pix = self.pixmap_hover
+            else:
+                pix = self.pixmap
 
-    def set_initial(self, initial):
-        print("Setting initial setup of game window")
-        self.board.set_initial(initial)
 
-        # calculate some rects for the space available for the gui
-        right_space = pygame.Rect(self.board_pos[0] + self.board_size[0],
-                                  self.board_pos[1],
-                                  self.board_pos[0],
-                                  self.size[1])
+        painter = QPainter(self)
+        painter.drawPixmap(event.rect(), pix)
 
-        # list of health bars
-        self.health_bars = []
+    def enterEvent(self, event):
+        self.update()
 
-        # stuff specific for each robot
-        for idx, bot in enumerate(sorted(self.board.bots,
-                                         key=lambda x: x.team)):
-            # draw health bars for each robot on the right side of the board
-            pb_offset = idx * right_space.height * 0.1
-            width, height = right_space.width, right_space.height
-            pb_rect = pygame.Rect(right_space.x + width * 0.1,
-                                  right_space.y + height * 0.2 + pb_offset,
-                                  width * 0.8,
-                                  height * 0.05)
-            pb_health = Progressbar(pb_rect, bot.team_color(),
-                                    [round(x * 0.1)
-                                     if i < 3
-                                     else x
-                                     for i, x in enumerate(bot.team_color())])
-            bot.register_health_callback(lambda new, p=pb_health:
-                                         p.set_progress(new / bot.maxhealth))
-            self.health_bars.append(pb_health)
-            self.ui_components.add(pb_health)
+    def leaveEvent(self, event):
+        self.update()
+
+    def sizeHint(self):
+        return QSize(200, 200)
+
+
+class Hub(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.players = ["Erich Hasl", "Nils Hebach", "Malte Schneider", "Moritz Heller"]
+        self.user_stats = ["10P", "42P", "10P", "10P"]
+        self.status = ["self", "online", "online", "online"]
+        self.user = self.players[self.status.index('self')]
+        self.starting_height, self.starting_width = 175, 500
+        self.difference = 100
+        self.line_starting_height = 250
+        self.chatBar = "passive"
+        self.layout = QHBoxLayout()
+        self.chatDictionary = {}
+        self.chatListDictionary = {}
+
+        self.initUI()
+
+    def initUI(self):
+        self.mdi = QMdiArea
+        self.statusBar()
+        self.statusBar().setStyleSheet("color:white")
+        self.statusBar().showMessage("Initialising")
+
+        palette = QPalette()
+        palette.setBrush(QPalette.Background, QBrush(QPixmap("resources/background.png")))
+        self.setPalette(palette)
+
+        heading_w, heading_h = WINDOW_SIZE[1] * 0.03, WINDOW_SIZE[0] * 0.03
+        heading = QLabel("Hub", self)
+        heading.setStyleSheet("QLabel {font-size: 80px; color:white}")
+        heading.move(heading_h, heading_w)
+        heading.adjustSize()
+
+        self.new_game = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.new_game.move(WINDOW_SIZE[1] * 0.05, 250)
+        self.new_game.setToolTip("Start a new game")
+        self.new_game.clicked.connect(self.game_challenge)
+        self.new_game.setFixedSize(QSize(150, 150))
+        self.new_game.setShortcut(QKeySequence("Ctrl+N"))
+
+        self.chat_button = PicButton(QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"),
+                                QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"), self)
+        self.chat_button.move(WINDOW_SIZE[1] * 0.05, 500)
+        self.chat_button.setToolTip("Chat with an online user")
+        self.chat_button.clicked.connect(self.choose_chat_user)
+        self.chat_button.setFixedSize(QSize(150, 150))
+        self.chat_button.setShortcut(QKeySequence("Ctrl+C"))
+
+        self.settings = PicButton(QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"),
+                                QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"), self)
+        self.setToolTip("View Settings")
+        self.settings.clicked.connect(self.show_settings)
+        self.settings.move(WINDOW_SIZE[1] * 0.05, 750)
+        self.settings.setFixedSize(QSize(150, 150))
+
+        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button.move(WINDOW_SIZE[0] * 0.7, 20)
+        self.button.setToolTip("Message Admin")
+        self.button.setFixedSize(QSize(100, 100))
+
+        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
+                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button.move(WINDOW_SIZE[0] * 0.8, 20)
+        self.button.setToolTip("Browse AI's")
+        self.button.setFixedSize(QSize(100, 100))
+
+        self.join_tournament = PicButton(QPixmap("resources/join_tournament.png"), QPixmap("resources/join_tournament_hover.png"),
+                                QPixmap("resources/join_tournament.png"), QPixmap("resources/join_tournament_hover.png"), self)
+        self.join_tournament.move(WINDOW_SIZE[0] * 0.9, 20)
+        self.join_tournament.setToolTip("Join Tournament")
+        self.join_tournament.setFixedSize(QSize(100, 100))
+
+        for player in self.players:
+            #TODO: Sort so that user is at the top and ingame players at the bottom
+            #TODO: add player status
+            statusImage = QLabel(self)
+            statusImage.setFixedSize(QSize(32, 32))
+            statusPicture = QPixmap(PICTURE_DICT[self.status[self.players.index(player)]])
+            myScaledPixmap = statusPicture.scaled(statusImage.size(), Qt.KeepAspectRatio)
+            statusImage.setPixmap(myScaledPixmap)
+            height, width = self.starting_height + self.difference * self.players.index(player) + 10, self.starting_width - 150
+            statusImage.move(width, height)
+
+            label = QLabel(player, self)
+            label.setStyleSheet("QLabel {font-size: 40px; color: white}")
+            height, width = self.starting_height + self.difference * self.players.index(player), self.starting_width
+            label.move(width, height)
+            label.adjustSize()
+            label2 = QLabel(self.user_stats[self.players.index(player)], self)
+            label2.setStyleSheet("QLabel {font-size: 40px; color: white}")
+            label2.move(1200, height)
+            label2.adjustSize()
+
+        self.draw_chat("Global Chat")
+        setup = settings.get_standard_settings()
+        header = "PyBot {}".format(setup["version"])
+        self.setWindowTitle(header)
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setGeometry(300, 300, *WINDOW_SIZE)
+        self.setFixedSize(*WINDOW_SIZE)
+        self.center()
+        self.show()
+
+    def paintEvent(self, e):
+        qp = QPainter()
+        qp.begin(self)
+        self.drawLines(qp)
+        qp.end()
+
+    def drawLines(self, qp):
+        pen = QPen(Qt.white, 5, Qt.SolidLine)
+        qp.setPen(pen)
+        qp.drawLine(0, 150, WINDOW_SIZE[0], 150)
+        qp.drawLine(250, 150, 250, WINDOW_SIZE[1])
+        for player in self.players:
+            pen = QPen(Qt.white, 2, Qt.SolidLine)
+            qp.setPen(pen)
+            line_height = self.line_starting_height + self.difference * self.players.index(player)
+            qp.drawLine(250, line_height, WINDOW_SIZE[0], line_height)
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+    def quitbtnpressed(self, button):
+        if button.text() == "quit":
+            app,quit()
+        string = "Quitting the application"
+        self.statusBar().showMessage(string)
+
+    def get_new_message(self):
+        return None
+
+    def update_chat(self):
+        if self.chatBar == "passive":
+            self.chatBar = "active"
+            string = "The chat is now {}".format(self.chatBar)
+            self.statusBar().showMessage(string)
+            self.draw_chat(receiver="Global Chat")
+        else:
+            self.chatBar = "passive"
+            string = "The chat is now {}".format(self.chatBar)
+            self.statusBar().showMessage(string)
+            self.draw_chat(receiver="Global Chat")
+
+    def draw_chat(self, receiver):
+        self.initChatDict()
+        if self.chatBar is "passive":
+            try:
+                #deleting previous items
+                self.chat.deleteLater()
+                self.message.deleteLater()
+                self.send.deleteLater()
+                self.heading.deleteLater()
+                self.scroll.deleteLater()
+            except:
+                pass
+            if self.get_new_message() is None:
+                self.chat = PicButton(QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
+                                 QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
+                                 self)
+                self.chat.setFixedSize(QSize(798, 75))
+                self.setToolTip("")
+                self.chat.clicked.connect(self.update_chat)
+                self.chat.move(WINDOW_SIZE[0]-798, WINDOW_SIZE[1]-75)
+                self.chat.raise_()
+                self.chat.show()
+            else:
+                self.chat = PicButton(QPixmap("resources/chat_new_collapsed.png"),
+                                 QPixmap("resources/chat_new_collapsed.png"),
+                                 QPixmap("resources/chat_new_collapsed.png"),
+                                 QPixmap("resources/chat_new_collapsed.png"),
+                                 self)
+                self.chat.setFixedSize(QSize(798, 75))
+                self.chat.clicked.connect(self.update_chat)
+                self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 75)
+                self.chat.raise_()
+                self.chat.show()
+        else:
+            try:
+                #deleting previous items
+                self.chat.deleteLater()
+                self.message.deleteLater()
+                self.send.deleteLater()
+                self.heading.deleteLater()
+                self.scroll.deleteLater()
+            except:
+                pass
+            if self.get_new_message() is None:
+                self.chat = PicButton(QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
+                                 QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
+                                 self)
+                self.chat.setFixedSize(QSize(798, 547))
+                self.chat.clicked.connect(self.update_chat)
+                self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
+                self.chat.raise_()
+
+                self.heading = QLabel(receiver, self)
+                self.heading.move(WINDOW_SIZE[0] - 550, WINDOW_SIZE[1] - 475)
+                self.heading.setStyleSheet("QLabel {color:black; font-size:40px}")
+                self.heading.adjustSize()
+
+                self.message = QLineEdit(self)
+                self.message.setMaxLength(26)
+                self.message.setStyleSheet(
+                    "QLineEdit {background: white; font-size: 30px; color: black} QLineEdit:focus {background: lightgrey;} "
+                    "QLineEdit:placeholder {color: white;}")
+                host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
+                self.message.move(host_w, host_h)
+                self.message.setPlaceholderText("Message")
+                self.message.setFixedSize(QSize(500, 40))
+                self.message.raise_()
+
+                self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
+                                      QPixmap("resources/play.png"), QPixmap("resources/play.png"), self)
+                self.send.setFixedSize(40, 40)
+                send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
+                self.send.move(send_w, send_h)
+                self.send.clicked.connect(lambda ignore, receiver_ = str(receiver):
+                                          self.send_message(receiver_, self.message.text()))
+                self.send.setShortcut(QKeySequence("Return"))
+                self.scroll = QScrollArea(self)
+                self.scroll.setStyleSheet("QScrollArea {background:white; border:1px dotted grey}")
+                self.scroll.move(WINDOW_SIZE[0]- 700, WINDOW_SIZE[1]- 400)
+                self.scroll.setFixedSize(590, 250)
+                self.scroll.raise_()
+                scrollContent = QWidget(self.scroll)
+                scrollContent.setStyleSheet("QWidget {background:white}")
+                scrollLayout = QVBoxLayout(scrollContent)
+                scrollContent.setLayout(scrollLayout)
+                for message in self.chatDictionary[receiver]:
+                    sender, real_message = message.split('&', 1) #The 1 is necessary to prevent unpacking to many vals.
+                    if sender != self.user:
+                        real_message = "".join([sender, ": ", real_message])
+                        messageLabel = QLabel(real_message)
+                        messageLabel.setFixedSize(550, 50)
+                        messageLabel.setStyleSheet("QLabel {background:white;font-size:24px;text-align:left;}")
+                    else:
+                        real_message = "".join([self.user, ": ", real_message])
+                        messageLabel = QLabel(real_message)
+                        messageLabel.setFixedSize(550, 50)
+                        messageLabel.setStyleSheet("QLabel {background:white;font-size:24px;text-align:right;}")
+                    scrollLayout.addWidget(messageLabel)
+                self.scroll.setWidget(scrollContent)
+                self.scroll.setWidgetResizable(False)
+                self.message.setFocus()
+                self.chat.show()
+                self.message.show()
+                self.send.show()
+                self.heading.show()
+                self.show()
+                self.scroll.show()
+
+            else:
+                self.chat = PicButton(QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"),
+                                 QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"), self)
+                self.chat.setFixedSize(QSize(798, 547))
+                self.chat.clicked.connect(self.update_chat)
+                self.chat.move(WINDOW_SIZE[0] - 798, WINDOW_SIZE[1] - 547)
+                self.chat.raise_()
+
+                self.heading = QLabel(receiver, self)
+                self.heading.move(WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 500)
+                self.heading.setStyleSheet("QLabel {color:black; font-size:18px}")
+                self.heading.adjustSize()
+
+                self.message = QLineEdit(self)
+                self.message.setMaxLength(30)
+                self.message.setStyleSheet(
+                    "QLineEdit {background: white; font-size: 30px; color: black} "
+                    "QLineEdit:focus {background: lightgrey;} "
+                    "QLineEdit:placeholder {color: white;}")
+                host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
+                self.message.move(host_w, host_h)
+                self.message.setPlaceholderText("Message")
+                self.message.setFixedSize(QSize(500, 40))
+                self.message.raise_()
+
+                self.message = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
+                                      QPixmap("resources/play.png"),QPixmap("resources/play.png"), self)
+                self.send.setFixedSize(40, 40)
+                self.send.clicked.connect(self.send_message)
+                self.send.setShortcut(QKeySequence("Return"))
+                send_w, send_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
+                self.send.move(send_w, send_h)
+                self.chat.show()
+                self.message.setFocus()
+                self.message.show()
+                self.send.show()
+                self.heading.show()
+                self.show()
+
+    def choose_chat_user(self):
+        chatable_user = ['Global Chat']
+        for i in range(0, len(self.status)):
+            if self.status[i] == "online":
+                chatable_user.append(self.players[i])
+        self.chat_choose_window = QDialog(self)
+        chat_choose_width = 300
+        chat_choose_height = 300
+        self.chat_choose_window.setGeometry(300, 300, chat_choose_height, chat_choose_width)
+        self.chat_choose_window.setWindowTitle("Choose a User")
+        for i in range(0, len(chatable_user)):
+            user_button = QPushButton(str(chatable_user[i]), self.chat_choose_window)
+            user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
+                                           "QPushButton:hover {background:skyblue; color:black;}")
+            width, height = chat_choose_width, chat_choose_height/len(chatable_user)
+            user_button.setFixedSize(QSize(width, height))
+            user_button.move(0, height*i)
+            usertext = str(user_button.text())
+            user_button.clicked.connect(lambda ignore, text_=str(usertext): self.start_chat(text_))
+        self.chat_choose_window.setFixedSize(chat_choose_height, chat_choose_width)
+        self.chat_choose_window.show()
+
+    def game_challenge(self):
+        playable_user = []
+        for i in range(0, len(self.status)):
+            if self.status[i] == "online":
+                playable_user.append(self.players[i])
+        self.challenge = QDialog(self)
+        chat_choose_width = 300
+        chat_choose_height = 300
+        self.challenge.setGeometry(300, 300, chat_choose_height, chat_choose_width)
+        self.challenge.setWindowTitle("Choose an Opponent")
+        for i in range(0, len(playable_user)):
+            user_button = QPushButton(str(playable_user[i]), self.challenge)
+            user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
+                                           "QPushButton:hover {background:skyblue; color:black;}")
+            width, height = chat_choose_width, chat_choose_height/len(playable_user)
+            user_button.setFixedSize(QSize(width, height))
+            user_button.move(0, height*i)
+            usertext = str(user_button.text())
+            user_button.clicked.connect(lambda usertext=usertext: self.start_game(usertext))
+        self.challenge.setFixedSize(chat_choose_height, chat_choose_width)
+        self.challenge.show()
+
+    def start_game(self, user):
+        self.challenge.close()
+        self.statusBar().showMessage("Starting game against {}".format(user))
+
+    def start_chat(self, username_):
+        self.chat_choose_window.close()
+        self.chatBar = "active"
+        self.draw_chat(receiver=username_)
+
+    def show_settings(self):
+        self.statusBar().showMessage("Opening settings...")
+        self.new_window = QDialog(self)
+        setting = settings.get_standard_settings()
+        username_label = QLabel("Username: ", self.new_window)
+        username_label.setStyleSheet("QLabel {font-size: 15px; color: black}")
+        username_label.move(15, 14)
+        self.user = QLineEdit(self.new_window)
+        self.user.setMaxLength(15)
+        self.user.setStyleSheet(
+            "QLineEdit {background: white; font-size: 15px; color: black} QLineEdit:focus {background: lightgrey;}"
+            "QLineEdit:placeholder {color: white;}")
+        old_username = setting["username"]
+        self.user.setPlaceholderText(old_username)
+        self.user.move(120, 10)
+        self.user.adjustSize()
+        hostname = QLabel("Host: ", self.new_window)
+        hostname.setStyleSheet("QLabel {font-size: 15px; color: black}")
+        hostname.move(15, 54)
+        self.host = QLineEdit(self.new_window)
+        self.host.setMaxLength(15)
+        self.host.setStyleSheet(
+            "QLineEdit {background: white; font-size: 15px; color: black} QLineEdit:focus {background: lightgrey;}"
+            "QLineEdit:placeholder {color: white;}")
+        old_hostname = setting["host"]
+        self.host.setPlaceholderText(old_hostname)
+        self.host.move(120, 50)
+        self.host.adjustSize()
+        update_behaviour = QLabel("Update settings:", self.new_window)
+        update_behaviour.setStyleSheet("QLabel {font-size: 15px; color: black}")
+        update_behaviour.move(75, 125)
+        self.always_update = QPushButton("Always", self.new_window)
+        self.always_update.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:lightblue}"
+                                    "QPushButton:checked {background:black; color:white}")
+        self.always_update.setCheckable(True)
+        if setting["updating"]=="always":
+            self.always_update.setChecked(True)
+        self.always_update.move(50, 150)
+        self.always_update.clicked.connect(self.disable_never)
+        self.never_update = QPushButton("Never", self.new_window)
+        self.never_update.setCheckable(True)
+        if setting["updating"] == "never":
+            self.never_update.setChecked(True)
+        self.never_update.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:lightblue}"
+                                   "QPushButton:checked {color:white; background:black}")
+        self.never_update.move(175, 150)
+        self.never_update.clicked.connect(self.disable_always)
+        version_string = "Version {}".format(setting["version"])
+        version = QLabel(version_string, self.new_window)
+        version.setStyleSheet("QLabel {font-size: 12px; color: black}")
+        version.move(15, 280)
+        self.ok = QPushButton("Ok", self.new_window)
+        self.ok.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:lightblue}")
+        self.ok.clicked.connect(self.update_settings)
+        self.ok.move(40, 225)
+        self.cancel = QPushButton("Cancel", self.new_window)
+        self.cancel.setStyleSheet("QPushButton {background: white} QPushButton:hover {background:red; color:white}")
+        self.cancel.clicked.connect(self.cancle)
+        self.cancel.move(185, 225)
+        self.new_window.setModal(True)
+        self.new_window.move(500, 500)
+        self.new_window.setWindowTitle("Settings")
+        self.new_window.setGeometry(500, 500, 300, 300)
+        self.new_window.setFixedSize(300, 300)
+        self.new_window.show()
+
+    def send_message(self, receiver, message):
+        if message is not "":
+            self.statusBar().showMessage("Sending message...")
+            messageList = self.chatDictionary[receiver]
+            message = "{}&{}".format(self.user, message)
+            messageList.append(message)
+            self.chatDictionary[receiver] = messageList
+            self.draw_chat(receiver=receiver)
+        else:
+            self.draw_chat(receiver=receiver)
+
+    def clearStatusBar(self):
+        print("clearing...")
+        self.statusBar().showMessage("")
+
+    def disable_always(self):
+        self.always_update.setChecked(False)
+
+    def disable_never(self):
+        self.never_update.setChecked(False)
+
+    def update_settings(self):
+        setting = settings.get_standard_settings()
+        if self.host.text() != "":
+            setting["host"] = self.host.text()
+        if self.user.text() != "":
+            setting["username"] = self.user.text()
+        if self.always_update.isChecked():
+            setting["updating"] = "always"
+        if self.never_update.isChecked():
+            setting["updating"] = "never"
+        settings.update_standard_settings(setting)
+        self.new_window.close()
+
+    def cancle(self):
+        self.new_window.close()
+
+    def initChatDict(self):
+        for player in self.players:
+            if not player == self.user:
+                try:
+                    self.chatDictionary[player]
+                except:
+                    listkey = ''.join([player, "_list"])
+                    self.chatListDictionary.update({listkey : []})
+                    self.chatDictionary.update({player : self.chatListDictionary[listkey]})
+        try:
+            self.chatDictionary["Global Chat"]
+        except:
+            listkey = ''.join(["Global Chat", "_list"])
+            self.chatListDictionary.update({listkey: []})
+            self.chatDictionary.update({"Global Chat": self.chatListDictionary[listkey]})
