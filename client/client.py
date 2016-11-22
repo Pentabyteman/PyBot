@@ -4,6 +4,7 @@
 import pickle
 import sys
 from collections import deque
+import atexit
 
 import settings
 import socket_client
@@ -21,19 +22,23 @@ class Game():
     def __init__(self):
         super().__init__()
         self.client = GameClient()
-        # self.client.on_move = self.update_window
+        self.client.on_move = self.update_window
         self.window = gui.ServerSelect(self.client)
-        # self.window.has_connected = self.lobby_view
+        if self.window.exec_() == QDialog.Accepted:
+            self.window = gui.Hub(self.client)
 
     def update_window(self, server):
         if server == 0:
-            self.window = gui.Hub()
+            self.window = gui.Hub(self.client)
         elif server >= 0:
             pass
 
     def lobby_view(self):
-        self.window = gui.Hub()
-        
+        self.window = gui.Hub(self.client)
+
+    def stop(self, *args):
+        print("stopped")
+        self.client.disconnect()
 
 class GameClient(socket_client.SocketClient):
 
@@ -90,7 +95,6 @@ class GameClient(socket_client.SocketClient):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-
     ex = Game()
-
+    atexit.register(ex.stop())
     sys.exit(app.exec_())

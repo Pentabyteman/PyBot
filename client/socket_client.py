@@ -13,10 +13,11 @@ class SocketClient:
         self.terminated = False
         print("Initialized socket client")
 
-    def connect(self, host, port, username):
+    def connect(self, host, port, username, password):
         try:
             self.socket = socket.socket()
             self.username = username
+            self.password = password
             self.socket.connect((host, port))
             self.start()
             return True
