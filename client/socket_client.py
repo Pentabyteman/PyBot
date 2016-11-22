@@ -25,8 +25,8 @@ class SocketClient:
             self.socket.connect((host, port))
             self.start()
             return True
-        except socket.error:
-            print("ERROR: Error while connecting!")
+        except socket.error as e:
+            print("ERROR: Error while connecting!", e)
             return False
 
     def start(self):
