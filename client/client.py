@@ -96,5 +96,6 @@ class GameClient(socket_client.SocketClient):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Game()
-    atexit.register(ex.stop())
+    func = ex.stop()
+    atexit.register(func)
     sys.exit(app.exec_())

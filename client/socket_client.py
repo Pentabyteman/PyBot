@@ -5,6 +5,7 @@ import socket
 import struct
 from threading import Thread
 import select
+import ssl
 
 
 class SocketClient:
@@ -16,6 +17,9 @@ class SocketClient:
     def connect(self, host, port, username, password):
         try:
             self.socket = socket.socket()
+            self.socket = ssl.wrap_socket(self.socket,
+                                          ca_certs='server.crt',
+                                          cert_reqs=ssl.CERT_REQUIRED)
             self.username = username
             self.password = password
             self.socket.connect((host, port))
