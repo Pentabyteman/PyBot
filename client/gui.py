@@ -1,14 +1,16 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
 
-import sys
 import settings
+import time
+import pygame
 import string
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QPushButton, QDesktopWidget, QApplication, QLabel, QLineEdit, \
     QMdiArea, QScrollArea, QAbstractButton, \
     QWidget, QTextEdit
+from ui_components import *
 
 
 BOARD_SIZE = (1017, 1017)
@@ -100,8 +102,8 @@ class ServerSelect(QDialog):
                               "QPushButton:hover {background:black; color:white; width:200px; font-size:38px;}")
         connect_w, connect_h = WINDOW_SIZE[1] * 0.6, WINDOW_SIZE[0] * 0.15
         self.connect.move(connect_h, connect_w)
-        self.connect.clicked.connect(lambda ignore, username = self.user.text(), passw = self.password.text(),
-                                     server = self.host.text(): self.connect_to_server(username, passw, server))
+        self.connect.clicked.connect(lambda ignore: self.connect_to_server(str(self.user.text()), str(self.password.text()),
+                                                                           str(self.host.text())))
         self.connect.adjustSize()
 
         self.error_label = QLabel('', self)
@@ -129,6 +131,7 @@ class ServerSelect(QDialog):
         self.move(qr.topLeft())
 
     def connect_to_server(self, username_, password_, server_):
+        self.client.on_login = self.on_login
         setting = settings.get_standard_settings()
         if setting["updating"] == "always":
             setting["host"] = self.host.text()
@@ -187,15 +190,18 @@ class ServerSelect(QDialog):
         if state:  # connected
             self.error_label.setText("")
             print("Established connection")
-            self.has_connected()
+            if self.client.login == "Invalid Username or Password":
+                self.error_label.setText(self.client.login)
         else:  # not connected
             self.error_label.setText("Can't connect to server!")
         self.statusbar.setText("Connecting...")
         self.error_label.adjustSize()
 
 
-    def has_connected(self):
-        self.accept()
+    def on_login(self):
+        self.hub = Hub(self.client, self.user.text())
+        self.hub.show()
+        self.close()
 
     def update_setting(self, username, host):
         setting = settings.get_standard_settings()
@@ -206,6 +212,7 @@ class ServerSelect(QDialog):
 
     def quit(self):
         self.ask_to_update.close()
+
 
 class PicButton(QAbstractButton):
     def __init__(self, pixmap, pixmap_hover, pixmap_pressed, pixmap_hover_pressed, parent=None):
@@ -246,13 +253,17 @@ class PicButton(QAbstractButton):
 
 
 class Hub(QMainWindow):
-    def __init__(self, client):
+    def __init__(self, client, username):
         super().__init__()
         self.client = client
-        self.players = ["Erich Hasl", "Nils Hebach", "Malte Schneider", "Moritz Heller"]
-        self.user_stats = ["10P", "42P", "10P", "10P"]
-        self.status = ["self", "online", "online", "online"]
-        self.user = self.players[self.status.index('self')]
+        if self.client.players_invalid != False:
+            self.players = self.client.players
+        else:
+            self.players = [username]
+        self.status = ["online"]
+        self.user = self.players[self.players.index(username)]
+        self.user_stats = ["1", "1", "1", "1"]
+        self.status[self.players.index(self.user)] = "self"
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
         self.line_starting_height = 250
@@ -261,6 +272,8 @@ class Hub(QMainWindow):
         self.chatDictionary = {}
         self.chatListDictionary = {}
         self.playerbuttonlist = []
+        self.client.on_global_chat = self.receive_global
+        self.client.on_private_chat = self.receive_private
 
         self.initUI()
 
@@ -383,6 +396,20 @@ class Hub(QMainWindow):
 
     def get_new_message(self):
         return None
+
+    def receive_global(self, sender, message):
+        messageList = self.chatDictionary["Global Chat"]
+        new_message = "{}&{}".format(sender, message)
+        messageList.append(new_message)
+        self.chatDictionary["Global Chat"] = messageList
+        self.draw_chat(receiver="Global Chat")
+
+    def receive_private(self, sender, message):
+        messageList = self.chatDictionary[sender]
+        new_message = "{}&{}".format(sender, message)
+        messageList.append(new_message)
+        self.chatDictionary[sender] = messageList
+        self.draw_chat(receiver=sender)
 
     def update_chat(self):
         if self.chatBar == "passive":
@@ -697,7 +724,6 @@ class Hub(QMainWindow):
     def send_message(self, receiver, message):
         if message is not "":
             self.statusBar().showMessage("Sending message...")
-            print(receiver)
             if receiver != "Global Chat":
                 query = "chat private {0} {1}".format(receiver, message)
             else:
@@ -707,6 +733,7 @@ class Hub(QMainWindow):
             messageList.append(new_message)
             self.chatDictionary[receiver] = messageList
             self.draw_chat(receiver=receiver)
+            self.client.send(query)
         else:
             self.draw_chat(receiver=receiver)
 

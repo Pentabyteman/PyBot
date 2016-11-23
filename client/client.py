@@ -24,8 +24,6 @@ class Game():
         self.client = GameClient()
         self.client.on_move = self.update_window
         self.window = gui.ServerSelect(self.client)
-        if self.window.exec_() == QDialog.Accepted:
-            self.window = gui.Hub(self.client)
 
     def update_window(self, server):
         if server == 0:
@@ -46,13 +44,18 @@ class GameClient(socket_client.SocketClient):
         super(GameClient, self).__init__(*args, **kwargs)
         self.is_playing = False
         self.inits, self.updates = deque(), deque()
+        self.players = None
         self.players_invalid = False
+        self.login = False
 
     def on_receive(self, query):
         args = query.split(b' ')
         key, body = args[0].decode("utf-8"), b" ".join(args[1:])
+        print(key)
         if key == 'username':
             self.send(self.username)
+        elif key == 'password':
+            self.send(self.password)
         elif key == 'started':
             if not self.is_playing:
                 self.started_game()
@@ -67,6 +70,12 @@ class GameClient(socket_client.SocketClient):
         elif key == "update":
             update = pickle.loads(body)
             self.on_update(update)
+        elif key == "invalid":
+            self.login = "Invalid Username or Password"
+        elif key == "connected":
+            self.on_login()
+        elif key == "chat":
+            self.new_message(body.decode("utf-8"))
 
     def on_init(self, init):
         self.inits.append(init)
@@ -91,6 +100,24 @@ class GameClient(socket_client.SocketClient):
         with open(path, 'r') as f:
             content = f.read()
         self.send("ai {}".format(content))
+
+    def on_login(self):
+        pass
+
+    def new_message(self, message):
+        type, body = message.split("", 1)
+        if type == "global":
+            sender, message = body.split("", 1)
+            self.on_global_chat(sender, message)
+        else:
+            sender, message = body.split("", 1)
+            self.on_private_chat(sender, message)
+
+    def on_global_chat(self, body):
+        pass
+
+    def on_private_chat(self, sender, message):
+        pass
 
 
 if __name__ == '__main__':
