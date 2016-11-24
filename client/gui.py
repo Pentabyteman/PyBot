@@ -7,9 +7,8 @@ import pygame
 import string
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QPushButton, QDesktopWidget, QApplication, QLabel, QLineEdit, \
-    QMdiArea, QScrollArea, QAbstractButton, \
-    QWidget, QTextEdit
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QPushButton, QDesktopWidget, QLabel, QLineEdit, \
+    QMdiArea, QScrollArea, QAbstractButton, QWidget
 
 
 BOARD_SIZE = (1017, 1017)
@@ -196,7 +195,6 @@ class ServerSelect(QDialog):
         self.statusbar.setText("Connecting...")
         self.error_label.adjustSize()
 
-
     def on_login(self):
         self.hub = Hub(self.client, self.user.text())
         self.hub.show()
@@ -254,6 +252,7 @@ class PicButton(QAbstractButton):
 class Hub(QMainWindow):
     def __init__(self, client, username):
         super().__init__()
+        self.currentReceiver = "Global Chat"
         self.username = username
         self.players = None
         if self.players == None:
@@ -276,6 +275,7 @@ class Hub(QMainWindow):
         self.client.on_global_chat = self.receive_global
         self.client.on_private_chat = self.receive_private
         self.labels = []
+        self.new_message_list = ["Global Chat"]
         self.initUI()
 
     def initUI(self):
@@ -405,13 +405,11 @@ class Hub(QMainWindow):
         string = "Quitting the application"
         self.statusBar().showMessage(string)
 
-    def get_new_message(self):
-        return None
-
     def receive_global(self, sender, message):
         messageList = self.chatDictionary["Global Chat"]
         new_message = "{}&{}".format(sender, message)
         messageList.append(new_message)
+        self.new_message_list.append(sender)
         self.chatDictionary["Global Chat"] = messageList
         self.draw_chat(receiver="Global Chat")
 
@@ -419,22 +417,25 @@ class Hub(QMainWindow):
         messageList = self.chatDictionary[sender]
         new_message = "{}&{}".format(sender, message)
         messageList.append(new_message)
+        currentMessage = self.message.text()
+        self.new_message_list.append(sender)
         self.chatDictionary[sender] = messageList
-        self.draw_chat(receiver=sender)
+        self.draw_chat(receiver=self.currentReceiver, message=currentMessage)
 
     def update_chat(self):
         if self.chatBar == "passive":
             self.chatBar = "active"
             string = "The chat is now {}".format(self.chatBar)
             self.statusBar().showMessage(string)
-            self.draw_chat(receiver="Global Chat")
+            self.draw_chat(receiver=self.currentReceiver)
         else:
             self.chatBar = "passive"
             string = "The chat is now {}".format(self.chatBar)
             self.statusBar().showMessage(string)
-            self.draw_chat(receiver="Global Chat")
+            self.draw_chat(receiver=self.currentReceiver)
 
-    def draw_chat(self, receiver):
+    def draw_chat(self, receiver, message=None):
+        self.currentReceiver = receiver
         for playerbutton in self.playerbuttonlist:
             playerbutton.deleteLater()
         self.playerbuttonlist = []
@@ -454,7 +455,7 @@ class Hub(QMainWindow):
                 self.scroll.deleteLater()
             except:
                 pass
-            if self.get_new_message() is None:
+            if not self.new_message_list:
                 self.chat = PicButton(QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
                                  QPixmap("resources/chat_old_collapsed.png"), QPixmap("resources/chat_old_collapsed.png"),
                                  self)
@@ -477,6 +478,11 @@ class Hub(QMainWindow):
                 self.chat.show()
         else:
             try:
+                #deleting the current receiver as new
+                self.new_message_list.remove(receiver)
+            except:
+                pass
+            try:
                 #deleting previous items
                 self.chat.deleteLater()
                 self.message.deleteLater()
@@ -486,7 +492,7 @@ class Hub(QMainWindow):
                 self.playerbutton.deleteLater()
             except:
                 pass
-            if self.get_new_message() is None:
+            if not self.new_message_list:
                 self.chat = PicButton(QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
                                  QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
                                  self)
@@ -510,6 +516,8 @@ class Hub(QMainWindow):
                 self.message.setPlaceholderText("Message")
                 self.message.setFixedSize(QSize(500, 40))
                 self.message.raise_()
+                if message != None:
+                    self.message.setText(message)
 
                 self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
                                       QPixmap("resources/play.png"), QPixmap("resources/play.png"), self)
@@ -583,35 +591,89 @@ class Hub(QMainWindow):
                 self.chat.raise_()
 
                 self.heading = QLabel(receiver, self)
-                self.heading.move(WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 500)
-                self.heading.setStyleSheet("QLabel {color:black; font-size:18px}")
+                self.heading.move(WINDOW_SIZE[0] - 550, WINDOW_SIZE[1] - 475)
+                self.heading.setStyleSheet("QLabel {color:black; font-size:40px}")
                 self.heading.adjustSize()
 
                 self.message = QLineEdit(self)
-                self.message.setMaxLength(30)
+                self.message.setMaxLength(55)
                 self.message.setStyleSheet(
-                    "QLineEdit {background: white; font-size: 30px; color: black} "
-                    "QLineEdit:focus {background: lightgrey;} "
-                    "QLineEdit:placeholder {color: white;}")
+                    "QLineEdit {background: white; font-size: 14px; color: black} QLineEdit:focus "
+                    "{background: lightgrey;} QTextEdit:placeholder {color: white;}")
                 host_w, host_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
                 self.message.move(host_w, host_h)
                 self.message.setPlaceholderText("Message")
                 self.message.setFixedSize(QSize(500, 40))
                 self.message.raise_()
+                if message != None:
+                    self.message.setText(message)
 
-                self.message = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
-                                      QPixmap("resources/play.png"),QPixmap("resources/play.png"), self)
+                self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
+                                      QPixmap("resources/play.png"), QPixmap("resources/play.png"), self)
                 self.send.setFixedSize(40, 40)
-                self.send.clicked.connect(self.send_message)
-                self.send.setShortcut(QKeySequence("Return"))
-                send_w, send_h = WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 100
+                send_w, send_h = WINDOW_SIZE[0] - 150, WINDOW_SIZE[1] - 100
                 self.send.move(send_w, send_h)
-                self.chat.show()
+                self.send.clicked.connect(lambda ignore, receiver_=str(receiver):
+                                          self.send_message(receiver_, self.message.text()))
+                self.send.setShortcut(QKeySequence("Return"))
+                self.scroll = QScrollArea(self)
+                self.scroll.setStyleSheet("QScrollArea {background:white; border:1px dotted grey}")
+                self.scroll.move(WINDOW_SIZE[0] - 700, WINDOW_SIZE[1] - 400)
+                self.scroll.setFixedSize(590, 250)
+                self.scroll.raise_()
+
+                self.playerbuttonlist = []
+                for i in range(0, len(self.tablist)):
+                    self.playerbutton = QPushButton(self.tablist[i], self)
+                    width, height = 798 / len(self.tablist), 30
+                    self.playerbutton.setFixedSize(width, height)
+                    self.playerbutton.move(WINDOW_SIZE[0] - width * (i + 1), WINDOW_SIZE[1] - height)
+                    self.playerbutton.setStyleSheet("QPushButton {background:lightgrey; border-radius:0px} "
+                                                    "QPushButton:hover {background:darkgrey}")
+                    if self.tablist[i] in self.new_message_list:
+                        self.playerbutton.setStyleSheet("QPushButton {background:lightblue: border-radius:0px;} "
+                                                        "QPushButton:hover {background:darkblue}")
+                    self.playerbutton.clicked.connect(lambda ignore, receiver=self.tablist[i]:
+                                                      self.draw_chat(receiver))
+                    self.playerbutton.show()
+                    if self.tablist[i] == receiver:
+                        self.playerbutton.setEnabled(False)
+                        self.playerbutton.setStyleSheet("QPushButton {background:grey; border-radius:0px;color:white}")
+                    self.playerbuttonlist.append(self.playerbutton)
+
+                scrollContent = QWidget(self.scroll)
+                scrollContent.setStyleSheet("QWidget {background:white}")
+                scrollLayout = QVBoxLayout(scrollContent)
+                scrollContent.setLayout(scrollLayout)
+                scrollLayout.setSpacing(0)
+                message_list = reversed(self.chatDictionary[receiver])
+                for message in message_list:
+                    sender, real_message = message.split('&',
+                                                         1)  # The 1 is necessary to prevent unpacking to many vals.
+                    if sender != self.user:
+                        real_message = "".join([sender, ": ", real_message])
+                        messageLabel = QLabel(real_message)
+                        messageLabel.setWordWrap(True)
+                        messageLabel.setStyleSheet("QLabel {background:white;font-size:14px;}")
+                        messageLabel.setAlignment(Qt.AlignLeft)
+                        messageLabel.setFixedSize(550, 30)
+                        messageLabel.setMaximumWidth(550)
+                    else:
+                        real_message = "".join([self.user, ": ", real_message])
+                        messageLabel = QLabel(real_message)
+                        messageLabel.setFixedSize(550, 30)
+                        messageLabel.setStyleSheet("QLabel {background:white;font-size:14px;}")
+                        messageLabel.setAlignment(Qt.AlignRight)
+                    scrollLayout.addWidget(messageLabel, 0)
+                self.scroll.setWidget(scrollContent)
+                self.scroll.setWidgetResizable(False)
                 self.message.setFocus()
+                self.chat.show()
                 self.message.show()
                 self.send.show()
                 self.heading.show()
                 self.show()
+                self.scroll.show()
 
     def choose_chat_user(self):
         chatable_user = ['Global Chat']
@@ -656,7 +718,7 @@ class Hub(QMainWindow):
             user_button.setFixedSize(QSize(width, height))
             user_button.move(0, height*i)
             usertext = str(user_button.text())
-            user_button.clicked.connect(lambda usertext=usertext: self.start_game(usertext))
+            user_button.clicked.connect(lambda ignore, usertext=usertext: self.start_game(usertext))
         self.challenge.setFixedSize(chat_choose_height, chat_choose_width)
         self.challenge.show()
 

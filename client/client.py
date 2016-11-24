@@ -5,15 +5,13 @@ import pickle
 import sys
 from collections import deque
 import atexit
+import socket
 
 import settings
 import socket_client
 import gui
 from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QPushButton, QDesktopWidget, QApplication, QLabel, QLineEdit, \
-    QMdiArea, QScrollArea, QAbstractButton, \
-    QWidget
+from PyQt5.QtWidgets import QApplication
 
 
 
@@ -130,5 +128,6 @@ class GameClient(socket_client.SocketClient):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    atexit.register(socket.shutdown)
     ex = Game()
     sys.exit(app.exec_())

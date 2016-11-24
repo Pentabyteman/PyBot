@@ -1,0 +1,36 @@
+TOURNAMENT:
+Info:
+When asked for more info, server returns
+tournament; info; name:<name>; text:<bla>; creator:<bla> scheduled:<date in UTC> players:<player1,player2,player3>
+Example:
+torunament; info; id:<id>; name:Awesome Competition; text:who is the smartest of us all; creator:erich; scheduled:2016-24-12-10:50; players:erich,hans
+If there is no tournament, server returns
+tournament info none
+If there are multiple tournaments, server returns
+tournament; info; name:<name>; text:<bla>; creator:<bla> scheduled:<date in UTC> players:<player1,player2,player3> | id:<id>; name:<name>; text:<bla>; creator:<bla> scheduled:<date in UTC> players:<player1,player2,player3>
+
+Joining:
+client should return
+tournament; join; id:<id>
+
+
+CHAT:
+Receiving:
+When there is a new message, server should return
+chat; new; <global/public>; sender:<sender>; message:<message>
+
+Sending:
+When sending a message, client should return
+chat; send; <global/public>; recipient:<recipient>; message:<message>
+
+
+GAME CHALLENGE
+Server returns:
+challenge; id:<id>; sender:<sender>; message:<message>
+
+Challenging Client returns:
+challenge; recipient:<recipient>; message:<message>
+
+Challenged Client returns:
+challenge; id:<id>; status:<y/n>
+
