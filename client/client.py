@@ -133,6 +133,11 @@ class GameClient(socket_client.SocketClient):
             self.on_update(update)
         elif key == "moved":
             self.on_move(int(body))
+        elif key == "chat":
+            mode, from_user, text =\
+                [x.decode("utf-8") for x in body.split(b" ", 2)]
+            print("chat", mode, from_user, text)
+            self.on_recv_chat(mode, text, from_user)
 
     def on_init(self, init):
         self.inits.append(init)
@@ -151,6 +156,12 @@ class GameClient(socket_client.SocketClient):
 
     def on_disconnect(self):
         pass
+
+    def on_recv_chat(self, mode, text, from_user):
+        print("default onrecvchat")
+
+    def chat(self, text, to="global"):
+        self.send("chat {} {}".format(to, text))
 
     def start_game(self):
         print("starting game")

@@ -10,7 +10,7 @@ import board
 import tkinter
 from ui_components import ImageButton, Label, GameLog, FileSelectionWidget,\
     Progressbar, TextInputWidget, UIGroup, Button, ListView,\
-    draw_roundrect
+    draw_roundrect, ChatWidget
 import settings
 
 # prepare file selection dialog
@@ -290,15 +290,31 @@ class HubWindow(Window):
         self.lv_players = ListView(lv_rect, (255, 255, 255, 255),
                                    text_size=25)
         self.ui_components.add(self.lv_players)
+
+        chat_top = lv_rect.bottom + self.rect.height * 0.02
+        chat_rect = pygame.Rect(self.rect.width * 0.5,
+                                chat_top,
+                                self.rect.width * 0.4,
+                                self.rect.height - chat_top)
+        self.chat_widget = ChatWidget(chat_rect, (0, 0, 0, 255),
+                                      self.client.chat,
+                                      self.client.username,
+                                      text_size=25)
+        self.client.on_recv_chat = self.chat_widget.on_recv
+        self.ui_components.add(self.chat_widget)
         self.client.players_changed = self.update_players
         if self.client.players_invalid:
             self.update_players()
             self.client.players_invalid = False
 
+    def chat(self, text, to="global"):
+        self.client.chat(text, to)
+
     def update_players(self):
         print("update players", self.client.players)
         self.lv_players.entries = [p for p in self.client.players
                                    if self.setup["username"] != p]
+        self.chat_widget.setup_selectors(self.lv_players.entries.copy())
 
     def join_queue(self, event):
         self.client.send("queue join")

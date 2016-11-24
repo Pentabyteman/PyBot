@@ -2,6 +2,7 @@
 # -*- coding: iso-8859-15 -*-
 
 import pygame
+import fonthelper
 from tkinter import filedialog
 
 
@@ -49,6 +50,7 @@ class UIComponent(pygame.sprite.DirtySprite):
         self.rect = self._image.get_rect()
         self.rect.x, self.rect.y = x, y
         self.enabled = True
+        self.requests_focus = False
         self.target, self.step = None, None
         self.virt_pos = self.rect.topleft
         super(UIComponent, self).__init__()
@@ -72,10 +74,15 @@ class UIComponent(pygame.sprite.DirtySprite):
                 self.hovered = False
                 self.mouse_left()
             self.mouse_moved(event)
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        elif event.type == pygame.MOUSEBUTTONDOWN:
             if self.contains(*event.pos):
-                self.clicked(event)
-                return True  # request focus
+                if event.button == 1:
+                    self.clicked(event)
+                    return self.requests_focus  # request focus
+                elif event.button == 4:
+                    self.scrolled(1)
+                elif event.button == 5:
+                    self.scrolled(-1)
         elif event.type == pygame.KEYDOWN and self.focussed:
             self.key_typed(event.key)
 
@@ -88,13 +95,19 @@ class UIComponent(pygame.sprite.DirtySprite):
             print("Reached target")
             self.target, self.step = None, None
         else:
-            print("Not there yet", self.rect.topleft, self.target)
+            diff = [abs(t - v) for t, v in zip(self.target, self.virt_pos)]
             self.virt_pos = [(own + step)
                              for own, step in zip(self.virt_pos,
                                                   self.step)]
+            new_diff = [abs(t - v) for t, v in zip(self.target, self.virt_pos)]
+            if new_diff > diff:
+                self.virt_pos = self.target
             self.rect.topleft = self.virt_pos
 
     def clicked(self, event):
+        pass
+
+    def scrolled(self, direction):
         pass
 
     def mouse_moved(self, event):
@@ -119,7 +132,7 @@ class UIComponent(pygame.sprite.DirtySprite):
         self.rect.center = (x, y)
 
     def move_to(self, x, y, frames):
-        self.target = (x, y)
+        self.target = (round(x), round(y))
         self.step = [(t - s) / frames
                      for t, s in zip(self.target, self.rect.topleft)]
         print("Target is at", self.target, "step", self.step)
@@ -171,6 +184,8 @@ class UIWidget(UIComponent):
         state = self.ui_components.update(event)
         if hasattr(event, 'pos'):
             event.pos = (x, y)
+        if not state:
+            super(UIWidget, self).update(event)
         return state
 
     def draw(self):
@@ -185,6 +200,7 @@ class HoverableComponent(UIComponent):
         self.colors = {"bg": ((255, 255, 255, 255), (0, 0, 0, 255)),
                        "fg": ((0, 0, 0, 255), (255, 255, 255, 255))}
         self._color_rev = reverse_color
+        self._ignore = False
 
     def mouse_entered(self):
         self.state = UIComponent.STATE_INVALID
@@ -194,11 +210,11 @@ class HoverableComponent(UIComponent):
 
     def _bgcolor(self):
         tag = "fg" if self._color_rev else "bg"
-        return self.colors[tag][0 if self.hovered else 1]
+        return self.colors[tag][0 if self.hovered and not self._ignore else 1]
 
     def _fgcolor(self):
         tag = "bg" if self._color_rev else "fg"
-        return self.colors[tag][0 if self.hovered else 1]
+        return self.colors[tag][0 if self.hovered and not self._ignore else 1]
 
 
 class Button(HoverableComponent):
@@ -388,7 +404,7 @@ class Label(UIComponent):
 class TextInputField(HoverableComponent):
 
     def __init__(self, rect, fg_color, bg_color, text_size=15, hint="",
-                 hintcolor=None):
+                 hintcolor=None, do_submit=False):
         super(TextInputField, self).__init__(rect)
         self.text, self.fg_color, self.bg_color = [], fg_color, bg_color
         self._font = pygame.font.Font("resources/fantasque.ttf", text_size)
@@ -397,7 +413,7 @@ class TextInputField(HoverableComponent):
                        "fg": ((0, 0, 0, 255), fg_color)}
         self.hint, self.hintcolor = hint, hintcolor if hintcolor is not None\
             else fg_color
-        print("initialized with hint", hint)
+        self.requests_focus, self.do_submit = True, do_submit
 
     def __repr__(self):
         return "TextInputField <{}>".format(self.text)
@@ -408,14 +424,23 @@ class TextInputField(HoverableComponent):
         if len(self.text) == 0:
             text = self._font.render(self.hint, True, self.hintcolor)
         else:
-            text = self._font.render(self.text, True, self._fgcolor())
+            try:
+                text = self._font.render(self.text, True, self._fgcolor())
+            except ValueError:
+                self.text = ""
+                text = self._font.render(self.hint, True, self.hintcolor)
         if self.focussed:
             # draw cursor
             x_pos = self._font.size("".join(self.text[:self.cursor]))[0]
             cursor_rect = (x_pos - 1, 0, 1,
                            text.get_rect().height)
             pygame.draw.rect(text, self._fgcolor(), cursor_rect)
-        self._image.blit(text, self._image.get_rect())
+        # move text to the left when text input field to small
+        if text.get_rect().width > self.rect.width:
+            text_pos = text.get_rect(right=self._image.get_rect().right)
+        else:
+            text_pos = self._image.get_rect()
+        self._image.blit(text, text_pos)
 
     @property
     def text(self):
@@ -423,6 +448,8 @@ class TextInputField(HoverableComponent):
 
     @text.setter
     def text(self, new):
+        if type(new) == str:
+            new = list(new)
         self.__text = new
         self.cursor = len(new)
         self.state = UIComponent.STATE_INVALID
@@ -438,7 +465,12 @@ class TextInputField(HoverableComponent):
 
     def key_typed(self, key):
         self.state = UIComponent.STATE_INVALID
-        if key == pygame.K_BACKSPACE:
+        if key == pygame.K_RETURN:
+            if not self.do_submit:
+                return
+            self.on_submit(self.text)
+            self.text = ""
+        elif key == pygame.K_BACKSPACE:
             try:
                 if self.cursor > 0:
                     del self.__text[self.cursor - 1]
@@ -452,6 +484,9 @@ class TextInputField(HoverableComponent):
         elif key <= 127:
             self.__text.insert(self.cursor, chr(key))
             self.cursor += 1
+
+    def on_submit(self, text):
+        pass
 
 
 class TextInputWidget(UIWidget):
@@ -479,7 +514,7 @@ class TextInputWidget(UIWidget):
 
     @text.setter
     def text(self, new):
-        self.in_field.text = list(new)
+        self.in_field.text = new
 
 
 class ListView(UIComponent):
@@ -518,6 +553,233 @@ class ListView(UIComponent):
         self.state = UIComponent.STATE_INVALID
 
 
+class ChatListView(ListView):
+
+    STATE_SCROLLED = 2
+    SCROLL_FACTOR = 20
+
+    def __init__(self, rect, color, text_size=15):
+        super(ChatListView, self).__init__(rect, color, text_size=text_size)
+        self.shifted = 0
+        self.max_shift = 0
+
+    def draw(self):
+        self._image.fill((0, 0, 0, 0))
+        current_y = self.rect.bottom + self.shifted
+        self.max_shift = -self.rect.height
+        for entry in reversed(self.entries):
+            # text = self._font.render(entry, True, self.color)
+            text = fonthelper.render_text(entry, self._font, self.color,
+                                          self.rect.width)
+            text_pos = text.get_rect(bottom=current_y)
+            current_y = text_pos.top
+            self._image.blit(text, text_pos)
+            self.max_shift += text_pos.height
+
+    def shift_list(self, frames, count=1):
+        pass
+
+    def scrolled(self, d):
+        self.shifted = max(0,
+                           min(self.max_shift, self.shifted + d *
+                               ChatListView.SCROLL_FACTOR))
+        self.state = ChatListView.STATE_INVALID
+
+    @property
+    def image(self):
+        image = super(ChatListView, self).image
+        if self.state == ChatListView.STATE_SCROLLED:
+            return image
+        return image
+
+
+class ChatSelector(Button):
+
+    def __init__(self, *args, **kwargs):
+        super(ChatSelector, self).__init__(*args, **kwargs)
+        self.chat_selected = False
+        self.requests_focus = True
+
+    def draw(self):
+        self._image.fill((0, 0, 0, 0))
+        draw_halfroundrect(self._image, self._image.get_rect(),
+                           self._bgcolor(), orientation=1)
+        text = self._font.render(self.text, True, self._fgcolor())
+        textpos = text.get_rect()
+        textpos.center = self._image.get_rect().center
+        self._image.blit(text, textpos)
+
+    @property
+    def chat_selected(self):
+        return self.__chat_selected
+
+    @chat_selected.setter
+    def chat_selected(self, new):
+        self.__chat_selected = new
+        self._ignore = new
+        self._color_rev = new
+        self.state = ChatSelector.STATE_INVALID
+
+    def clicked(self, event):
+        self.on_select(self.text)
+
+    def on_select(self, text):
+        pass
+
+
+class ChatWidget(UIWidget):
+
+    STATE_VISIBLE, STATE_INVISIBLE = 0, 1
+
+    def __init__(self, rect, fg_color, send, own_name, text_size=15):
+        super(ChatWidget, self).__init__(rect)
+        self.real_rect = self.rect.copy()
+        self.fg_color = fg_color
+        self._font = pygame.font.Font("resources/fantasque.ttf", text_size)
+
+        self.selection_rect = pygame.Rect(0, 0, self.rect.width * 0.2,
+                                          self.rect.height)
+        self.chat_rect = pygame.Rect(self.selection_rect.right,
+                                     self.selection_rect.top,
+                                     self.rect.width -
+                                     self.selection_rect.width,
+                                     self.rect.height)
+        print("selection", self.selection_rect, "chat", self.chat_rect)
+
+        list_rect = pygame.Rect(self.chat_rect.x,
+                                self.chat_rect.y,
+                                self.chat_rect.width,
+                                self.chat_rect.height * 0.9)
+        self.chat_list = ChatListView(list_rect, fg_color, text_size=text_size)
+        self.add(self.chat_list)
+
+        enter_rect = pygame.Rect(self.chat_rect.x + self.chat_rect.width * 0.1,
+                                 self.chat_rect.height * 0.9,
+                                 self.chat_rect.width * 0.8,
+                                 self.chat_rect.height * 0.1)
+        enter_field = TextInputField(enter_rect, (255, 255, 255, 255),
+                                     (40, 40, 40, 255), 30, hint="Enter text",
+                                     do_submit=True)
+        enter_field.on_submit = self.on_chat
+        self.add(enter_field)
+        self.status = ChatWidget.STATE_VISIBLE
+        self.send = send
+        self.chat = Chat(self.chat_list)
+        self.own_name = own_name
+        self.buttons = []
+
+    def setup_selectors(self, options):
+        options.insert(0, "global")
+        height = self.selection_rect.height * 0.1
+        self.ui_components.remove(*self.buttons)
+        self.buttons = []
+        current_y = self.selection_rect.height * 0.1
+        # existing = [btn.text for btn in self.buttons]
+        if self.chat.current not in options:
+            self.chat.current = "global"
+        for option in options:
+            # if option in existing:
+                # continue
+            btn_rect = pygame.Rect(self.selection_rect.x,
+                                   current_y,
+                                   self.selection_rect.width,
+                                   height)
+            btn = ChatSelector(option, btn_rect, text_size=15)
+            btn.parent = self
+            btn.on_select = self.select_chat
+            self.buttons.append(btn)
+            self.ui_components.add(btn)
+            current_y = btn_rect.bottom
+            if option == self.chat.current:
+                btn.chat_selected = True
+        self.state = ChatWidget.STATE_INVALID
+
+    def select_chat(self, text):
+        try:
+            old = next(b for b in self.buttons if b.text == self.chat.current)
+            old.chat_selected = False
+        except StopIteration:
+            print("Error: Old button not found")
+        try:
+            self.chat.current = text
+            new = next(b for b in self.buttons if b.text == text)
+        except StopIteration:
+            print("Error: New not found")
+            self.chat.current = "global"
+            new = next(b for b in self.buttons if b.text == self.chat.current)
+        finally:
+            new.chat_selected = True
+
+    def draw(self):
+        self._image.fill((0, 0, 0, 0))
+        draw_halfroundrect(self._image, self.chat_rect,
+                           (255, 255, 255, 255), radius=0.2)
+        self.ui_components.draw(self._image)
+
+    def on_chat(self, text):
+        self.send(text, self.chat.current)
+        self.chat.add(self.chat.current, "{}: {}".format(self.own_name, text))
+
+    def on_recv(self, mode, text, from_user):
+        print("receive chat", mode, text, from_user)
+        text = "{}: {}".format(from_user, text)
+        if mode == "global":
+            self.chat.add("global", text)
+        else:
+            self.chat.add(from_user, text)
+
+    @property
+    def status(self):
+        return self.__status
+
+    @status.setter
+    def status(self, new):
+        self.__status = new
+        if new == ChatWidget.STATE_VISIBLE:
+            top = self.real_rect.top
+            self.move_to(self.rect.x, top, 15)
+        elif new == ChatWidget.STATE_INVISIBLE:
+            top = self.real_rect.top + self.rect.height * 0.9
+            self.move_to(self.rect.x, top, 15)
+        self.state = ChatWidget.STATE_INVALID
+
+    def clicked(self, event):
+        self.status = ChatWidget.STATE_INVISIBLE\
+            if self.status == ChatWidget.STATE_VISIBLE else\
+            ChatWidget.STATE_VISIBLE
+
+
+class Chat:
+
+    def __init__(self, chat_view):
+        self.view = chat_view
+        self.chat_konv = {}
+        self.current = "global"
+
+    def add(self, from_user, text):
+        if from_user not in self.chat_konv:
+            self.chat_konv[from_user] = []
+        self.chat_konv[from_user].append(text)
+        if from_user == self.current:
+            self.view.add(text)
+
+    @property
+    def current(self):
+        return self.__current
+
+    @current.setter
+    def current(self, new):
+        if hasattr(self, '__current') and new == self.__current:
+            return
+        self.__current = new
+        if new not in self.chat_konv:
+            self.view.entries = []
+        else:
+            self.view.entries = self.chat_konv[new].copy()
+            self.view.shifted = 0
+            self.view.state = UIComponent.STATE_INVALID
+
+
 def draw_roundrect(surface, rect, color, radius=0.4):
 
     rect = pygame.Rect(rect)
@@ -548,6 +810,20 @@ def draw_roundrect(surface, rect, color, radius=0.4):
     rectangle.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MIN)
 
     return surface.blit(rectangle, pos)
+
+
+def draw_halfroundrect(surface, rect, color, radius=0.4,
+                       orientation=0):
+    draw_roundrect(surface, rect, color, radius)
+
+    overlay_rect = rect.copy()
+    if orientation == 0:
+        overlay_rect.height *= 0.5
+        overlay_rect.top += overlay_rect.height
+    else:
+        overlay_rect.width *= 0.5
+        overlay_rect.right = rect.right
+    pygame.draw.rect(surface, color, overlay_rect)
 
 
 def draw_progressbar(surface, rect, color, bgcolor, progress, text="",
@@ -586,7 +862,7 @@ class GameLog(UIComponent):
         self._image.fill((0, 0, 0, 255))
         # xpos of first row
         gamelog_rowsize = int(self.gamelog_size[0] / 2)
-        gamelog_rownumber = int(self.gamelog_size[1]/30)  # ypos of first col
+        gamelog_rownumber = int(self.gamelog_size[1] / 30)  # ypos of first col
         current_row = -1  # watch out, needs to start with -1
         index = 0  # watch out, needs to start with 0
         for i in range(0, len(self.turnlist)):
