@@ -334,25 +334,27 @@ class Hub(QMainWindow):
         self.join_tournament.setFixedSize(QSize(100, 100))
 
         for player in self.players:
+            print(player)
             #TODO: Sort so that user is at the top and ingame players at the bottom
             #TODO: add player status
             statusImage = QLabel(self)
             statusImage.setFixedSize(QSize(32, 32))
-            statusPicture = QPixmap(PICTURE_DICT[self.status[self.players.index(player)]])
+            # statusPicture = QPixmap(PICTURE_DICT[self.status[self.players.index(player)]])
+            statusPicture = QPixmap(PICTURE_DICT["online"])
             myScaledPixmap = statusPicture.scaled(statusImage.size(), Qt.KeepAspectRatio)
             statusImage.setPixmap(myScaledPixmap)
             height, width = self.starting_height + self.difference * self.players.index(player) + 10, self.starting_width - 150
             statusImage.move(width, height)
 
-            label = QLabel(player, self)
-            label.setStyleSheet("QLabel {font-size: 40px; color: white}")
+            self.label = QLabel(player, self)
+            self.label.setStyleSheet("QLabel {font-size: 40px; color: white}")
             height, width = self.starting_height + self.difference * self.players.index(player), self.starting_width
-            label.move(width, height)
-            label.adjustSize()
-            label2 = QLabel(self.user_stats[self.players.index(player)], self)
-            label2.setStyleSheet("QLabel {font-size: 40px; color: white}")
-            label2.move(1200, height)
-            label2.adjustSize()
+            self.label.move(width, height)
+            self.label.adjustSize()
+            self.label2 = QLabel(self.user_stats[self.players.index(player)], self)
+            self.label2.setStyleSheet("QLabel {font-size: 40px; color: white}")
+            self.label2.move(1200, height)
+            self.label2.adjustSize()
 
         self.draw_chat("Global Chat")
         setup = settings.get_standard_settings()
@@ -743,6 +745,7 @@ class Hub(QMainWindow):
     def update_players(self, players):
         self.initChatDict()
         self.players = players
+        print(self.players)
         self.initUI()
 
     def disable_always(self):
@@ -775,13 +778,9 @@ class Hub(QMainWindow):
                 try:
                     self.chatDictionary[player]
                 except:
-                    listkey = ''.join([player, "_list"])
-                    self.chatListDictionary.update({listkey : []})
-                    self.chatDictionary.update({player : self.chatListDictionary[listkey]})
+                    self.chatDictionary.update({player: []})
         try:
             self.chatDictionary["Global Chat"]
         except:
-            listkey = ''.join(["Global Chat", "_list"])
-            self.chatListDictionary.update({listkey: []})
-            self.chatDictionary.update({"Global Chat": self.chatListDictionary[listkey]})
+            self.chatDictionary.update({"Global Chat": []})
         print(self.chatDictionary)
