@@ -112,7 +112,7 @@ class ServerSelect(QDialog):
         self.error_label.adjustSize()
 
         setup = settings.get_standard_settings()
-        header = "PyBot {}".format(setup["version"])
+        header = "PyBot v{}".format(setup["version"])
         self.setWindowTitle(header)
         self.setWindowIcon(QIcon(ICON_PATH))
         info = "Running PyBot {0} on {1}. with Python {2} \n " \
@@ -254,15 +254,17 @@ class PicButton(QAbstractButton):
 class Hub(QMainWindow):
     def __init__(self, client, username):
         super().__init__()
+        self.username = username
         self.players = None
         if self.players == None:
             self.players = [username]
         self.client = client
         self.client.on_players = self.update_players
-        self.status = ["online"]
+        self.status = ["online", "online", "online", "online"]
         self.user = self.players[self.players.index(username)]
         self.user_stats = ["1", "1", "1", "1"]
         self.status[self.players.index(self.user)] = "self"
+        print(self.status)
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
         self.line_starting_height = 250
@@ -273,10 +275,12 @@ class Hub(QMainWindow):
         self.playerbuttonlist = []
         self.client.on_global_chat = self.receive_global
         self.client.on_private_chat = self.receive_private
-
+        self.labels = []
         self.initUI()
 
     def initUI(self):
+        for label in self.labels:
+            label.deleteLater()
         self.mdi = QMdiArea
         self.statusBar()
         self.statusBar().setStyleSheet("color:white")
@@ -333,32 +337,38 @@ class Hub(QMainWindow):
         self.join_tournament.setToolTip("Join Tournament")
         self.join_tournament.setFixedSize(QSize(100, 100))
 
+        self.labels = []
         for player in self.players:
-            print(player)
             #TODO: Sort so that user is at the top and ingame players at the bottom
             #TODO: add player status
+            print(player)
             statusImage = QLabel(self)
             statusImage.setFixedSize(QSize(32, 32))
-            # statusPicture = QPixmap(PICTURE_DICT[self.status[self.players.index(player)]])
-            statusPicture = QPixmap(PICTURE_DICT["online"])
+            statusPicture = QPixmap(PICTURE_DICT[self.status[self.players.index(player)]])
             myScaledPixmap = statusPicture.scaled(statusImage.size(), Qt.KeepAspectRatio)
             statusImage.setPixmap(myScaledPixmap)
             height, width = self.starting_height + self.difference * self.players.index(player) + 10, self.starting_width - 150
             statusImage.move(width, height)
+            print(self.players.index(player))
+            label = QLabel(player, self)
+            label.setStyleSheet("QLabel {font-size: 40px; color: white}")
+            height, width = self.starting_height + (self.difference * self.players.index(player)), self.starting_width
+            print(height)
+            label.move(width, height)
+            label.adjustSize()
+            label2 = QLabel(self.user_stats[self.players.index(player)], self)
+            label2.setStyleSheet("QLabel {font-size: 40px; color: white}")
+            label2.move(1200, height)
+            label2.adjustSize()
 
-            self.label = QLabel(player, self)
-            self.label.setStyleSheet("QLabel {font-size: 40px; color: white}")
-            height, width = self.starting_height + self.difference * self.players.index(player), self.starting_width
-            self.label.move(width, height)
-            self.label.adjustSize()
-            self.label2 = QLabel(self.user_stats[self.players.index(player)], self)
-            self.label2.setStyleSheet("QLabel {font-size: 40px; color: white}")
-            self.label2.move(1200, height)
-            self.label2.adjustSize()
-
+            self.labels.append(label)
+            self.labels.append(label2)
+            self.labels.append(statusImage)
+        for label in self.labels:
+            label.show()
         self.draw_chat("Global Chat")
         setup = settings.get_standard_settings()
-        header = "PyBot {}".format(setup["version"])
+        header = "PyBot v{}".format(setup["version"])
         self.setWindowTitle(header)
         self.setWindowIcon(QIcon(ICON_PATH))
         self.setGeometry(300, 300, *WINDOW_SIZE)
@@ -605,9 +615,11 @@ class Hub(QMainWindow):
 
     def choose_chat_user(self):
         chatable_user = ['Global Chat']
-        for i in range(0, len(self.status)):
+        for i in range(0, len(self.players)):
             if self.status[i] == "online":
-                chatable_user.append(self.players[i])
+                if self.players[i] != self.user:
+                    chatable_player = self.players[i]
+                    chatable_user.append(chatable_player)
         self.chat_choose_window = QDialog(self)
         chat_choose_width = 300
         chat_choose_height = 300
@@ -745,7 +757,10 @@ class Hub(QMainWindow):
     def update_players(self, players):
         self.initChatDict()
         self.players = players
-        print(self.players)
+        self.status = ["online", "online", "online", "online"]
+        self.user = self.players[self.players.index(self.username)]
+        self.user_stats = ["1", "1", "1", "1"]
+        self.status[self.players.index(self.user)] = "self"
         self.initUI()
 
     def disable_always(self):
@@ -771,8 +786,6 @@ class Hub(QMainWindow):
         self.new_window.close()
 
     def initChatDict(self):
-        print("upd")
-        print(self.players)
         for player in self.players:
             if not player == self.user:
                 try:
@@ -783,4 +796,3 @@ class Hub(QMainWindow):
             self.chatDictionary["Global Chat"]
         except:
             self.chatDictionary.update({"Global Chat": []})
-        print(self.chatDictionary)
