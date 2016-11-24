@@ -639,9 +639,10 @@ class Hub(QMainWindow):
 
     def game_challenge(self):
         playable_user = []
-        for i in range(0, len(self.status)):
+        for i in range(0, len(self.players)):
             if self.status[i] == "online":
-                playable_user.append(self.players[i])
+                if self.players[i] != self.username:
+                    playable_user.append(self.players[i])
         self.challenge = QDialog(self)
         chat_choose_width = 300
         chat_choose_height = 300
