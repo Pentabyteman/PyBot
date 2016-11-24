@@ -10,7 +10,6 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QPushButton, QDesktopWidget, QApplication, QLabel, QLineEdit, \
     QMdiArea, QScrollArea, QAbstractButton, \
     QWidget, QTextEdit
-from ui_components import *
 
 
 BOARD_SIZE = (1017, 1017)
@@ -255,11 +254,11 @@ class PicButton(QAbstractButton):
 class Hub(QMainWindow):
     def __init__(self, client, username):
         super().__init__()
-        self.client = client
-        if self.client.players_invalid != False:
-            self.players = self.client.players
-        else:
+        self.players = None
+        if self.players == None:
             self.players = [username]
+        self.client = client
+        self.client.on_players = self.update_players
         self.status = ["online"]
         self.user = self.players[self.players.index(username)]
         self.user_stats = ["1", "1", "1", "1"]
@@ -725,7 +724,7 @@ class Hub(QMainWindow):
         if message is not "":
             self.statusBar().showMessage("Sending message...")
             if receiver != "Global Chat":
-                query = "chat private {0} {1}".format(receiver, message)
+                query = "chat {0} {1}".format(receiver, message)
             else:
                 query = "chat global {}".format(message)
             messageList = self.chatDictionary[receiver]
@@ -740,6 +739,11 @@ class Hub(QMainWindow):
     def clearStatusBar(self):
         print("clearing...")
         self.statusBar().showMessage("")
+
+    def update_players(self, players):
+        self.initChatDict()
+        self.players = players
+        self.initUI()
 
     def disable_always(self):
         self.always_update.setChecked(False)
@@ -764,6 +768,8 @@ class Hub(QMainWindow):
         self.new_window.close()
 
     def initChatDict(self):
+        print("upd")
+        print(self.players)
         for player in self.players:
             if not player == self.user:
                 try:
@@ -778,3 +784,4 @@ class Hub(QMainWindow):
             listkey = ''.join(["Global Chat", "_list"])
             self.chatListDictionary.update({listkey: []})
             self.chatDictionary.update({"Global Chat": self.chatListDictionary[listkey]})
+        print(self.chatDictionary)

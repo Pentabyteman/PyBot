@@ -40,8 +40,11 @@ class Game():
 
 class GameClient(socket_client.SocketClient):
 
+    data_received = pyqtSignal(bytes)
+
     def __init__(self, *args, **kwargs):
         super(GameClient, self).__init__(*args, **kwargs)
+        self.data_received.connect(self.on_receive)
         self.is_playing = False
         self.inits, self.updates = deque(), deque()
         self.players = None
@@ -54,6 +57,7 @@ class GameClient(socket_client.SocketClient):
         print(key)
         if key == 'username':
             self.send(self.username)
+            print(self.username)
         elif key == 'password':
             self.send(self.password)
         elif key == 'started':
@@ -63,7 +67,8 @@ class GameClient(socket_client.SocketClient):
             self.playing_changed(self.is_playing)
         elif key == "players":
             self.players = [x.decode("utf-8") for x in body.split(b" ")]
-            self.players_changed()
+            print(self.players)
+            self.on_players(self.players)
         elif key == "init":
             initial = pickle.loads(body)
             self.on_init(initial)
@@ -104,16 +109,19 @@ class GameClient(socket_client.SocketClient):
     def on_login(self):
         pass
 
+    def on_players(self, playerlist):
+        pass
+
     def new_message(self, message):
-        type, body = message.split("", 1)
+        type, body = message.split(" ", 1)
         if type == "global":
-            sender, message = body.split("", 1)
+            sender, message = body.split(" ", 1)
             self.on_global_chat(sender, message)
         else:
-            sender, message = body.split("", 1)
+            sender, message = body.split(" ", 1)
             self.on_private_chat(sender, message)
 
-    def on_global_chat(self, body):
+    def on_global_chat(self, sender, body):
         pass
 
     def on_private_chat(self, sender, message):

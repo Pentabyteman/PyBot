@@ -6,11 +6,13 @@ import struct
 from threading import Thread
 import select
 import ssl
+from PyQt5.QtCore import QObject
 
 
-class SocketClient:
+class SocketClient(QObject):
 
     def __init__(self):
+        super(SocketClient, self).__init__()
         self.terminated = False
         print("Initialized socket client")
 
@@ -62,7 +64,7 @@ class SocketClient:
                     return None
                 msglen = struct.unpack('>I', raw_msglen)[0]
                 recv = recvall(self.socket, msglen)
-                reply = self.on_receive(recv)
+                reply = self.data_received.emit(recv)
                 if len(write_sockets) > 0 and reply:
                     self.socket.send(reply.encode())
 
