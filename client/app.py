@@ -2,13 +2,16 @@
 # -*- coding: iso-8859-15 -*-
 
 import pygame
+import dialog
 
 
 class App():
 
-    def __init__(self):
+    def __init__(self, display):
         pygame.init()
         self.return_code = -1
+        self.display = display
+        dialog.init(self)
 
     def on_event(self, event):
         pass
@@ -38,3 +41,19 @@ class App():
     def stop(self, *args):
         self.return_code = -1
         self._running = False
+
+    @property
+    def dialog(self):
+        return self.__dialog
+
+    @dialog.setter
+    def dialog(self, new):
+        self.__dialog = new
+        if new is None:
+            return
+        new.on_finish = self.reset_dialog
+        rect = self.display.get_rect()
+        x = rect.centerx - new.size[0] * 0.5
+        y = rect.centery - new.size[1] * 0.8
+        print("x y", x, y)
+        self.dialog_pos = (x, y)

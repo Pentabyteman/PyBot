@@ -780,6 +780,62 @@ class Chat:
             self.view.state = UIComponent.STATE_INVALID
 
 
+class QueueButton(UIWidget):
+
+    def __init__(self, rect, join_func, leave_func):
+        super(QueueButton, self).__init__(rect)
+        self.join, self.leave = join_func, leave_func
+        self.init_join()
+
+    def init_join(self):
+        print("initialise join view")
+        btn_rect = self.rect.copy()
+        btn_rect.x, btn_rect.y = 0, 0
+        self.ui_components.empty()
+        btn = Button("Join queue", btn_rect, text_size=30)
+        btn.parent = self
+        btn.clicked = self.join
+        self.ui_components.add(btn)
+        print("ui components", self.ui_components)
+        self.state = UIComponent.STATE_INVALID
+
+    def on_join(self):
+        self.init_leave()
+
+    def on_leave(self):
+        self.init_join()
+
+    def init_leave(self):
+        self.ui_components.empty()
+        lbl_rect = pygame.Rect(0, 0,
+                               self.rect.width * 0.75,
+                               self.rect.height)
+        lbl = Label("Joined queue ...", lbl_rect, (0, 255, 0, 255),
+                    text_size=20, centered=True)
+        lbl.parent = self
+        self.ui_components.add(lbl)
+
+        size = min(self.rect.width * 0.2, self.rect.height)
+        print("button size", size, self.rect.width * 0.2, self.rect.height)
+        btn_rect = pygame.Rect(self.rect.width * 0.8,
+                               (self.rect.height - size) / 2,
+                               size, size)
+        print("button rect", btn_rect)
+        img = pygame.image.load("resources/cancel.png")
+
+        btn = ImageButton(img, btn_rect)
+        btn.parent = self
+        btn.clicked = self.leave
+        self.ui_components.add(btn)
+        self.state = UIComponent.STATE_INVALID
+
+    def join(self, *args):
+        pass
+
+    def leave(self, *args):
+        pass
+
+
 def draw_roundrect(surface, rect, color, radius=0.4):
 
     rect = pygame.Rect(rect)

@@ -8,9 +8,11 @@ import string
 import time
 import board
 import tkinter
+import window
+import dialog
 from ui_components import ImageButton, Label, GameLog, FileSelectionWidget,\
-    Progressbar, TextInputWidget, UIGroup, Button, ListView,\
-    draw_roundrect, ChatWidget
+    Progressbar, TextInputWidget, Button, ListView,\
+    ChatWidget, QueueButton
 import settings
 
 # prepare file selection dialog
@@ -39,86 +41,7 @@ class Speaker:
             sound.play()
 
 
-class Window:
-
-    STATE_VALID, STATE_INVALID = 1, 0
-
-    def __init__(self, size):
-        self.size = size
-        self.rect = pygame.Rect(0, 0, size[0], size[1])
-        self.ui_components = UIGroup()
-        self.surface = pygame.Surface(self.size, pygame.SRCALPHA)
-        self.state = Window.STATE_INVALID
-
-    def draw(self):
-        self.surface.fill((0, 0, 0, 255))
-        self.ui_components.draw(self.surface)
-
-    @property
-    def image(self):
-        if self.state == Window.STATE_INVALID:
-            self.draw()
-            self.state = Window.STATE_VALID
-        return self.surface
-
-    def on_tick(self):
-        self.ui_components.on_tick()
-        self.state = Window.STATE_INVALID
-
-    def on_event(self, event):
-        self.ui_components.update(event)
-        self.state = Window.STATE_INVALID
-
-
-class Dialog(Window):
-
-    def __init__(self, size):
-        super(Dialog, self).__init__(size)
-        self.shadow_rect = self.rect.copy()
-        self.shadow_rect.width = self.rect.width * 0.98
-        self.shadow_rect.height = self.rect.height * 0.98
-        self.area = self.rect.copy()
-        self.area.x += self.rect.width * 0.01
-        self.area.y += self.rect.height * 0.01
-        self.area.width = self.shadow_rect.width
-        self.area.height = self.shadow_rect.height
-        self.content = pygame.Surface(self.area.size, pygame.SRCALPHA)
-
-    def draw(self):
-        self.surface.fill((0, 0, 0, 0))
-        draw_roundrect(self.surface, self.shadow_rect,
-                       (180, 180, 180, 255))
-        draw_roundrect(self.surface, self.area,
-                       (255, 255, 255, 255))  # background
-        self.ui_components.draw(self.content)
-        self.surface.blit(self.content, self.area)
-
-    def on_finish(self):
-        pass
-
-
-class AlertDialog(Dialog):
-
-    def __init__(self, size, text):
-        super(AlertDialog, self).__init__(size)
-        lbl_rect = pygame.Rect(self.area.width * 0.1,
-                               self.area.height * 0.1,
-                               self.area.width * 0.8,
-                               self.area.height * 0.15)
-        lbl = Label(text, lbl_rect, (0, 0, 0, 255), 28, centered=True,
-                    bold=True)
-        self.ui_components.add(lbl)
-
-        btn_rect = pygame.Rect(self.area.width * 0.3,
-                               self.area.height * 0.6,
-                               self.area.width * 0.4,
-                               self.area.height * 0.2)
-        btn = Button("Ok", btn_rect, 30, True)
-        btn.clicked = lambda x: self.on_finish()
-        self.ui_components.add(btn)
-
-
-class ServerSelect(Window):
+class ServerSelect(window.Window):
 
     def __init__(self, size, client, setup):
         super(ServerSelect, self).__init__(size)
@@ -236,12 +159,13 @@ class ServerSelect(Window):
         self.setup["password"] = password
         settings.update_standard_settings(self.setup)
 
+        print("connecting with", username, password)
         state = self.client.connect(host, port, username, password)
         if state:  # connected, trying to login
             self.btn_conn.enabled, self.server_widget.enabled = False, False
             self.login_widget.enabled, self.pwd_widget.enabled = False, False
             self.error_label.text = ""
-            print("Established connection")
+            print("Established connection, waiting ...")
         else:  # not connected, could not reach server
             self.error_label.text = "Can't connect to server!"
 
@@ -254,12 +178,19 @@ class ServerSelect(Window):
         pass
 
 
-class HubWindow(Window):
+class HubWindow(window.Window):
 
     def __init__(self, size, client, setup):
         super(HubWindow, self).__init__(size)
         self.client = client
         self.setup = setup
+
+        quit_rect = pygame.Rect(0, 0, self.rect.width * 0.05,
+                                self.rect.width * 0.05)
+        img = pygame.image.load("resources/exit.png")
+        btn_quit = ImageButton(img, quit_rect)
+        btn_quit.clicked = lambda x: self.on_quit()
+        self.ui_components.add(btn_quit)
 
         heading_w, heading_h = self.rect.width * 0.3, self.rect.height * 0.1
         heading_rect = pygame.Rect(self.rect.width * 0.1,
@@ -272,9 +203,16 @@ class HubWindow(Window):
                                      self.rect.height * 0.2,
                                      self.rect.width * 0.15,
                                      self.rect.height * 0.05)
-        btn_queue = Button("Join queue", btn_queue_rect, 30)
-        btn_queue.clicked = self.join_queue
+        btn_queue = QueueButton(btn_queue_rect,
+                                self.join_queue,
+                                self.leave_queue)
         self.ui_components.add(btn_queue)
+
+        spectate_rect = btn_queue_rect.copy()
+        spectate_rect.top = btn_queue_rect.bottom + self.rect.height * 0.02
+        btn_spectate = Button("Spectate", spectate_rect, text_size=30)
+        btn_spectate.clicked = self.show_spectate
+        self.ui_components.add(btn_spectate)
 
         lblp_rect = pygame.Rect(self.rect.width * 0.7,
                                 self.rect.height * 0.05,
@@ -306,6 +244,8 @@ class HubWindow(Window):
         if self.client.players_invalid:
             self.update_players()
             self.client.players_invalid = False
+        self.client.on_join_queue = btn_queue.on_join
+        self.client.on_leave_queue = btn_queue.on_leave
 
     def chat(self, text, to="global"):
         self.client.chat(text, to)
@@ -316,11 +256,20 @@ class HubWindow(Window):
                                    if self.setup["username"] != p]
         self.chat_widget.setup_selectors(self.lv_players.entries.copy())
 
-    def join_queue(self, event):
+    def join_queue(self, *args):
         self.client.send("queue join")
 
+    def leave_queue(self, *args):
+        self.client.send("queue leave")
 
-class GamePreparation(Window):
+    def show_spectate(self, *args):
+        dialog.show(dialog.SpectateDialog(dialog.MEDIUM, self.client))
+
+    def on_quit(self):
+        pass
+
+
+class GamePreparation(window.Window):
 
     def __init__(self, size, client, has_started):
         super(GamePreparation, self).__init__(size)
@@ -415,7 +364,7 @@ class GamePreparation(Window):
         self.btn_play.enabled = False
 
 
-class GameWindow(Window):
+class GameWindow(window.Window):
 
     def __init__(self, size, board_size, client, on_finish=None,
                  ai1=None, ai2=None, start=None, speed=False):
@@ -512,7 +461,7 @@ class GameWindow(Window):
         """Called every tick"""
         super(GameWindow, self).on_tick()
         self.board.on_tick()
-        self.state = Window.STATE_INVALID
+        self.state = window.Window.STATE_INVALID
 
     def play(self, event):
         self.client.start_game()

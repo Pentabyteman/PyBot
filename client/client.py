@@ -6,7 +6,7 @@ from collections import deque
 import pygame
 import app
 import gui
-import pickle
+import dialog
 import settings
 import updates
 
@@ -18,27 +18,40 @@ ICON_PATH = "resources/pybot_logo_ver4.png"
 class Game(app.App):
 
     def __init__(self, display, setup):
-        super(Game, self).__init__()
-        self.display = display
+        super(Game, self).__init__(display)
         self.setup = setup
-        self.client = GameClient()
-        self.client.on_move = self.update_window
-        self.window = gui.ServerSelect(WINDOW_SIZE, self.client, self.setup)
-        self.client.on_connect = self.lobby_view
+        self.setup_client()
+        self.server_view()
         self.dialog = None
 
-    def update_window(self, server):
+    def setup_client(self):
+        self.client = GameClient()
+        self.client.on_connect = self.lobby_view
+        self.client.on_move = self.update_window
+        self.client.on_quit = self.quit_server
+
+    def update_window(self, server, state):
         if server == 0:
             self.lobby_view()
         elif server >= 0:
-            self.game_view()
+            self.game_view(state)
 
     def lobby_view(self):
         print("lobby view")
         self.window = gui.HubWindow(WINDOW_SIZE, self.client, self.setup)
+        self.window.on_quit = self.quit_server
 
-    def game_view(self):
-        if self.client.is_playing:
+    def quit_server(self):
+        self.client.disconnect()
+        self.setup_client()
+        self.server_view()
+
+    def server_view(self):
+        print("server selection")
+        self.window = gui.ServerSelect(WINDOW_SIZE, self.client, self.setup)
+
+    def game_view(self, state):
+        if self.client.is_playing or state == "playing":
             self.start_game()
         else:
             self.start_preparation()
@@ -75,22 +88,6 @@ class Game(app.App):
             self.display.blit(self.dialog.image, self.dialog_pos)
         pygame.display.flip()
 
-    @property
-    def dialog(self):
-        return self.__dialog
-
-    @dialog.setter
-    def dialog(self, new):
-        self.__dialog = new
-        if new is None:
-            return
-        new.on_finish = self.reset_dialog
-        rect = self.display.get_rect()
-        x = rect.centerx - new.size[0] * 0.5
-        y = rect.centery - new.size[1] * 0.8
-        print("x y", x, y)
-        self.dialog_pos = (x, y)
-
     def reset_dialog(self):
         self.dialog = None
 
@@ -104,40 +101,48 @@ class GameClient(socket_client.SocketClient):
         self.players_invalid = False
 
     def on_receive(self, query):
-        args = query.split(b' ')
-        key, body = args[0].decode("utf-8"), b" ".join(args[1:])
-        if key == 'username':
-            self.send(self.username)
-        elif key == 'password':
-            self.send(self.password)
-        elif key == 'invalid':
-            self.on_login_failed()
-        elif key == 'connected':
-            print("connected")
-            self.on_connect()
-        elif key == 'started':
-            if not self.is_playing:
-                self.started_game()
-            self.is_playing = True
-            self.playing_changed(self.is_playing)
-        elif key == 'finished':
-            self.is_playing = False
-        elif key == "players":
-            self.players = [x.decode("utf-8") for x in body.split(b" ")]
-            self.players_changed()
-        elif key == "init":
-            initial = pickle.loads(body)
-            self.on_init(initial)
-        elif key == "update":
-            update = pickle.loads(body)
-            self.on_update(update)
-        elif key == "moved":
-            self.on_move(int(body))
+        print("receiving", query)
+        key = query["key"]
+        action = query["action"]
+        if key == "login":
+            if action == "username":
+                self.send(self.username)
+            elif action == 'password':
+                self.send(self.password)
+            elif action == 'invalid':
+                self.on_login_failed()
+            elif action == 'connected':
+                print("connected")
+                self.on_connect()
+        elif key == "server":
+            if action == "players":
+                self.players = query["players"]
+                self.players_changed()
+            elif action == "moved":
+                self.on_move(query["to"], query["state"])
+            elif action == "active":
+                self.on_games_info(query["servers"])
+        elif key == "game":
+            if action == "started":
+                if not self.is_playing:
+                    self.started_game()
+                self.is_playing = True
+                self.playing_changed(self.is_playing)
+            elif action == "finished":
+                self.is_playing = False
+
+            if action == "init":
+                self.on_init(query["data"])
+            elif action == "update":
+                self.on_update(query["data"])
+
         elif key == "chat":
-            mode, from_user, text =\
-                [x.decode("utf-8") for x in body.split(b" ", 2)]
-            print("chat", mode, from_user, text)
-            self.on_recv_chat(mode, text, from_user)
+            self.on_recv_chat(query["mode"], query["text"], query["from"])
+        elif key == "queue":
+            if action == "joined":
+                self.on_join_queue()
+            elif action == "left":
+                self.on_leave_queue()
 
     def on_init(self, init):
         self.inits.append(init)
@@ -145,7 +150,7 @@ class GameClient(socket_client.SocketClient):
     def on_update(self, update):
         self.updates.append(update)
 
-    def on_move(self, server):  # user was moved to server
+    def on_move(self, server, state):  # user was moved to server
         pass
 
     def on_login_failed(self):
@@ -159,6 +164,15 @@ class GameClient(socket_client.SocketClient):
 
     def on_recv_chat(self, mode, text, from_user):
         print("default onrecvchat")
+
+    def on_join_queue(self):
+        pass
+
+    def on_leave_queue(self):
+        pass
+
+    def on_games_info(self, games):
+        pass
 
     def chat(self, text, to="global"):
         self.send("chat {} {}".format(to, text))
@@ -185,9 +199,8 @@ class GameClient(socket_client.SocketClient):
 def notify_updates(app, needed):
     if not needed:
         return
-    app.dialog = gui.AlertDialog((WINDOW_SIZE[0] * 0.3,
-                                  WINDOW_SIZE[1] * 0.2),
-                                 "New version available")
+    dialog.show(dialog.AlertDialog(dialog.SMALL,
+                                   "New version available"))
 
 
 if __name__ == '__main__':

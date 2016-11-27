@@ -5,7 +5,7 @@ import sysconfig
 import json
 
 DEFAULT_SETTINGS = {"updating": "none", "username": "", "host": "",
-                    "version": "1.0.0"}
+                    "version": "1.0.0", "password": ""}
 
 
 def get_pybot_platform():
