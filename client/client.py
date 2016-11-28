@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
 
-import pickle
 import sys
 from collections import deque
 import atexit
@@ -36,9 +35,10 @@ class Game():
         print("stopped")
         self.client.disconnect()
 
+
 class GameClient(socket_client.SocketClient):
 
-    data_received = pyqtSignal(bytes)
+    data_received = pyqtSignal(dict)
 
     def __init__(self, *args, **kwargs):
         super(GameClient, self).__init__(*args, **kwargs)
@@ -49,123 +49,116 @@ class GameClient(socket_client.SocketClient):
         self.players_invalid = False
         self.login = False
 
-    class GameClient(socket_client.SocketClient):
+    def on_receive(self, query):
+        print("receiving", query)
+        key = query["key"]
+        action = query["action"]
+        if key == "login":
+            if action == "username":
+                self.send(self.username)
+            elif action == 'password':
+                self.send(self.password)
+            elif action == 'invalid':
+                self.on_login_failed()
+            elif action == 'connected':
+                print("connected")
+                self.on_connect()
+        elif key == "server":
+            if action == "players":
+                self.players = query["players"]
+                self.players_changed()
+                self.on_players(self.players)
+            elif action == "moved":
+                self.on_move(query["to"], query["state"])
+            elif action == "active":
+                self.on_games_info(query["servers"])
+        elif key == "game":
+            if action == "started":
+                if not self.is_playing:
+                    self.started_game()
+                self.is_playing = True
+                self.playing_changed(self.is_playing)
+            elif action == "finished":
+                self.is_playing = False
 
-        def __init__(self, *args, **kwargs):
-            super(GameClient, self).__init__(*args, **kwargs)
-            self.is_playing = False
-            self.inits, self.updates = deque(), deque()
-            self.players_invalid = False
+            if action == "init":
+                self.on_init(query["data"])
+            elif action == "update":
+                self.on_update(query["data"])
 
-        def on_receive(self, query):
-            print("receiving", query)
-            key = query["key"]
-            action = query["action"]
-            if key == "login":
-                if action == "username":
-                    self.send(self.username)
-                elif action == 'password':
-                    self.send(self.password)
-                elif action == 'invalid':
-                    self.on_login_failed()
-                elif action == 'connected':
-                    print("connected")
-                    self.on_connect()
-            elif key == "server":
-                if action == "players":
-                    self.players = query["players"]
-                    self.players_changed()
-                elif action == "moved":
-                    self.on_move(query["to"], query["state"])
-                elif action == "active":
-                    self.on_games_info(query["servers"])
-            elif key == "game":
-                if action == "started":
-                    if not self.is_playing:
-                        self.started_game()
-                    self.is_playing = True
-                    self.playing_changed(self.is_playing)
-                elif action == "finished":
-                    self.is_playing = False
+        elif key == "chat":
+            self.on_recv_chat(query["mode"], query["text"], query["from"])
+        elif key == "queue":
+            if action == "joined":
+                self.on_join_queue()
+            elif action == "left":
+                self.on_leave_queue()
 
-                if action == "init":
-                    self.on_init(query["data"])
-                elif action == "update":
-                    self.on_update(query["data"])
+    def on_init(self, init):
+        self.inits.append(init)
 
-            elif key == "chat":
-                self.on_recv_chat(query["mode"], query["text"], query["from"])
-            elif key == "queue":
-                if action == "joined":
-                    self.on_join_queue()
-                elif action == "left":
-                    self.on_leave_queue()
+    def on_update(self, update):
+        self.updates.append(update)
 
-        def on_init(self, init):
-            self.inits.append(init)
+    def on_move(self, server, state):  # user was moved to server
+        pass
 
-        def on_update(self, update):
-            self.updates.append(update)
+    def on_login_failed(self):
+        pass
 
-        def on_move(self, server, state):  # user was moved to server
-            pass
+    def on_connect(self):
+        print("Default on connect")
 
-        def on_login_failed(self):
-            pass
+    def on_disconnect(self):
+        pass
 
-        def on_connect(self):
-            print("Default on connect")
+    def on_recv_chat(self, mode, text, from_user):
+        print("default onrecvchat")
 
-        def on_disconnect(self):
-            pass
+    def on_join_queue(self):
+        pass
 
-        def on_recv_chat(self, mode, text, from_user):
-            print("default onrecvchat")
+    def on_leave_queue(self):
+        pass
 
-        def on_join_queue(self):
-            pass
+    def on_games_info(self, games):
+        pass
 
-        def on_leave_queue(self):
-            pass
+    def chat(self, text, to="global"):
+        self.send("chat {} {}".format(to, text))
 
-        def on_games_info(self, games):
-            pass
+    def start_game(self):
+        print("starting game")
+        self.send("start")
 
-        def chat(self, text, to="global"):
-            self.send("chat {} {}".format(to, text))
+    def started_game(self):
+        pass
 
-        def start_game(self):
-            print("starting game")
-            self.send("start")
+    def playing_changed(self, new):
+        pass
 
-        def started_game(self):
-            pass
+    def players_changed(self):
+        self.players_invalid = True
 
-        def playing_changed(self, new):
-            pass
+    def send_ai(self, path):
+        with open(path, 'r') as f:
+            content = f.read()
+        self.send("ai {}".format(content))
 
-        def players_changed(self):
-            self.players_invalid = True
+    def new_message(self, message):
+        type, body = message.split(" ", 1)
+        if type == "global":
+            sender, message = body.split(" ", 1)
+            self.on_global_chat(sender, message)
+        else:
+            sender, message = body.split(" ", 1)
+            self.on_private_chat(sender, message)
 
-        def send_ai(self, path):
-            with open(path, 'r') as f:
-                content = f.read()
-            self.send("ai {}".format(content))
+    def on_global_chat(self, sender, body):
+        pass
 
-        def new_message(self, message):
-            type, body = message.split(" ", 1)
-            if type == "global":
-                sender, message = body.split(" ", 1)
-                self.on_global_chat(sender, message)
-            else:
-                sender, message = body.split(" ", 1)
-                self.on_private_chat(sender, message)
-
-        def on_global_chat(self, sender, body):
-            pass
-
-        def on_private_chat(self, sender, message):
-            pass
+    def on_private_chat(self, sender, message):
+        pass
 
 
 if __name__ == '__main__':

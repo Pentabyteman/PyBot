@@ -280,7 +280,8 @@ class ServerSelect(QDialog):
         self.move(qr.topLeft())
 
     def connect_to_server(self, username_, password_, server_):
-        self.client.on_login = self.on_login
+        self.client.on_connect = self.on_connect
+        self.client.on_login_failed = self.on_login_failed
         setting = settings.get_standard_settings()
         if setting["updating"] == "always":
             setting["host"] = self.host.text()
@@ -346,11 +347,13 @@ class ServerSelect(QDialog):
         self.statusbar.showMessage("Connecting...")
         self.error_label.adjustSize()
 
-    def on_login(self):
-        self.hub = Hub(self.client, self.user.text())
+    def on_connect(self):
+        self.hub = Hub(self.client, self.user.text(), self.Window_Size)
         self.hub.show()
         self.close()
 
+    def on_login_failed(self):
+        self.error_label.setText("Failed to Login")
     def update_setting(self, username, host):
         setting = settings.get_standard_settings()
         setting["host"] = self.host.text()
@@ -401,7 +404,7 @@ class PicButton(QAbstractButton):
 
 
 class Hub(QMainWindow):
-    def __init__(self, client, username):
+    def __init__(self, client, username, WindowSize = WINDOW_SIZE):
         super().__init__()
         self.currentReceiver = "Global Chat"
         self.username = username
@@ -428,6 +431,7 @@ class Hub(QMainWindow):
         self.client.on_info = self.tournament_info
         self.labels = []
         self.new_message_list = ["Global Chat"]
+        self.Window_Size = WindowSize
         self.initUI()
 
     def initUI(self):
@@ -442,7 +446,7 @@ class Hub(QMainWindow):
         palette.setBrush(QPalette.Background, QBrush(QPixmap("resources/background.png")))
         self.setPalette(palette)
 
-        heading_w, heading_h = Window_Size[1] * 0.03, Window_Size[0] * 0.03
+        heading_w, heading_h = self.Window_Size[1] * 0.03, self.Window_Size[0] * 0.03
         heading = QLabel("Hub", self)
         heading.setStyleSheet("QLabel {font-size: 80px; color:white}")
         heading.move(heading_h, heading_w)
@@ -450,7 +454,7 @@ class Hub(QMainWindow):
 
         self.new_game = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
                                 QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
-        self.new_game.move(Window_Size[1] * 0.05, 250)
+        self.new_game.move(self.Window_Size[1] * 0.05, self.Window_Size[0] * 0.1666666)
         self.new_game.setToolTip("Start a new game")
         self.new_game.clicked.connect(self.game_challenge)
         self.new_game.setFixedSize(QSize(150, 150))
@@ -458,7 +462,7 @@ class Hub(QMainWindow):
 
         self.chat_button = PicButton(QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"),
                                 QPixmap("resources/chat.png"), QPixmap("resources/chat_hover.png"), self)
-        self.chat_button.move(Window_Size[1] * 0.05, 500)
+        self.chat_button.move(self.Window_Size[1] * 0.05, self.Window_Size[0] * 0.3333333)
         self.chat_button.setToolTip("Chat with an online user")
         self.chat_button.clicked.connect(self.choose_chat_user)
         self.chat_button.setFixedSize(QSize(150, 150))
@@ -468,24 +472,24 @@ class Hub(QMainWindow):
                                 QPixmap("resources/settings.png"), QPixmap("resources/settings_hover.png"), self)
         self.setToolTip("View Settings")
         self.settings.clicked.connect(self.show_settings)
-        self.settings.move(Window_Size[1] * 0.05, 750)
+        self.settings.move(self.Window_Size[1] * 0.05, self.Window_Size[0] * 0.5)
         self.settings.setFixedSize(QSize(150, 150))
 
         self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
                                 QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
-        self.button.move(Window_Size[0] * 0.7, 20)
+        self.button.move(self.Window_Size[0] * 0.7, 20)
         self.button.setToolTip("Message Admin")
         self.button.setFixedSize(QSize(100, 100))
 
         self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
                                 QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
-        self.button.move(Window_Size[0] * 0.8, 20)
+        self.button.move(self.Window_Size[0] * 0.8, 20)
         self.button.setToolTip("Browse AI's")
         self.button.setFixedSize(QSize(100, 100))
 
         self.join_tournament = PicButton(QPixmap("resources/join_tournament.png"), QPixmap("resources/join_tournament_hover.png"),
                                 QPixmap("resources/join_tournament.png"), QPixmap("resources/join_tournament_hover.png"), self)
-        self.join_tournament.move(Window_Size[0] * 0.9, 20)
+        self.join_tournament.move(self.Window_Size[0] * 0.9, 20)
         self.join_tournament.setToolTip("Join Tournament")
         self.join_tournament.clicked.connect(self.tournament_info)
         self.join_tournament.setFixedSize(QSize(100, 100))
@@ -524,8 +528,8 @@ class Hub(QMainWindow):
         header = "PyBot v{}".format(setup["version"])
         self.setWindowTitle(header)
         self.setWindowIcon(QIcon(ICON_PATH))
-        self.setGeometry(300, 300, *Window_Size)
-        self.setFixedSize(*Window_Size)
+        self.setGeometry(300, 300, *self.Window_Size)
+        self.setFixedSize(*self.Window_Size)
         self.center()
         self.show()
 
@@ -538,13 +542,13 @@ class Hub(QMainWindow):
     def drawLines(self, qp):
         pen = QPen(Qt.white, 5, Qt.SolidLine)
         qp.setPen(pen)
-        qp.drawLine(0, 150, Window_Size[0], 150)
-        qp.drawLine(250, 150, 250, Window_Size[1])
+        qp.drawLine(0, 150, self.Window_Size[0], 150)
+        qp.drawLine(250, 150, 250, self.Window_Size[1])
         for player in self.players:
             pen = QPen(Qt.white, 2, Qt.SolidLine)
             qp.setPen(pen)
             line_height = self.line_starting_height + self.difference * self.players.index(player)
-            qp.drawLine(250, line_height, Window_Size[0], line_height)
+            qp.drawLine(250, line_height, self.Window_Size[0], line_height)
 
     def center(self):
         qr = self.frameGeometry()
@@ -554,7 +558,7 @@ class Hub(QMainWindow):
 
     def quitbtnpressed(self, button):
         if button.text() == "quit":
-            app,quit()
+            app.quit()
         string = "Quitting the application"
         self.statusBar().showMessage(string)
 
@@ -615,7 +619,7 @@ class Hub(QMainWindow):
                 self.chat.setFixedSize(QSize(798, 75))
                 self.setToolTip("")
                 self.chat.clicked.connect(self.update_chat)
-                self.chat.move(Window_Size[0] - 798, Window_Size[1] - 75)
+                self.chat.move(self.Window_Size[0] - 798, self.Window_Size[1] - 75)
                 self.chat.raise_()
                 self.chat.show()
             else:
@@ -626,7 +630,7 @@ class Hub(QMainWindow):
                                  self)
                 self.chat.setFixedSize(QSize(798, 75))
                 self.chat.clicked.connect(self.update_chat)
-                self.chat.move(Window_Size[0] - 798, Window_Size[1] - 75)
+                self.chat.move(self.Window_Size[0] - 798, self.Window_Size[1] - 75)
                 self.chat.raise_()
                 self.chat.show()
         else:
@@ -651,11 +655,11 @@ class Hub(QMainWindow):
                                  self)
                 self.chat.setFixedSize(QSize(798, 547))
                 self.chat.clicked.connect(self.update_chat)
-                self.chat.move(Window_Size[0] - 798, Window_Size[1] - 547)
+                self.chat.move(self.Window_Size[0] - 798, self.Window_Size[1] - 547)
                 self.chat.raise_()
 
                 self.heading = QLabel(receiver, self)
-                self.heading.move(Window_Size[0] - 550, Window_Size[1] - 475)
+                self.heading.move(self.Window_Size[0] - 550, self.Window_Size[1] - 475)
                 self.heading.setStyleSheet("QLabel {color:black; font-size:40px}")
                 self.heading.adjustSize()
 
@@ -664,7 +668,7 @@ class Hub(QMainWindow):
                 self.message.setStyleSheet(
                     "QLineEdit {background: white; font-size: 14px; color: black} QLineEdit:focus "
                     "{background: lightgrey;} QTextEdit:placeholder {color: white;}")
-                host_w, host_h = Window_Size[0] - 700, Window_Size[1] - 100
+                host_w, host_h = self.Window_Size[0] - 700, self.Window_Size[1] - 100
                 self.message.move(host_w, host_h)
                 self.message.setPlaceholderText("Message")
                 self.message.setFixedSize(QSize(500, 40))
@@ -675,14 +679,14 @@ class Hub(QMainWindow):
                 self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
                                       QPixmap("resources/play.png"), QPixmap("resources/play.png"), self)
                 self.send.setFixedSize(40, 40)
-                send_w, send_h = Window_Size[0] - 150, Window_Size[1] - 100
+                send_w, send_h = self.Window_Size[0] - 150, self.Window_Size[1] - 100
                 self.send.move(send_w, send_h)
                 self.send.clicked.connect(lambda ignore, receiver_ = str(receiver):
                                           self.send_message(receiver_, self.message.text()))
                 self.send.setShortcut(QKeySequence("Return"))
                 self.scroll = QScrollArea(self)
                 self.scroll.setStyleSheet("QScrollArea {background:white; border:1px dotted grey}")
-                self.scroll.move(Window_Size[0] - 700, Window_Size[1] - 400)
+                self.scroll.move(self.Window_Size[0] - 700, self.Window_Size[1] - 400)
                 self.scroll.setFixedSize(590, 250)
                 self.scroll.raise_()
 
@@ -691,7 +695,7 @@ class Hub(QMainWindow):
                     self.playerbutton = QPushButton(self.tablist[i], self)
                     width, height = 798/len(self.tablist), 30
                     self.playerbutton.setFixedSize(width, height)
-                    self.playerbutton.move(Window_Size[0] - width * (i + 1), Window_Size[1] - height)
+                    self.playerbutton.move(self.Window_Size[0] - width * (i + 1), self.Window_Size[1] - height)
                     self.playerbutton.setStyleSheet("QPushButton {background:lightgrey; border-radius:0px} "
                                                     "QPushButton:hover {background:darkgrey}")
                     self.playerbutton.clicked.connect(lambda ignore, receiver=self.tablist[i]:
@@ -740,11 +744,11 @@ class Hub(QMainWindow):
                                  QPixmap("resources/chat_new.png"),QPixmap("resources/chat_new.png"), self)
                 self.chat.setFixedSize(QSize(798, 547))
                 self.chat.clicked.connect(self.update_chat)
-                self.chat.move(Window_Size[0] - 798, Window_Size[1] - 547)
+                self.chat.move(self.Window_Size[0] - 798, self.Window_Size[1] - 547)
                 self.chat.raise_()
 
                 self.heading = QLabel(receiver, self)
-                self.heading.move(Window_Size[0] - 550, Window_Size[1] - 475)
+                self.heading.move(self.Window_Size[0] - 550, self.Window_Size[1] - 475)
                 self.heading.setStyleSheet("QLabel {color:black; font-size:40px}")
                 self.heading.adjustSize()
 
@@ -753,7 +757,7 @@ class Hub(QMainWindow):
                 self.message.setStyleSheet(
                     "QLineEdit {background: white; font-size: 14px; color: black} QLineEdit:focus "
                     "{background: lightgrey;} QTextEdit:placeholder {color: white;}")
-                host_w, host_h = Window_Size[0] - 700, Window_Size[1] - 100
+                host_w, host_h = self.Window_Size[0] - 700, self.Window_Size[1] - 100
                 self.message.move(host_w, host_h)
                 self.message.setPlaceholderText("Message")
                 self.message.setFixedSize(QSize(500, 40))
@@ -764,14 +768,14 @@ class Hub(QMainWindow):
                 self.send = PicButton(QPixmap("resources/play.png"), QPixmap("resources/play.png"),
                                       QPixmap("resources/play.png"), QPixmap("resources/play.png"), self)
                 self.send.setFixedSize(40, 40)
-                send_w, send_h = Window_Size[0] - 150, Window_Size[1] - 100
+                send_w, send_h = self.Window_Size[0] - 150, self.Window_Size[1] - 100
                 self.send.move(send_w, send_h)
                 self.send.clicked.connect(lambda ignore, receiver_=str(receiver):
                                           self.send_message(receiver_, self.message.text()))
                 self.send.setShortcut(QKeySequence("Return"))
                 self.scroll = QScrollArea(self)
                 self.scroll.setStyleSheet("QScrollArea {background:white; border:1px dotted grey}")
-                self.scroll.move(Window_Size[0] - 700, Window_Size[1] - 400)
+                self.scroll.move(self.Window_Size[0] - 700, self.Window_Size[1] - 400)
                 self.scroll.setFixedSize(590, 250)
                 self.scroll.raise_()
 
@@ -780,7 +784,7 @@ class Hub(QMainWindow):
                     self.playerbutton = QPushButton(self.tablist[i], self)
                     width, height = 798 / len(self.tablist), 30
                     self.playerbutton.setFixedSize(width, height)
-                    self.playerbutton.move(Window_Size[0] - width * (i + 1), Window_Size[1] - height)
+                    self.playerbutton.move(self.Window_Size[0] - width * (i + 1), self.Window_Size[1] - height)
                     self.playerbutton.setStyleSheet("QPushButton {background:lightgrey; border-radius:0px} "
                                                     "QPushButton:hover {background:darkgrey}")
                     if self.tablist[i] in self.new_message_list:
@@ -958,7 +962,8 @@ class Hub(QMainWindow):
             else:
                 query = "chat global {}".format(message)
             messageList = self.chatDictionary[receiver]
-            new_message = "{}&{}".format(self.user, message)
+            print(self.user)
+            new_message = "{}&{}".format(self.username, message)
             messageList.append(new_message)
             self.chatDictionary[receiver] = messageList
             self.draw_chat(receiver=receiver)
