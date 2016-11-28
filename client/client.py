@@ -21,7 +21,7 @@ class Game():
         super().__init__()
         self.client = GameClient()
         self.client.on_move = self.update_window
-        self.window = gui.ServerSelect(self.client)
+        self.window = gui.ChooseScreenResolution(SCREEN_SIZE, self.client)
 
     def update_window(self, server):
         if server == 0:
@@ -49,85 +49,129 @@ class GameClient(socket_client.SocketClient):
         self.players_invalid = False
         self.login = False
 
-    def on_receive(self, query):
-        args = query.split(b' ')
-        key, body = args[0].decode("utf-8"), b" ".join(args[1:])
-        print(key)
-        if key == 'username':
-            self.send(self.username)
-            print(self.username)
-        elif key == 'password':
-            self.send(self.password)
-        elif key == 'started':
-            if not self.is_playing:
-                self.started_game()
-            self.is_playing = True
-            self.playing_changed(self.is_playing)
-        elif key == "players":
-            self.players = [x.decode("utf-8") for x in body.split(b" ")]
-            print(self.players)
-            self.on_players(self.players)
-        elif key == "init":
-            initial = pickle.loads(body)
-            self.on_init(initial)
-        elif key == "update":
-            update = pickle.loads(body)
-            self.on_update(update)
-        elif key == "invalid":
-            self.login = "Invalid Username or Password"
-        elif key == "connected":
-            self.on_login()
-        elif key == "chat":
-            self.new_message(body.decode("utf-8"))
+    class GameClient(socket_client.SocketClient):
 
-    def on_init(self, init):
-        self.inits.append(init)
+        def __init__(self, *args, **kwargs):
+            super(GameClient, self).__init__(*args, **kwargs)
+            self.is_playing = False
+            self.inits, self.updates = deque(), deque()
+            self.players_invalid = False
 
-    def on_update(self, update):
-        self.updates.append(update)
+        def on_receive(self, query):
+            print("receiving", query)
+            key = query["key"]
+            action = query["action"]
+            if key == "login":
+                if action == "username":
+                    self.send(self.username)
+                elif action == 'password':
+                    self.send(self.password)
+                elif action == 'invalid':
+                    self.on_login_failed()
+                elif action == 'connected':
+                    print("connected")
+                    self.on_connect()
+            elif key == "server":
+                if action == "players":
+                    self.players = query["players"]
+                    self.players_changed()
+                elif action == "moved":
+                    self.on_move(query["to"], query["state"])
+                elif action == "active":
+                    self.on_games_info(query["servers"])
+            elif key == "game":
+                if action == "started":
+                    if not self.is_playing:
+                        self.started_game()
+                    self.is_playing = True
+                    self.playing_changed(self.is_playing)
+                elif action == "finished":
+                    self.is_playing = False
 
-    def start_game(self):
-        print("starting game")
-        self.send("start")
+                if action == "init":
+                    self.on_init(query["data"])
+                elif action == "update":
+                    self.on_update(query["data"])
 
-    def started_game(self):
-        pass
+            elif key == "chat":
+                self.on_recv_chat(query["mode"], query["text"], query["from"])
+            elif key == "queue":
+                if action == "joined":
+                    self.on_join_queue()
+                elif action == "left":
+                    self.on_leave_queue()
 
-    def playing_changed(self, new):
-        pass
+        def on_init(self, init):
+            self.inits.append(init)
 
-    def players_changed(self):
-        self.players_invalid = True
+        def on_update(self, update):
+            self.updates.append(update)
 
-    def send_ai(self, path):
-        with open(path, 'r') as f:
-            content = f.read()
-        self.send("ai {}".format(content))
+        def on_move(self, server, state):  # user was moved to server
+            pass
 
-    def on_login(self):
-        pass
+        def on_login_failed(self):
+            pass
 
-    def on_players(self, playerlist):
-        pass
+        def on_connect(self):
+            print("Default on connect")
 
-    def new_message(self, message):
-        type, body = message.split(" ", 1)
-        if type == "global":
-            sender, message = body.split(" ", 1)
-            self.on_global_chat(sender, message)
-        else:
-            sender, message = body.split(" ", 1)
-            self.on_private_chat(sender, message)
+        def on_disconnect(self):
+            pass
 
-    def on_global_chat(self, sender, body):
-        pass
+        def on_recv_chat(self, mode, text, from_user):
+            print("default onrecvchat")
 
-    def on_private_chat(self, sender, message):
-        pass
+        def on_join_queue(self):
+            pass
+
+        def on_leave_queue(self):
+            pass
+
+        def on_games_info(self, games):
+            pass
+
+        def chat(self, text, to="global"):
+            self.send("chat {} {}".format(to, text))
+
+        def start_game(self):
+            print("starting game")
+            self.send("start")
+
+        def started_game(self):
+            pass
+
+        def playing_changed(self, new):
+            pass
+
+        def players_changed(self):
+            self.players_invalid = True
+
+        def send_ai(self, path):
+            with open(path, 'r') as f:
+                content = f.read()
+            self.send("ai {}".format(content))
+
+        def new_message(self, message):
+            type, body = message.split(" ", 1)
+            if type == "global":
+                sender, message = body.split(" ", 1)
+                self.on_global_chat(sender, message)
+            else:
+                sender, message = body.split(" ", 1)
+                self.on_private_chat(sender, message)
+
+        def on_global_chat(self, sender, body):
+            pass
+
+        def on_private_chat(self, sender, message):
+            pass
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    atexit.register(socket.shutdown)
+    desktop = app.desktop().screenGeometry()
+    global SCREEN_SIZE
+    SCREEN_SIZE = desktop.width(), desktop.height()
     ex = Game()
     sys.exit(app.exec_())
