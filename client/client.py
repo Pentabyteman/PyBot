@@ -62,8 +62,7 @@ class Game(app.App):
 
     def start_game(self):
         self.window = gui.GameWindow(WINDOW_SIZE, BOARD_SIZE,
-                                     client=self.client,
-                                     on_finish=self.stop)
+                                     client=self.client)
 
     def stop(self, *args):
         super(Game, self).stop(*args)
@@ -82,7 +81,7 @@ class Game(app.App):
         self.window.on_tick()
 
     def on_render(self):
-        self.display.fill((255, 255, 255))
+        self.display.fill((0, 0, 0))
         self.display.blit(self.window.image, (0, 0))
         if self.dialog is not None:
             self.display.blit(self.dialog.image, self.dialog_pos)
@@ -143,6 +142,14 @@ class GameClient(socket_client.SocketClient):
                 self.on_join_queue()
             elif action == "left":
                 self.on_leave_queue()
+        elif key == "tournament":
+            if action == "created":
+                self.on_tournament_create()
+            elif action == "removed":
+                self.on_tournament_remove()
+            elif action == "info":
+                self.on_tournament_info(query["creator"], query["name"],
+                                        query["players"])
 
     def on_init(self, init):
         self.inits.append(init)
@@ -174,12 +181,24 @@ class GameClient(socket_client.SocketClient):
     def on_games_info(self, games):
         pass
 
+    def on_tournament_create(self):
+        pass
+
+    def on_tournament_remove(self):
+        pass
+
+    def on_tournament_info(self, creator, name, players):
+        pass
+
     def chat(self, text, to="global"):
         self.send("chat {} {}".format(to, text))
 
     def start_game(self):
         print("starting game")
         self.send("start")
+
+    def leave(self):
+        self.send("leave")
 
     def started_game(self):
         pass

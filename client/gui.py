@@ -214,6 +214,12 @@ class HubWindow(window.Window):
         btn_spectate.clicked = self.show_spectate
         self.ui_components.add(btn_spectate)
 
+        tourn_rect = spectate_rect.copy()
+        tourn_rect.top = spectate_rect.bottom + self.rect.height * 0.02
+        btn_tourn = Button("Tournament", tourn_rect, text_size=30)
+        btn_tourn.clicked = self.show_tournament
+        self.ui_components.add(btn_tourn)
+
         lblp_rect = pygame.Rect(self.rect.width * 0.7,
                                 self.rect.height * 0.05,
                                 self.rect.width * 0.25,
@@ -264,6 +270,9 @@ class HubWindow(window.Window):
 
     def show_spectate(self, *args):
         dialog.show(dialog.SpectateDialog(dialog.MEDIUM, self.client))
+
+    def show_tournament(self, *args):
+        dialog.show(dialog.TournamentDialog(dialog.LARGE, self.client))
 
     def on_quit(self):
         pass
@@ -366,16 +375,17 @@ class GamePreparation(window.Window):
 
 class GameWindow(window.Window):
 
-    def __init__(self, size, board_size, client, on_finish=None,
+    def __init__(self, size, board_size, client,
                  ai1=None, ai2=None, start=None, speed=False):
         super(GameWindow, self).__init__(size)
+        # socket client to communicate
+        self.client = client
 
         self.speed = speed
         # expects size only to be wider than board_size
         self.board_size = min(board_size, size)  # may not be larger than size
         self.board_pos = [round(0.5 * (s - b))
                           for s, b in zip(self.size, self.board_size)]
-        self.on_finish = on_finish
 
         self.last_time = time.time()
         self.speaker = Speaker()
@@ -393,10 +403,9 @@ class GameWindow(window.Window):
                                     left_space.height * 0.05,
                                     left_space.width * 0.25,
                                     left_space.width * 0.25)
-        ic_quit = pygame.image.load("resources/quit.png")
+        ic_quit = pygame.image.load("resources/exit.png")
         quit_btn = ImageButton(ic_quit, quit_btn_rect)
-        if on_finish is not None:
-            quit_btn.clicked = on_finish
+        quit_btn.clicked = self.leave
         self.ui_components.add(quit_btn)
 
         # add a mute button (finally!!)
@@ -443,8 +452,7 @@ class GameWindow(window.Window):
 
         self.ui_components.add(self.btn_play)
 
-        # socket client to communicate
-        self.client = client
+        # client callbacks
         self.client.on_init = lambda init: self.set_initial(init)
         self.client.on_update = lambda update: self.board.update(update)
         self.client.playing_changed = lambda new: self.update_play_icon(new)
@@ -465,6 +473,9 @@ class GameWindow(window.Window):
 
     def play(self, event):
         self.client.start_game()
+
+    def leave(self, event):
+        self.client.leave()
 
     def update_play_icon(self, state):
         self.btn_play.icon = self.ic_pause if state\

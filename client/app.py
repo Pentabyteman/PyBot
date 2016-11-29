@@ -54,6 +54,6 @@ class App():
         new.on_finish = self.reset_dialog
         rect = self.display.get_rect()
         x = rect.centerx - new.size[0] * 0.5
-        y = rect.centery - new.size[1] * 0.8
+        y = rect.centery - new.size[1] * 0.6
         print("x y", x, y)
         self.dialog_pos = (x, y)

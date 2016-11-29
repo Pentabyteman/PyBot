@@ -3,16 +3,18 @@ import pygame
 from ui_components import Button, draw_roundrect, Label
 
 app = None
-SMALL, MEDIUM, LARGE = None, None, None
+SMALL, MEDIUM, LARGE, LONG, WIDE = None, None, None, None, None
 
 
 def init(a):
-    global app, SMALL, MEDIUM, LARGE
+    global app, SMALL, MEDIUM, LARGE, LONG, WIDE
     app = a
     w, h = app.display.get_size()
     SMALL = (w * 0.3, h * 0.2)
     MEDIUM = (w * 0.5, h * 0.3)
     LARGE = (w * 0.7, h * 0.5)
+    LONG = (w * 0.5, h * 0.8)
+    WIDE = (w * 0.8, h * 0.3)
 
 
 def show(dialog):
@@ -118,3 +120,31 @@ class SpectateDialog(Dialog):
     def join_game(self, game):
         self.client.send("join {}".format(game))
         self.on_finish()
+
+
+class TournamentDialog(Dialog):
+
+    def __init__(self, size, client):
+        super(TournamentDialog, self).__init__(size)
+        lbl_rect = pygame.Rect(self.area.width * 0.1,
+                               self.area.height * 0.1,
+                               self.area.width * 0.8,
+                               self.area.height * 0.15)
+        lbl = Label("Tournament", lbl_rect, (0, 0, 0, 255), 28, centered=True,
+                    bold=True)
+        self.ui_components.add(lbl)
+
+        quit_rect = pygame.Rect(self.area.width * 0.4,
+                                self.area.height * 0.8,
+                                self.area.width * 0.2,
+                                self.area.height * 0.15)
+        btn_quit = Button("Cancel", quit_rect, text_size=25)
+        btn_quit.clicked = lambda x: self.on_finish()
+        self.ui_components.add(btn_quit)
+
+        self.client = client
+        self.client.on_tournament_info = self.setup_tournament
+        self.client.send("tournament info")
+
+    def setup_tournament(self, creator, name, players):
+        pass
