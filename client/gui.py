@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
 
+import board
 import settings
 import time
 import pygame
@@ -353,7 +354,12 @@ class ServerSelect(QDialog):
         self.close()
 
     def on_login_failed(self):
-        self.error_label.setText("Failed to Login")
+        self.error_label.setText("Invalid Username or Password")
+        self.error_label.adjustSize()
+        self.error_label.raise_()
+        self.error_label.show()
+
+
     def update_setting(self, username, host):
         setting = settings.get_standard_settings()
         setting["host"] = self.host.text()
@@ -653,7 +659,7 @@ class Hub(QMainWindow):
                 self.chat = PicButton(QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
                                  QPixmap("resources/chat_no_new.png"), QPixmap("resources/chat_no_new.png"),
                                  self)
-                self.chat.setFixedSize(QSize(798, 547))
+                self.chat.setFixedSize(798, 547)
                 self.chat.clicked.connect(self.update_chat)
                 self.chat.move(self.Window_Size[0] - 798, self.Window_Size[1] - 547)
                 self.chat.raise_()
@@ -1007,25 +1013,31 @@ class Hub(QMainWindow):
         self.new_window.close()
 
     def tournament_dialog(self, tournament, players=None):
-        if tournament:
-            self.tournament_window = QDialog(self)
-            tournament_width = 300
-            tournament_height = 300
-            self.tournament_window.setGeometry(300, 300, tournament_height, tournament_width)
-            """self.chat_choose_window.setWindowTitle("Tournaments")
-                user_button = QPushButton(str(chatable_user[i]), self.chat_choose_window)
-                user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
-                                          "QPushButton:hover {background:skyblue; color:black;}")
-                width, height = chat_choose_width, chat_choose_height / len(chatable_user)
-                user_button.setFixedSize(QSize(width, height))
-                user_button.move(0, height * i)
-                usertext = str(user_button.text())
-                user_button.clicked.connect(lambda ignore, text_=str(usertext): self.start_chat(text_))
-            self.chat_choose_window.setFixedSize(chat_choose_height, chat_choose_width)
-            self.chat_choose_window.show()"""
+        chatable_user = []
+        for i in range(0, len(self.players)):
+            if self.status[i] == "online":
+                if self.players[i] != self.user:
+                    chatable_player = self.players[i]
+                    chatable_user.append(chatable_player)
+        self.chat_choose_window = QDialog(self)
+        chat_choose_width = 300
+        chat_choose_height = 300
+        self.chat_choose_window.setGeometry(300, 300, chat_choose_height, chat_choose_width)
+        self.chat_choose_window.setWindowTitle("Choose a User")
+        for i in range(0, len(chatable_user)):
+            user_button = QPushButton(str(chatable_user[i]), self.chat_choose_window)
+            user_button.setStyleSheet("QPushButton {background:salmon;color:black;} "
+                                      "QPushButton:hover {background:skyblue; color:black;}")
+            width, height = chat_choose_width, chat_choose_height / len(chatable_user)
+            user_button.setFixedSize(QSize(width, height))
+            user_button.move(0, height * i)
+            usertext = str(user_button.text())
+            user_button.clicked.connect(lambda ignore, text_=str(usertext): self.start_chat(text_))
+        self.chat_choose_window.setFixedSize(chat_choose_height, chat_choose_width)
+        self.chat_choose_window.show()
 
     def tournament_info(self):
-        self.client.send("tournament info")
+        self.client.send("tournamentinfo")
 
     def initChatDict(self):
         for player in self.players:
@@ -1038,3 +1050,43 @@ class Hub(QMainWindow):
             self.chatDictionary["Global Chat"]
         except:
             self.chatDictionary.update({"Global Chat": []})
+
+
+class GameWindow(QDialog):
+
+    def __init__(self, size, board_size, client, on_finish=None,
+                 ai1=None, ai2=None, start=None, speed=False):
+        super(GameWindow, self).__init__(size)
+
+        self.speed = speed
+        # expects size only to be wider than board_size
+        self.board_size = min(board_size, size)  # may not be larger than size
+        self.board_pos = [round(0.5 * (s - b))
+                          for s, b in zip(self.size, self.board_size)]
+        self.on_finish = on_finish
+
+        self.last_time = time.time()
+        self.init_board()
+
+    def draw(self):
+        self.surface.fill((0, 0, 0, 0))  # clean up
+        self.surface.blit(self.board.draw(), self.board_pos)
+        self.ui_components.draw(self.surface)
+
+    def on_tick(self):
+        """Called every tick"""
+        super(GameWindow, self).on_tick()
+        self.board.on_tick()
+
+    def play(self, event):
+        self.client.start_game()
+
+    def init_board(self, initial=None):
+        self.board = board.Board(self.board_size, initial)
+        self.board.speakers = self.speaker
+
+    def reset(self, event):
+        self.init_board()
+        self.has_started = False
+        self.btn_play.icon = self.ic_play
+        self.gameLog.reset()
