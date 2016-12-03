@@ -269,7 +269,6 @@ class ServerSelect(QDialog):
         info = "Running PyBot {0} on {1}. with Python {2} \n " \
             .format(setup["version"], settings.get_pybot_platform(),
                     settings.get_python_version())
-        print(info)
         self.statusbar.showMessage(info)
         self.setFixedSize(*self.Window_Size)
         self.show()
@@ -423,7 +422,6 @@ class Hub(QMainWindow):
         self.user = self.players[self.players.index(username)]
         self.user_stats = ["1", "1", "1", "1"]
         self.status[self.players.index(self.user)] = "self"
-        print(self.status)
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
         self.line_starting_height = 250
@@ -458,8 +456,8 @@ class Hub(QMainWindow):
         heading.move(heading_h, heading_w)
         heading.adjustSize()
 
-        self.new_game = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
-                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.new_game = PicButton(QPixmap("resources/challenge.png"), QPixmap("resources/challenge_hover.png"),
+                                QPixmap("resources/challenge.png"), QPixmap("resources/challenge_hover.png"), self)
         self.new_game.move(self.Window_Size[1] * 0.05, self.Window_Size[0] * 0.1666666)
         self.new_game.setToolTip("Start a new game")
         self.new_game.clicked.connect(self.game_challenge)
@@ -481,16 +479,22 @@ class Hub(QMainWindow):
         self.settings.move(self.Window_Size[1] * 0.05, self.Window_Size[0] * 0.5)
         self.settings.setFixedSize(QSize(150, 150))
 
-        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
-                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
-        self.button.move(self.Window_Size[0] * 0.7, 20)
+        self.button = PicButton(QPixmap("resources/notifyadmin.png"), QPixmap("resources/notify_admin.png"),
+                                QPixmap("resources/notifyadmin.png"), QPixmap("resources/notify_admin.png"), self)
+        self.button.move(self.Window_Size[0] * 0.6, 20)
         self.button.setToolTip("Message Admin")
         self.button.setFixedSize(QSize(100, 100))
 
-        self.button = PicButton(QPixmap("resources/play.png"), QPixmap("resources/pause.png"),
-                                QPixmap("resources/wall.png"), QPixmap("resources/muted.png"), self)
+        self.button = PicButton(QPixmap("resources/stats.png"), QPixmap("resources/stats_hover.png"),
+                                QPixmap("resources/stats.png"), QPixmap("resources/stats_hover.png"), self)
+        self.button.move(self.Window_Size[0] * 0.7, 20)
+        self.button.setToolTip("View Player Stats")
+        self.button.setFixedSize(QSize(100, 100))
+
+        self.button = PicButton(QPixmap("resources/queue.png"), QPixmap("resources/queue_hover.png"),
+                                QPixmap("resources/queue.png"), QPixmap("resources/queue_hover.png"), self)
         self.button.move(self.Window_Size[0] * 0.8, 20)
-        self.button.setToolTip("Browse AI's")
+        self.button.setToolTip("Join Queue")
         self.button.setFixedSize(QSize(100, 100))
 
         self.join_tournament = PicButton(QPixmap("resources/join_tournament.png"), QPixmap("resources/join_tournament_hover.png"),
@@ -504,7 +508,6 @@ class Hub(QMainWindow):
         for player in self.players:
             #TODO: Sort so that user is at the top and ingame players at the bottom
             #TODO: add player status
-            print(player)
             statusImage = QLabel(self)
             statusImage.setFixedSize(QSize(32, 32))
             statusPicture = QPixmap(PICTURE_DICT[self.status[self.players.index(player)]])
@@ -512,11 +515,9 @@ class Hub(QMainWindow):
             statusImage.setPixmap(myScaledPixmap)
             height, width = self.starting_height + self.difference * self.players.index(player) + 10, self.starting_width - 150
             statusImage.move(width, height)
-            print(self.players.index(player))
             label = QLabel(player, self)
             label.setStyleSheet("QLabel {font-size: 40px; color: white}")
             height, width = self.starting_height + (self.difference * self.players.index(player)), self.starting_width
-            print(height)
             label.move(width, height)
             label.adjustSize()
             label2 = QLabel(self.user_stats[self.players.index(player)], self)
@@ -968,7 +969,6 @@ class Hub(QMainWindow):
             else:
                 query = "chat global {}".format(message)
             messageList = self.chatDictionary[receiver]
-            print(self.user)
             new_message = "{}&{}".format(self.username, message)
             messageList.append(new_message)
             self.chatDictionary[receiver] = messageList
