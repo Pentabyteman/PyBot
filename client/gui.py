@@ -11,7 +11,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QVBoxLayout, QDialog, QPushButton, QDesktopWidget, QLabel, \
     QLineEdit, QMdiArea, QScrollArea, QAbstractButton, QWidget, QStatusBar, QGridLayout, QTextEdit, QSizePolicy, \
-    QRadioButton, QButtonGroup
+    QRadioButton, QButtonGroup, QShortcut, QAction
 
 
 BOARD_SIZE = (1017, 1017)
@@ -20,6 +20,10 @@ ICON_PATH = "resources/pybot_logo_ver1.png"
 PICTURE_DICT = {"self": "resources/self.png", "online": "resources/online.png", "ingame": "resources/ingame.png"}
 RESOLUTIONS = ["1920x1200 8:5", "1920x1080 16:9","1680x1050 8:5", "1600x900 16:9", "1440x900 8:5", "1360x768 16:9",
                "1280x1024 5:4", "1280x800 8:5", "1280x720 16:9", "1024x768 4:3"]
+SERVEROUTPUT = {'help': "serverVisit github.com for a list of keywords.",
+                'error': 'serverERROR: Unknown Command',
+                'authorisation': 'serverWARNING: Authorisation needed to execute',
+                'syntax': 'serverERROR: Syntax Error'}
 SCREEN_DICT = {
     "1920x1200": [1500, 1017],
     "1920x1080": [1350, 915],
@@ -37,8 +41,12 @@ SCREEN_DICT = {
 class ChooseScreenResolution(QDialog):
     def __init__(self, Screen, client):
         super().__init__()
+
+        # Initialising some values
         self.client = client
         self.screen = Screen
+
+        # Drawing Screen
         self.initUI()
 
     def initUI(self):
@@ -133,10 +141,14 @@ class ChooseScreenResolution(QDialog):
 class ServerSelect(QDialog):
     def __init__(self, client, Window_Size=WINDOW_SIZE ):
         super().__init__()
+
+        # Initialising some values
         self.Window_Size = Window_Size
         self.client = client
         self.info_state = True
         self.established_connection = False
+
+        # Drawing Screen
         self.initUI()
 
     def initUI(self):
@@ -348,7 +360,7 @@ class ServerSelect(QDialog):
         self.error_label.adjustSize()
 
     def on_connect(self):
-        self.hub = Hub(self.client, self.user.text(), self.Window_Size)
+        self.hub = Hub(self.client, self.user.text(), self.Window_Size, self.host.text())
         self.hub.show()
         self.close()
 
@@ -357,7 +369,6 @@ class ServerSelect(QDialog):
         self.error_label.adjustSize()
         self.error_label.raise_()
         self.error_label.show()
-
 
     def update_setting(self, username, host):
         setting = settings.get_standard_settings()
@@ -409,7 +420,7 @@ class PicButton(QAbstractButton):
 
 
 class Hub(QMainWindow):
-    def __init__(self, client, username, WindowSize = WINDOW_SIZE):
+    def __init__(self, client, username, WindowSize = WINDOW_SIZE, host=""):
         super().__init__()
         self.currentReceiver = "Global Chat"
         self.username = username
@@ -420,7 +431,7 @@ class Hub(QMainWindow):
         self.client.on_players = self.update_players
         self.status = ["online", "online", "online", "online"]
         self.user = self.players[self.players.index(username)]
-        self.user_stats = ["1", "1", "1", "1"]
+        self.stats = ["1500", "1500", "1500", "1500"]
         self.status[self.players.index(self.user)] = "self"
         self.starting_height, self.starting_width = 175, 500
         self.difference = 100
@@ -434,7 +445,8 @@ class Hub(QMainWindow):
         self.client.on_private_chat = self.receive_private
         self.client.on_info = self.tournament_info
         self.labels = []
-        self.new_message_list = ["Global Chat"]
+        self.host = host
+        self.new_message_list = []
         self.Window_Size = WindowSize
         self.initUI()
 
@@ -483,6 +495,7 @@ class Hub(QMainWindow):
                                 QPixmap("resources/notifyadmin.png"), QPixmap("resources/notify_admin.png"), self)
         self.button.move(self.Window_Size[0] * 0.6, 20)
         self.button.setToolTip("Message Admin")
+        self.button.clicked.connect(self.console)
         self.button.setFixedSize(QSize(100, 100))
 
         self.button = PicButton(QPixmap("resources/stats.png"), QPixmap("resources/stats_hover.png"),
@@ -520,7 +533,7 @@ class Hub(QMainWindow):
             height, width = self.starting_height + (self.difference * self.players.index(player)), self.starting_width
             label.move(width, height)
             label.adjustSize()
-            label2 = QLabel(self.user_stats[self.players.index(player)], self)
+            label2 = QLabel(str(self.stats[self.players.index(player)]), self)
             label2.setStyleSheet("QLabel {font-size: 40px; color: white}")
             label2.move(1200, height)
             label2.adjustSize()
@@ -864,7 +877,7 @@ class Hub(QMainWindow):
         self.chat_choose_window.show()
 
     def game_challenge(self):
-        playable_user = []
+        playable_user = ['Join Queue']
         for i in range(0, len(self.players)):
             if self.status[i] == "online":
                 if self.players[i] != self.username:
@@ -982,12 +995,14 @@ class Hub(QMainWindow):
         self.statusBar().showMessage("")
 
     def update_players(self, players):
+        self.players = []
+        self.stats = []
         self.initChatDict()
-        self.players = players
+        for player in players:
+            self.players.append(player['name'])
+            self.stats.append(player['score'])
         self.status = ["online", "online", "online", "online"]
-        self.user = self.players[self.players.index(self.username)]
-        self.user_stats = ["1", "1", "1", "1"]
-        self.status[self.players.index(self.user)] = "self"
+        self.status[self.players.index(self.username)] = "self"
         self.initUI()
 
     def disable_always(self):
@@ -1051,42 +1066,186 @@ class Hub(QMainWindow):
         except:
             self.chatDictionary.update({"Global Chat": []})
 
+    def console(self):
+        self.consolelist = []
+        # Initialising the console window
+        self.console_window = QDialog(self)
+        self.console_window.setModal(True)
+        title = "{}@{}".format(self.username, self.host)
+        self.console_window.setWindowTitle(title)
+        self.console_window_width, self.console_window_height = self.Window_Size[0] * 0.8, self.Window_Size[1] * 0.8
+        self.console_window.setFixedSize(self.console_window_width, self.console_window_height)
+        self.console_window.setStyleSheet("QDialog {background:black;}")
+        self.draw_console(title)
+        # Showing the window
+        self.console_window.show()
+
+    def draw_console(self, title):
+        # Adding scrollable part
+        try:
+            self.scroll.deleteLater()
+        except:
+            pass
+        self.scroll = QScrollArea(self.console_window)
+        self.scroll.setStyleSheet("QScrollArea {background:black; border:1px solid black}")
+        self.scroll.move(0, 0)
+        self.scroll.setFixedSize(self.console_window_width, self.console_window_height)
+        self.scroll.raise_()
+        usernamestring = "{}:~$".format(title)
+        scrollContent = QWidget(self.scroll)
+        scrollContent.setStyleSheet("QWidget {background:black}")
+        scrollLayout = QVBoxLayout(scrollContent)
+        scrollContent.setLayout(scrollLayout)
+        scrollLayout.setSpacing(0)
+        for message in self.consolelist:
+            horizontalLayout = QHBoxLayout()
+            if message.startswith("server"):
+                message = message.split("server")[1]
+                heading_label = QLabel(message)
+                if message.startswith("ERROR"):
+                    heading_label.setStyleSheet("QLabel {background-color:black; color:darkred; font-size: 22px}")
+                elif message.startswith("WARNING"):
+                    heading_label.setStyleSheet("QLabel {background-color:black; color:yellow; font-size: 22px}")
+                else:
+                    heading_label.setStyleSheet("QLabel {background-color:black; color:white; font-size: 22px}")
+                horizontalLayout.addWidget(heading_label, Qt.AlignLeft)
+            else:
+                heading_label = QLabel(usernamestring)
+                heading_label.setStyleSheet("QLabel {background-color:black; color:olive; font-size: 24px}")
+                label = QLabel(message)
+                label.setStyleSheet("QLabel {background-color:black; border:0px; color:white; font-size: 22px}")
+                horizontalLayout.addWidget(heading_label, Qt.AlignLeft)
+                horizontalLayout.addWidget(label, Qt.AlignLeft)
+            scrollLayout.addLayout(horizontalLayout)
+        verticalLayout = QHBoxLayout()
+        self.heading_label = QLabel(usernamestring)
+        self.heading_label.setStyleSheet("QLabel {background-color:black; color:olive; font-size: 24px}")
+        self.entertext = QLineEdit()
+        self.entertext.setStyleSheet("QLineEdit {background-color:black; border:0px; color:white; font-size: 22px}"
+                                     "QLineEdit:focus {background-color:black; border:0px; "
+                                     "color:white; font-size: 22px}")
+        self.entertext.setFocus()
+        self.entertext.raise_()
+        self.entertext.returnPressed.connect(lambda:
+                                          self.console_has_input(self.entertext.text(), title))
+        self.heading_label.adjustSize()
+        verticalLayout.addWidget(self.heading_label, Qt.AlignLeft)
+        verticalLayout.addWidget(self.entertext, Qt.AlignLeft)
+        scrollLayout.addLayout(verticalLayout)
+        self.scroll.setWidget(scrollContent)
+        self.scroll.setWidgetResizable(False)
+        self.scroll.raise_()
+        self.scroll.show()
+
+
+    @pyqtSlot()
+    def console_has_input(self, input, title):
+        self.consolelist.append(input)
+
+        # Unpacking Input
+        try:
+            cmd, arg = input.split(" ")[0], input.split(" ")[1:]
+        except:
+            cmd = input
+
+        # Help
+        if cmd == 'help':
+            self.consolelist.append(SERVEROUTPUT['help'])
+
+        # Admin Stuff
+        elif cmd == 'sudo':
+            try:
+                if arg[1] == 'kick':
+                    text = "kick {}".format(arg[2:])
+                    self.client.send(text)
+            except:
+                self.consolelist.append(SERVEROUTPUT['syntax'])
+
+        # Low User Tries Admin Stuff
+        elif cmd == 'kick':
+            text = "{} '{}'".format(SERVEROUTPUT['authorisation'], cmd)
+            self.consolelist.append(text)
+
+        # Working Commands
+        elif cmd == 'close':
+            try:
+                if arg[0] == 'app':
+                    self.console_window.close()
+                    self.close()
+                elif arg[0] == 'console':
+                    self.console_window.close()
+                else:
+                    self.console_window.close()
+            except:
+                self.consolelist.append(SERVEROUTPUT['syntax'])
+        elif cmd == 'chat':
+            try:
+                # Checking if correct syntax is used
+                if arg[0]:
+                    if arg[1]:
+                        self.client.send(input)
+            except:
+                self.consolelist.append(SERVEROUTPUT['syntax'])
+        else:
+            text = "{}: '{}'".format(SERVEROUTPUT['error'], cmd)
+            self.consolelist.append(text)
+        self.draw_console(title)
 
 class GameWindow(QDialog):
+    def __init__(self, client, username, opponent, WindowSize = WINDOW_SIZE):
+        super().__init__()
+        # Initilialising some values
+        self.username = username
+        self.opponent = opponent
+        self.client = client
+        self.client.on_players = self.update_players
+        self.Window_Size = WindowSize
 
-    def __init__(self, size, board_size, client, on_finish=None,
-                 ai1=None, ai2=None, start=None, speed=False):
-        super(GameWindow, self).__init__(size)
+        # Drawing Screen
+        self.initUI()
 
-        self.speed = speed
-        # expects size only to be wider than board_size
-        self.board_size = min(board_size, size)  # may not be larger than size
-        self.board_pos = [round(0.5 * (s - b))
-                          for s, b in zip(self.size, self.board_size)]
-        self.on_finish = on_finish
+    def initUI(self):
+        # Creating the Window
+        self.setGeometry(300, 300, *self.Window_Size)
+        self.center()
 
-        self.last_time = time.time()
-        self.init_board()
+        # Drawing the Background
+        palette = QPalette()
+        picture = QPixmap("resources/background.png")
+        picture_scaled = picture.scaled(self.Window_Size[1], self.Window_Size[0])
+        palette.setBrush(QPalette.Background, QBrush(picture_scaled))
+        self.setPalette(palette)
 
-    def draw(self):
-        self.surface.fill((0, 0, 0, 0))  # clean up
-        self.surface.blit(self.board.draw(), self.board_pos)
-        self.ui_components.draw(self.surface)
+        # Creating the board
+        self.boardwidth, self.boardheight = self.Window_Size[0] * 0.8, self.Window_Size[1]
 
-    def on_tick(self):
-        """Called every tick"""
-        super(GameWindow, self).on_tick()
-        self.board.on_tick()
 
-    def play(self, event):
-        self.client.start_game()
+        self.heading = QLabel("PyBot", self)
+        self.heading.setStyleSheet("QLabel {font-size: 80px; color:white}")
 
-    def init_board(self, initial=None):
-        self.board = board.Board(self.board_size, initial)
-        self.board.speakers = self.speaker
+        # Drawing Window
+        setup = settings.get_standard_settings()
+        header = "PyBot v{}".format(setup["version"])
+        self.setWindowTitle(header)
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setFixedSize(*self.Window_Size)
+        self.show()
 
-    def reset(self, event):
-        self.init_board()
-        self.has_started = False
-        self.btn_play.icon = self.ic_play
-        self.gameLog.reset()
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+    def paintEvent(self, e):
+        qp = QPainter()
+        qp.begin(self)
+        self.drawRects(qp)
+        qp.end()
+
+    def drawRects(self, qp):
+        # Drawing the black background for the board
+        qp.setBrush(QColor(0, 0, 0))
+        qp.drawRect(self.Window_Size[0]*0.1, 0, self.boardwidth, self.boardheight)
+
+        # Drawing grid lines

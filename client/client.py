@@ -68,6 +68,7 @@ class GameClient(socket_client.SocketClient):
                 self.players = query["players"]
                 self.players_changed()
                 self.on_players(self.players)
+                print(self.players)
             elif action == "moved":
                 self.on_move(query["to"], query["state"])
             elif action == "active":
