@@ -115,7 +115,7 @@ class GameClient(socket_client.SocketClient):
                 self.on_connect()
         elif key == "server":
             if action == "players":
-                self.players = query["players"]
+                self.players = [p['name'] for p in query["players"]]
                 self.players_changed()
             elif action == "moved":
                 self.on_move(query["to"], query["state"])
