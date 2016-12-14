@@ -107,11 +107,14 @@ class ChooseScreenResolution(QDialog):
             resolution = checked_button.text()
             key = resolution.split(' ')[0]
             optimal_size = SCREEN_DICT[key]
-            self.serverselect = ServerSelect(self.client, optimal_size)
+            # self.serverselect = ServerSelect(self.client, optimal_size)
+            self.serverselect = GameWindow(self.client, username="nils", opponent="christian", WindowSize=optimal_size)
             self.serverselect.show()
             self.close()
         except:
-            self.serverselect = ServerSelect(self.client)
+            # self.serverselect = ServerSelect(self.client)
+            self.serverselect = GameWindow(self.client, username="nils", opponent="christian",
+                                           WindowSize=optimal_size)
             self.serverselect.show()
             self.close()
 
@@ -1137,7 +1140,6 @@ class Hub(QMainWindow):
         self.scroll.raise_()
         self.scroll.show()
 
-
     @pyqtSlot()
     def console_has_input(self, input, title):
         self.consolelist.append(input)
@@ -1191,6 +1193,7 @@ class Hub(QMainWindow):
             self.consolelist.append(text)
         self.draw_console(title)
 
+
 class GameWindow(QDialog):
     def __init__(self, client, username, opponent, WindowSize = WINDOW_SIZE):
         super().__init__()
@@ -1198,7 +1201,6 @@ class GameWindow(QDialog):
         self.username = username
         self.opponent = opponent
         self.client = client
-        self.client.on_players = self.update_players
         self.Window_Size = WindowSize
 
         # Drawing Screen
@@ -1217,11 +1219,13 @@ class GameWindow(QDialog):
         self.setPalette(palette)
 
         # Creating the board
-        self.boardwidth, self.boardheight = self.Window_Size[0] * 0.8, self.Window_Size[1]
+        self.boardwidth, self.boardheight = self.Window_Size[1], self.Window_Size[1]
 
+        # Drawing Names and Stats
+        self.username_label = QLabel(self.username)
+        self.opponent_label = QLabel(self.opponent)
+        
 
-        self.heading = QLabel("PyBot", self)
-        self.heading.setStyleSheet("QLabel {font-size: 80px; color:white}")
 
         # Drawing Window
         setup = settings.get_standard_settings()
@@ -1246,6 +1250,14 @@ class GameWindow(QDialog):
     def drawRects(self, qp):
         # Drawing the black background for the board
         qp.setBrush(QColor(0, 0, 0))
-        qp.drawRect(self.Window_Size[0]*0.1, 0, self.boardwidth, self.boardheight)
+        move_right = (self.Window_Size[0] - self.Window_Size[1])/2
+        qp.drawRect(move_right, 0, self.boardwidth, self.boardheight)
 
         # Drawing grid lines
+        qp.setBrush(QColor(255, 255, 255))
+        for i in range(0, 10):
+            factor = self.boardwidth/9, self.boardheight/9
+            pen = QPen(Qt.white, 1, Qt.SolidLine)
+            qp.setPen(pen)
+            qp.drawLine((move_right + factor[0] * i), 0, (move_right + factor[0] * i), self.Window_Size[1])
+            qp.drawLine(move_right, (factor[1] * i), (move_right + self.boardwidth), (factor[1] * i))
